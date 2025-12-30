@@ -8,7 +8,7 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Background="{DynamicResource PrimaryHueMidBrush}">
+        <Border Background="#673AB7" Grid.Column="0">
             <StackPanel Margin="10">
                 <TextBlock Text="WMS" Foreground="White" FontSize="24" FontWeight="Bold" Margin="20"/>
 

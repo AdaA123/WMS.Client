@@ -4,10 +4,12 @@ namespace WMS.Client.Models
 {
     public class InboundModel
     {
-        public string OrderNo { get; set; }     // 入库单号
-        public string Supplier { get; set; }    // 供应商
-        public string Status { get; set; }      // 状态 (待入库/已完成)
-        public int Count { get; set; }          // 数量
-        public DateTime Date { get; set; }      // 日期
+        // 给所有 string 属性加上 = string.Empty;
+        public string OrderNo { get; set; } = string.Empty;
+        public string Supplier { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+
+        public int Count { get; set; }
+        public DateTime Date { get; set; }
     }
 }

@@ -6,6 +6,6 @@ namespace WMS.Client.ViewModels
     public partial class MainViewModel : ObservableObject
     {
         [ObservableProperty]
-        private object _currentView;
+        private object? _currentView;
     }
 }

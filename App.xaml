@@ -7,8 +7,18 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="DeepPurple" SecondaryColor="Lime" />
+
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="SelectableTextBlock" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+                <Setter Property="IsReadOnly" Value="True"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+                <Setter Property="materialDesign:TextFieldAssist.DecorationVisibility" Value="Hidden"/>
+                <Setter Property="materialDesign:TextFieldAssist.TextBoxViewMargin" Value="0"/>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

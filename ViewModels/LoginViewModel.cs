@@ -1,35 +1,39 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
-using System.Windows;
-using System.Windows.Controls; // 必须加这行，为了识别 PasswordBox
-using System.Windows;          // 必须加这行，为了识别 MessageBox
+using System.Windows;          // 用于 MessageBox
+using System.Windows.Controls; // 用于 PasswordBox <--- 你之前缺的就是这个
 
 namespace WMS.Client.ViewModels
 {
     public partial class LoginViewModel : ObservableObject
     {
-        [ObservableProperty] private string _userName;
-        [ObservableProperty] private string _password;
+        [ObservableProperty]
+        private string _userName = "admin"; // 给个默认值方便测试
 
-        public Action LoginSuccessAction { get; set; } // 登录成功的回调
+        // 注意：这里不再需要 _password 属性，因为我们直接从 UI 控件获取密码
+
+        public Action? LoginSuccessAction { get; set; }
 
         [RelayCommand]
-        private void Login(object parameter) // 1. 增加参数
+        private void Login(object parameter)
         {
-            // 2. 从参数中获取密码框控件
+            // 1. 将参数转换为 PasswordBox 控件
             var passwordBox = parameter as PasswordBox;
-            var password = passwordBox?.Password; // 获取实际输入的密码
 
-            // 3. 验证逻辑
+            // 2. 获取实际密码
+            var password = passwordBox?.Password;
+
+            // 3. 验证 (为了测试方便，先打印出来看看)
+            // System.Diagnostics.Debug.WriteLine($"账号:{UserName}, 密码:{password}");
+
             if (UserName == "admin" && password == "123")
             {
-                LoginSuccessAction?.Invoke(); // 登录成功
+                LoginSuccessAction?.Invoke();
             }
             else
             {
-                // 建议加上具体的错误提示，方便调试
-                System.Windows.MessageBox.Show($"登录失败！\n你输入的账号: {UserName}\n你输入的密码: {password}\n正确应该是: admin / 123");
+                MessageBox.Show($"登录失败！\n账号: {UserName}\n密码: {password}\n(正确是 admin / 123)");
             }
         }
     }

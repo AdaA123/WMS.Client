@@ -40,9 +40,36 @@
                   SelectionMode="Single"
                   Style="{StaticResource MaterialDesignDataGrid}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="入库单号" Binding="{Binding OrderNo}" Width="150"/>
-                <DataGridTextColumn Header="供应商" Binding="{Binding Supplier}" Width="*"/>
-                <DataGridTextColumn Header="入库数量" Binding="{Binding Count}" Width="100"/>
+                <DataGridTemplateColumn Header="入库单号" Width="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding OrderNo}"
+                     IsReadOnly="True"
+                     BorderThickness="0"
+                     Background="Transparent"
+                     TextWrapping="NoWrap"
+                     Padding="0"
+                     VerticalAlignment="Center"
+                     materialDesign:TextFieldAssist.DecorationVisibility="Hidden"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="供应商" Width="*" MinWidth="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding Supplier}"
+                     IsReadOnly="True"
+                     BorderThickness="0"
+                     Background="Transparent"
+                     TextWrapping="NoWrap"
+                     Padding="0"
+                     VerticalAlignment="Center"
+                     materialDesign:TextFieldAssist.DecorationVisibility="Hidden"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="入库数量" Binding="{Binding Count}" Width="*" MinWidth="100"/>
 
                 <DataGridTemplateColumn Header="状态" Width="120">
                     <DataGridTemplateColumn.CellTemplate>
