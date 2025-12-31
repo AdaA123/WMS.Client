@@ -3,16 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        
         xmlns:vm="clr-namespace:WMS.Client.ViewModels"
         xmlns:v="clr-namespace:WMS.Client.Views"
-        
         mc:Ignorable="d"
         Title="WMS 智能仓储管理系统" Height="768" Width="1280"
         WindowStartupLocation="CenterScreen"
-        
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
         TextElement.FontSize="14"
@@ -25,11 +21,9 @@
         <DataTemplate DataType="{x:Type vm:HomeViewModel}">
             <v:HomeView />
         </DataTemplate>
-
         <DataTemplate DataType="{x:Type vm:InboundViewModel}">
             <v:InboundView />
         </DataTemplate>
-
         <DataTemplate DataType="{x:Type vm:OutboundViewModel}">
             <v:OutboundView />
         </DataTemplate>
@@ -43,49 +37,46 @@
 
         <Border Grid.Column="0" Background="#2c3e50">
             <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Margin="0,30,0,30">
+                <StackPanel DockPanel.Dock="Top" Margin="0,40,0,40">
                     <materialDesign:PackIcon Kind="Warehouse" Width="50" Height="50" 
                                              Foreground="White" HorizontalAlignment="Center"/>
                     <TextBlock Text="WMS 仓储系统" Foreground="White" 
-                               FontSize="20" FontWeight="Bold" 
+                               FontSize="22" FontWeight="Bold" 
                                HorizontalAlignment="Center" Margin="0,15,0,0"/>
                 </StackPanel>
 
-                <Button DockPanel.Dock="Bottom" Margin="20"
-                        Command="{Binding LogoutCommand}"
-                        Style="{StaticResource MaterialDesignOutlinedButton}"
-                        Foreground="#FF8A80" BorderBrush="#FF8A80"
-                        Content="退出登录" />
-
                 <StackPanel DockPanel.Dock="Top">
                     <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
-                                 Height="50" Padding="20,0"
+                                 Height="55" Margin="10,5" Padding="15,0"
                                  Command="{Binding NavigateCommand}" CommandParameter="Home"
                                  Foreground="White" BorderThickness="0"
+                                 materialDesign:ButtonAssist.CornerRadius="8"
                                  IsChecked="True">
                         <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="ViewDashboard" Width="20" Height="20" VerticalAlignment="Center"/>
-                            <TextBlock Text="系统首页" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                            <materialDesign:PackIcon Kind="ViewDashboard" Width="22" Height="22" VerticalAlignment="Center"/>
+                            <TextBlock Text="系统首页" Margin="15,0,0,0" FontSize="15" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
 
                     <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
-                                 Height="50" Padding="20,0"
+                                 Height="55" Margin="10,5" Padding="15,0"
                                  Command="{Binding NavigateCommand}" CommandParameter="Inbound"
-                                 Foreground="White" BorderThickness="0">
+                                 Foreground="White" BorderThickness="0"
+                                 materialDesign:ButtonAssist.CornerRadius="8">
                         <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="TruckDelivery" Width="20" Height="20" VerticalAlignment="Center"/>
-                            <TextBlock Text="入库管理" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                            <materialDesign:PackIcon Kind="TruckDelivery" Width="22" Height="22" VerticalAlignment="Center"/>
+                            <TextBlock Text="入库管理" Margin="15,0,0,0" FontSize="15" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
 
                     <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
-                                 Height="50" Padding="20,0"
+                                 Height="55" Margin="10,5" Padding="15,0"
                                  Command="{Binding NavigateCommand}" CommandParameter="Outbound"
-                                 Foreground="White" BorderThickness="0">
+                                 Foreground="White" BorderThickness="0"
+                                 materialDesign:ButtonAssist.CornerRadius="8">
                         <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="PackageVariantClosed" Width="20" Height="20" VerticalAlignment="Center"/>
-                            <TextBlock Text="出库管理" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                            <materialDesign:PackIcon Kind="PackageVariantClosed" Width="22" Height="22" VerticalAlignment="Center"/>
+                            <TextBlock Text="出库管理" Margin="15,0,0,0" FontSize="15" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
                 </StackPanel>
@@ -103,15 +94,61 @@
                     <TextBlock Text="欢迎使用仓储管理系统" VerticalAlignment="Center" Margin="20,0" 
                                FontSize="16" FontWeight="SemiBold" Foreground="#555"/>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="20,0">
-                        <materialDesign:PackIcon Kind="AccountCircle" Width="28" Height="28" Foreground="Gray" VerticalAlignment="Center"/>
-                        <TextBlock Text="管理员 (Admin)" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="Gray"/>
-                    </StackPanel>
+                    <materialDesign:PopupBox HorizontalAlignment="Right" VerticalAlignment="Center" 
+                                             Margin="0,0,20,0"
+                                             PlacementMode="BottomAndAlignRightEdges"
+                                             StaysOpen="False">
+
+                        <materialDesign:PopupBox.ToggleContent>
+                            <StackPanel Orientation="Horizontal" Cursor="Hand">
+                                <materialDesign:PackIcon Kind="AccountCircle" Width="28" Height="28" 
+                                                         Foreground="{DynamicResource PrimaryHueMidBrush}" 
+                                                         VerticalAlignment="Center"/>
+                                <TextBlock Text="管理员 (Admin)" VerticalAlignment="Center" 
+                                           Margin="10,0,0,0" 
+                                           Foreground="#555" FontWeight="Medium"/>
+                                <materialDesign:PackIcon Kind="ChevronDown" Width="20" Height="20" 
+                                                         Foreground="#999" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                            </StackPanel>
+                        </materialDesign:PopupBox.ToggleContent>
+
+                        <StackPanel Width="150">
+                            <Button Command="{Binding OpenChangePasswordCommand}"
+                                    Content="修改密码"
+                                    HorizontalContentAlignment="Left"
+                                    Style="{StaticResource MaterialDesignFlatButton}">
+                                <Button.ContentTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="KeyChange" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="修改密码" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </Button.ContentTemplate>
+                            </Button>
+
+                            <Separator Margin="0,5"/>
+
+                            <Button Command="{Binding LogoutCommand}"
+                                    Content="退出登录"
+                                    HorizontalContentAlignment="Left"
+                                    Foreground="#FF5252"
+                                    Style="{StaticResource MaterialDesignFlatButton}">
+                                <Button.ContentTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Logout" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="退出登录" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </Button.ContentTemplate>
+                            </Button>
+                        </StackPanel>
+                    </materialDesign:PopupBox>
                 </Grid>
             </Border>
 
             <ContentControl Grid.Row="1" Content="{Binding CurrentView}" Margin="20"/>
-
         </Grid>
     </Grid>
 </Window>

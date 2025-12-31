@@ -123,5 +123,22 @@ namespace WMS.Client.Services
         {
             return await _database.QueryScalarsAsync<string>("SELECT DISTINCT ProductName FROM InboundModel WHERE ProductName IS NOT NULL");
         }
+        public async Task<bool> ChangePasswordAsync(string username, string oldPassword, string newPassword)
+        {
+            // 1. 先验证旧密码是否正确
+            var user = await _database.Table<UserModel>()
+                                      .Where(u => u.Username == username && u.Password == oldPassword)
+                                      .FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                return false; // 旧密码错误或用户不存在
+            }
+
+            // 2. 更新密码
+            user.Password = newPassword;
+            await _database.UpdateAsync(user);
+            return true; // 修改成功
+        }
     }
 }

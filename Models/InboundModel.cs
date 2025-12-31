@@ -1,20 +1,22 @@
-﻿using SQLite; // 引入 SQLite 命名空间
+﻿using SQLite;
 using System;
 
 namespace WMS.Client.Models
 {
     public class InboundModel
     {
-        // [PrimaryKey]: 主键
-        // [AutoIncrement]: 数据库自动填 ID (1, 2, 3...)
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
 
+        // ✅ 初始化为空字符串，消除警告
         public string OrderNo { get; set; } = string.Empty;
         public string ProductName { get; set; } = string.Empty;
+
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+
         public string Supplier { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-        public int Count { get; set; }
-        public DateTime Date { get; set; }
+
+        public DateTime InboundDate { get; set; }
     }
 }

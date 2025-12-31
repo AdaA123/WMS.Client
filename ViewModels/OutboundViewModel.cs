@@ -1,157 +1,101 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MaterialDesignThemes.Wpf;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using WMS.Client.Models;
-using WMS.Client.Services; // 引用服务
-using WMS.Client.Views;
+using WMS.Client.Services;
 
 namespace WMS.Client.ViewModels
 {
     public partial class OutboundViewModel : ObservableObject
     {
         private readonly DatabaseService _dbService;
-        private List<OutboundModel> _allData = new();
 
-        [ObservableProperty]
-        private ObservableCollection<OutboundModel> _displayedData = new();
+        // 列表数据源
+        public ObservableCollection<OutboundModel> OutboundList { get; } = new();
+        // 客户下拉框数据源
+        public ObservableCollection<string> Customers { get; } = new();
 
+        // ✅ 解决 CS0103：添加输入对象绑定
         [ObservableProperty]
-        private string _searchText = string.Empty;
+        private OutboundModel _newOutbound = new();
 
         public OutboundViewModel()
         {
             _dbService = new DatabaseService();
-            LoadDataAsync().ConfigureAwait(false);
+            _ = LoadData();
+            _ = LoadCustomers();
         }
 
-        private async Task LoadDataAsync()
+        // ✅ 保存逻辑 (对应界面“确认出库”)
+        [RelayCommand]
+        private async Task Save()
+        {
+            // 1. 校验
+            if (string.IsNullOrWhiteSpace(NewOutbound.ProductName))
+            {
+                MessageBox.Show("产品名称不能为空！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (NewOutbound.Quantity <= 0)
+            {
+                MessageBox.Show("出库数量必须大于 0！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                // 2. 自动生成单号 CK + 时间
+                NewOutbound.OrderNo = $"CK{DateTime.Now:yyyyMMddHHmmss}";
+                NewOutbound.OutboundDate = DateTime.Now;
+
+                // 默认客户
+                if (string.IsNullOrEmpty(NewOutbound.Customer))
+                    NewOutbound.Customer = "散客";
+
+                // 3. 保存
+                await _dbService.SaveOutboundOrderAsync(NewOutbound);
+
+                // 4. 刷新
+                await LoadData();
+                await LoadCustomers();
+
+                // 5. 清空输入
+                NewOutbound = new OutboundModel();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"出库失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private async Task Delete(OutboundModel item)
+        {
+            if (item == null) return;
+            if (MessageBox.Show($"确认删除单号 [{item.OrderNo}] 吗？", "删除确认", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                await _dbService.DeleteOutboundOrderAsync(item);
+                await LoadData();
+            }
+        }
+
+        private async Task LoadData()
         {
             var list = await _dbService.GetOutboundOrdersAsync();
-            _allData = list;
-            DisplayedData = new ObservableCollection<OutboundModel>(_allData);
+            OutboundList.Clear();
+            list.Reverse(); // 新的在上面
+            foreach (var item in list) OutboundList.Add(item);
         }
 
-        partial void OnSearchTextChanged(string value)
+        private async Task LoadCustomers()
         {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                DisplayedData = new ObservableCollection<OutboundModel>(_allData);
-            }
-            else
-            {
-                var filtered = _allData.Where(x =>
-                    x.OutboundNo.Contains(value) ||
-                    x.Customer.Contains(value) ||
-                    // ✅ 新增：支持搜索產品名稱
-                    (x.ProductName != null && x.ProductName.Contains(value)));
-
-                DisplayedData = new ObservableCollection<OutboundModel>(filtered);
-            }
-        }
-
-        [RelayCommand]
-        private async Task AddNew()
-        {
-            // --- 1. 自动计算出库单号 (CK-202512-xxx) ---
-            string currentMonthPrefix = $"CK-{DateTime.Now:yyyyMM}-";
-            int nextSequence = 1;
-
-            if (_allData.Any())
-            {
-                var currentMonthOrders = _allData
-                    .Where(x => x.OutboundNo.StartsWith(currentMonthPrefix))
-                    .ToList();
-
-                if (currentMonthOrders.Any())
-                {
-                    var maxIndex = currentMonthOrders
-                        .Select(x =>
-                        {
-                            string numPart = x.OutboundNo.Substring(currentMonthPrefix.Length);
-                            if (int.TryParse(numPart, out int num)) return num;
-                            return 0;
-                        })
-                        .Max();
-                    nextSequence = maxIndex + 1;
-                }
-            }
-            string nextOrderNo = $"{currentMonthPrefix}{nextSequence:D3}";
-
-            // --- 2. 准备数据 ---
-            var newOrder = new OutboundModel
-            {
-                OutboundNo = nextOrderNo,
-                Customer = "",
-                Count = 0,
-                Status = "待拣货",
-                Date = DateTime.Now
-            };
-            // --- 3. 弹窗 (确保你新建了 OutboundDialog) ---
-            // 如果你还没建 OutboundDialog，暂时可以用 InboundDialog 顶一下，但字段显示会有点怪
-            // A. 从数据库获取去重后的产品列表
-            var productList = await _dbService.GetProductListAsync();
-
-            // 2. ✅ 新增：获取客户列表
-            var customerList = await _dbService.GetCustomerListAsync();
-
-            // B. 创建弹窗时，把列表传进去
-            var view = new OutboundDialog(productList, customerList);
-
-            view.DataContext = newOrder;
-
-            var result = await DialogHost.Show(view, "RootDialog");
-
-            // --- 4. 保存 ---
-            bool isConfirmed = false;
-            if (result is bool b) isConfirmed = b;
-            else if (result is string s) isConfirmed = bool.Parse(s);
-
-            if (isConfirmed)
-            {
-                if (string.IsNullOrWhiteSpace(newOrder.ProductName))
-                {
-                    System.Windows.MessageBox.Show("保存失敗：產品名稱不能為空！", "提示",
-                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-                    return;
-                }
-
-                if (newOrder.Count <= 0)
-                {
-                    System.Windows.MessageBox.Show("保存失敗：出庫數量必須大於 0！", "提示",
-                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-                    return;
-                }
-
-                if (string.IsNullOrWhiteSpace(newOrder.Customer))
-                {
-                    System.Windows.MessageBox.Show("保存失敗：請選擇或輸入客戶！", "提示",
-                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-                    return;
-                }
-
-                await _dbService.SaveOutboundOrderAsync(newOrder);
-                await LoadDataAsync();
-            }
-        }
-        [RelayCommand]
-        private async Task Delete(OutboundModel model)
-        {
-            var result = System.Windows.MessageBox.Show(
-                $"确定要删除出库单 [{model.OutboundNo}] 吗？",
-                "删除确认",
-                System.Windows.MessageBoxButton.YesNo,
-                System.Windows.MessageBoxImage.Warning);
-
-            if (result == System.Windows.MessageBoxResult.Yes)
-            {
-                await _dbService.DeleteOutboundOrderAsync(model);
-                await LoadDataAsync();
-            }
+            var list = await _dbService.GetCustomerListAsync();
+            Customers.Clear();
+            foreach (var item in list)
+                if (!string.IsNullOrEmpty(item)) Customers.Add(item);
         }
     }
 }
