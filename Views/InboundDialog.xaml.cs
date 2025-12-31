@@ -20,9 +20,17 @@ namespace WMS.Client.Views
     /// </summary>
     public partial class InboundDialog : UserControl
     {
-        public InboundDialog()
+        // 允许接收供应商列表
+        public InboundDialog(List<string>? supplierList = null)
         {
             InitializeComponent();
+
+            if (supplierList != null)
+            {
+                CmbSupplier.ItemsSource = supplierList;
+            }
         }
+
+        public InboundDialog() : this(null) { }
     }
 }

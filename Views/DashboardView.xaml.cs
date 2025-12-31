@@ -19,7 +19,7 @@ namespace WMS.Client.Views
             {
                 new MenuItemModel("系统首页", PackIconKind.Home, typeof(HomeView)),
                 new MenuItemModel("入库管理", PackIconKind.Dolly, typeof(InboundView)), // 暂时都指回去，防止报错
-                new MenuItemModel("出库管理", PackIconKind.Truck, typeof(HomeView))
+                new MenuItemModel("出库管理", PackIconKind.TruckDelivery, typeof(OutboundView))
             };
 
             MenuListBox.ItemsSource = menuItems;

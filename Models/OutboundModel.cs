@@ -1,18 +1,18 @@
-﻿using SQLite; // 引入 SQLite 命名空间
+﻿using SQLite; // 引入这个
 using System;
 
 namespace WMS.Client.Models
 {
-    public class InboundModel
+    public class OutboundModel
     {
-        // [PrimaryKey]: 主键
-        // [AutoIncrement]: 数据库自动填 ID (1, 2, 3...)
+        // 1. 加上主键和自增
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
 
-        public string OrderNo { get; set; } = string.Empty;
+        public string OutboundNo { get; set; } = string.Empty;
+        // ✅ 新增：产品名称
         public string ProductName { get; set; } = string.Empty;
-        public string Supplier { get; set; } = string.Empty;
+        public string Customer { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public int Count { get; set; }
         public DateTime Date { get; set; }

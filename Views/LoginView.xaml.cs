@@ -1,28 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+﻿using System.Windows; // 必须引用这个
+using WMS.Client.ViewModels;
 
 namespace WMS.Client.Views
 {
-    /// <summary>
-    /// LoginView.xaml 的交互逻辑
-    /// </summary>
-    public partial class LoginView : UserControl
+    // 🔴 重点：这里必须是 : Window，不能是 : UserControl
+    public partial class LoginView : Window
     {
         public LoginView()
         {
             InitializeComponent();
+            this.DataContext = new LoginViewModel();
         }
     }
 }

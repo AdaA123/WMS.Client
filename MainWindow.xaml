@@ -3,14 +3,115 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        
+        xmlns:vm="clr-namespace:WMS.Client.ViewModels"
+        xmlns:v="clr-namespace:WMS.Client.Views"
+        
         mc:Ignorable="d"
-        Title="WMS 智能仓储系统" Height="600" Width="1000" 
-        WindowStartupLocation="CenterScreen">
+        Title="WMS 智能仓储管理系统" Height="768" Width="1280"
+        WindowStartupLocation="CenterScreen"
+        
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="14"
+        TextOptions.TextFormattingMode="Ideal" 
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}">
 
-    <materialDesign:DialogHost Identifier="RootDialog" DialogTheme="Inherit">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:HomeViewModel}">
+            <v:HomeView />
+        </DataTemplate>
 
-        <ContentControl Content="{Binding CurrentView}" />
+        <DataTemplate DataType="{x:Type vm:InboundViewModel}">
+            <v:InboundView />
+        </DataTemplate>
 
-    </materialDesign:DialogHost>
+        <DataTemplate DataType="{x:Type vm:OutboundViewModel}">
+            <v:OutboundView />
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Background="#2c3e50">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Margin="0,30,0,30">
+                    <materialDesign:PackIcon Kind="Warehouse" Width="50" Height="50" 
+                                             Foreground="White" HorizontalAlignment="Center"/>
+                    <TextBlock Text="WMS 仓储系统" Foreground="White" 
+                               FontSize="20" FontWeight="Bold" 
+                               HorizontalAlignment="Center" Margin="0,15,0,0"/>
+                </StackPanel>
+
+                <Button DockPanel.Dock="Bottom" Margin="20"
+                        Command="{Binding LogoutCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Foreground="#FF8A80" BorderBrush="#FF8A80"
+                        Content="退出登录" />
+
+                <StackPanel DockPanel.Dock="Top">
+                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
+                                 Height="50" Padding="20,0"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Home"
+                                 Foreground="White" BorderThickness="0"
+                                 IsChecked="True">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ViewDashboard" Width="20" Height="20" VerticalAlignment="Center"/>
+                            <TextBlock Text="系统首页" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+
+                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
+                                 Height="50" Padding="20,0"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Inbound"
+                                 Foreground="White" BorderThickness="0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="TruckDelivery" Width="20" Height="20" VerticalAlignment="Center"/>
+                            <TextBlock Text="入库管理" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+
+                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
+                                 Height="50" Padding="20,0"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Outbound"
+                                 Foreground="White" BorderThickness="0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="PackageVariantClosed" Width="20" Height="20" VerticalAlignment="Center"/>
+                            <TextBlock Text="出库管理" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Grid Grid.Column="1" Background="#f5f5f5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="60"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="White" Effect="{StaticResource MaterialDesignShadowDepth1}">
+                <Grid>
+                    <TextBlock Text="欢迎使用仓储管理系统" VerticalAlignment="Center" Margin="20,0" 
+                               FontSize="16" FontWeight="SemiBold" Foreground="#555"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="20,0">
+                        <materialDesign:PackIcon Kind="AccountCircle" Width="28" Height="28" Foreground="Gray" VerticalAlignment="Center"/>
+                        <TextBlock Text="管理员 (Admin)" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="Gray"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <ContentControl Grid.Row="1" Content="{Binding CurrentView}" Margin="20"/>
+
+        </Grid>
+    </Grid>
 </Window>
