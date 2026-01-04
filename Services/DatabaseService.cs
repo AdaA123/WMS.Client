@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq; // ✅ 必须引用 Linq 用于分组统计
 using System.Threading.Tasks;
 using WMS.Client.Models;
 
@@ -14,25 +15,21 @@ namespace WMS.Client.Services
 
         public DatabaseService()
         {
-            // 1. 设置路径
             var docPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             _dbPath = Path.Combine(docPath, "WMS_Database.db");
 
-            // 2. 同步初始化 (确保表结构存在)
             using (var db = new SQLiteConnection(_dbPath))
             {
                 db.CreateTable<UserModel>();
                 db.CreateTable<InboundModel>();
                 db.CreateTable<OutboundModel>();
 
-                // 初始化管理员
                 if (db.Table<UserModel>().Count() == 0)
                 {
                     db.Insert(new UserModel { Username = "admin", Password = "888888" });
                 }
             }
 
-            // 3. 创建异步连接
             _database = new SQLiteAsyncConnection(_dbPath);
         }
 
@@ -47,8 +44,20 @@ namespace WMS.Client.Services
             return user != null;
         }
 
+        public async Task<bool> ChangePasswordAsync(string username, string oldPassword, string newPassword)
+        {
+            var user = await _database.Table<UserModel>()
+                                      .Where(u => u.Username == username && u.Password == oldPassword)
+                                      .FirstOrDefaultAsync();
+            if (user == null) return false;
+
+            user.Password = newPassword;
+            await _database.UpdateAsync(user);
+            return true;
+        }
+
         // ==============================
-        // 2. 首页统计 (HomeViewModel 需要)
+        // 2. 首页统计 & 库存汇总 (HomeViewModel 需要)
         // ==============================
         public Task<int> GetTotalInboundCountAsync()
         {
@@ -60,8 +69,45 @@ namespace WMS.Client.Services
             return _database.Table<OutboundModel>().CountAsync();
         }
 
+        // 🔴 新增：获取库存汇总列表
+        public async Task<List<InventorySummaryModel>> GetInventorySummaryAsync()
+        {
+            // 1. 取出所有入库和出库记录
+            var inbounds = await _database.Table<InboundModel>().ToListAsync();
+            var outbounds = await _database.Table<OutboundModel>().ToListAsync();
+
+            // 2. 找出所有出现过的产品名称 (去重)
+            var allProducts = inbounds.Select(x => x.ProductName)
+                                      .Union(outbounds.Select(x => x.ProductName))
+                                      .Distinct()
+                                      .Where(x => !string.IsNullOrEmpty(x)) // 过滤空名
+                                      .ToList();
+
+            var summaryList = new List<InventorySummaryModel>();
+
+            // 3. 遍历每个产品，计算库存
+            foreach (var name in allProducts)
+            {
+                // 算入库总数
+                var inQty = inbounds.Where(x => x.ProductName == name).Sum(x => x.Quantity);
+                // 算出库总数
+                var outQty = outbounds.Where(x => x.ProductName == name).Sum(x => x.Quantity);
+
+                summaryList.Add(new InventorySummaryModel
+                {
+                    ProductName = name,
+                    TotalInbound = inQty,
+                    TotalOutbound = outQty,
+                    CurrentStock = inQty - outQty // 剩余库存
+                });
+            }
+
+            // 4. 按库存量从大到小排序返回
+            return summaryList.OrderByDescending(x => x.CurrentStock).ToList();
+        }
+
         // ==============================
-        // 3. 入库管理 (InboundViewModel 需要)
+        // 3. 入库管理
         // ==============================
         public Task<List<InboundModel>> GetInboundOrdersAsync()
         {
@@ -70,10 +116,8 @@ namespace WMS.Client.Services
 
         public Task SaveInboundOrderAsync(InboundModel item)
         {
-            if (item.Id != 0)
-                return _database.UpdateAsync(item);
-            else
-                return _database.InsertAsync(item);
+            if (item.Id != 0) return _database.UpdateAsync(item);
+            else return _database.InsertAsync(item);
         }
 
         public Task DeleteInboundOrderAsync(InboundModel item)
@@ -81,15 +125,13 @@ namespace WMS.Client.Services
             return _database.DeleteAsync(item);
         }
 
-        // 获取供应商列表 (简单起见，从现有记录中查不重复的供应商)
         public async Task<List<string>> GetSupplierListAsync()
         {
-            // 使用 SQL 查询不重复的供应商名称
             return await _database.QueryScalarsAsync<string>("SELECT DISTINCT Supplier FROM InboundModel WHERE Supplier IS NOT NULL");
         }
 
         // ==============================
-        // 4. 出库管理 (OutboundViewModel 需要)
+        // 4. 出库管理
         // ==============================
         public Task<List<OutboundModel>> GetOutboundOrdersAsync()
         {
@@ -98,10 +140,8 @@ namespace WMS.Client.Services
 
         public Task SaveOutboundOrderAsync(OutboundModel item)
         {
-            if (item.Id != 0)
-                return _database.UpdateAsync(item);
-            else
-                return _database.InsertAsync(item);
+            if (item.Id != 0) return _database.UpdateAsync(item);
+            else return _database.InsertAsync(item);
         }
 
         public Task DeleteOutboundOrderAsync(OutboundModel item)
@@ -109,36 +149,14 @@ namespace WMS.Client.Services
             return _database.DeleteAsync(item);
         }
 
-        // 获取客户列表
         public async Task<List<string>> GetCustomerListAsync()
         {
             return await _database.QueryScalarsAsync<string>("SELECT DISTINCT Customer FROM OutboundModel WHERE Customer IS NOT NULL");
         }
 
-        // ==============================
-        // 5. 通用数据
-        // ==============================
-        // 获取产品列表 (从入库单里找不重复的产品名)
         public async Task<List<string>> GetProductListAsync()
         {
             return await _database.QueryScalarsAsync<string>("SELECT DISTINCT ProductName FROM InboundModel WHERE ProductName IS NOT NULL");
-        }
-        public async Task<bool> ChangePasswordAsync(string username, string oldPassword, string newPassword)
-        {
-            // 1. 先验证旧密码是否正确
-            var user = await _database.Table<UserModel>()
-                                      .Where(u => u.Username == username && u.Password == oldPassword)
-                                      .FirstOrDefaultAsync();
-
-            if (user == null)
-            {
-                return false; // 旧密码错误或用户不存在
-            }
-
-            // 2. 更新密码
-            user.Password = newPassword;
-            await _database.UpdateAsync(user);
-            return true; // 修改成功
         }
     }
 }

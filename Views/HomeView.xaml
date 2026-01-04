@@ -4,7 +4,7 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800">
+             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="900">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -15,48 +15,97 @@
 
         <TextBlock Text="仓库概览" 
                    Style="{StaticResource MaterialDesignHeadline4TextBlock}" 
-                   Margin="0,0,0,30"/>
+                   Margin="0,0,0,20"/>
 
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" Margin="0,0,0,20">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <materialDesign:Card Grid.Column="0" Margin="0,0,10,0" Padding="20" Background="#E3F2FD">
+            <materialDesign:Card Grid.Column="0" Margin="0,0,10,0" Padding="20" Background="#E3F2FD" UniformCornerRadius="8">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <materialDesign:PackIcon Kind="Dolly" Width="40" Height="40" Foreground="#1565C0"/>
                     </StackPanel>
                     <TextBlock Text="{Binding TotalInbound}" FontSize="40" FontWeight="Bold" Foreground="#1565C0"/>
-                    <TextBlock Text="入库总件数" FontSize="16" Foreground="Gray"/>
+                    <TextBlock Text="入库总单数" FontSize="16" Foreground="Gray"/>
                 </StackPanel>
             </materialDesign:Card>
 
-            <materialDesign:Card Grid.Column="1" Margin="10,0,10,0" Padding="20" Background="#FFEBEE">
+            <materialDesign:Card Grid.Column="1" Margin="10,0,10,0" Padding="20" Background="#FFEBEE" UniformCornerRadius="8">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <materialDesign:PackIcon Kind="TruckDelivery" Width="40" Height="40" Foreground="#C62828"/>
                     </StackPanel>
                     <TextBlock Text="{Binding TotalOutbound}" FontSize="40" FontWeight="Bold" Foreground="#C62828"/>
-                    <TextBlock Text="出库总件数" FontSize="16" Foreground="Gray"/>
+                    <TextBlock Text="出库总单数" FontSize="16" Foreground="Gray"/>
                 </StackPanel>
             </materialDesign:Card>
 
-            <materialDesign:Card Grid.Column="2" Margin="10,0,0,0" Padding="20" Background="#E8F5E9">
+            <materialDesign:Card Grid.Column="2" Margin="10,0,0,0" Padding="20" Background="#E8F5E9" UniformCornerRadius="8">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <materialDesign:PackIcon Kind="Cube" Width="40" Height="40" Foreground="#2E7D32"/>
                     </StackPanel>
                     <TextBlock Text="{Binding CurrentStock}" FontSize="40" FontWeight="Bold" Foreground="#2E7D32"/>
-                    <TextBlock Text="当前库存结余" FontSize="16" Foreground="Gray"/>
+                    <TextBlock Text="当前单据结余" FontSize="16" Foreground="Gray"/>
                 </StackPanel>
             </materialDesign:Card>
         </Grid>
 
-        <materialDesign:PackIcon Grid.Row="2" Kind="Warehouse" 
-                                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                                 Width="200" Height="200" Foreground="#EEEEEE"/>
+        <materialDesign:Card Grid.Row="2" VerticalAlignment="Stretch" UniformCornerRadius="8" Padding="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Background="#F5F5F5" Padding="15,10">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Poll" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="Gray"/>
+                        <TextBlock Text="详细库存汇总 (按产品)" FontWeight="Bold" Foreground="#666" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <DataGrid Grid.Row="1"
+                          ItemsSource="{Binding SummaryList}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          HeadersVisibility="All"
+                          CanUserAddRows="False"
+                          SelectionMode="Extended"
+                          Style="{StaticResource MaterialDesignDataGrid}">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="产品名称" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="PackageVariant" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                        <TextBlock Text="{Binding ProductName}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="入库总量" Binding="{Binding TotalInbound}" Width="120" />
+
+                        <DataGridTextColumn Header="出库总量" Binding="{Binding TotalOutbound}" Width="120" />
+
+                        <DataGridTemplateColumn Header="当前库存" Width="150">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Background="#E8F5E9" CornerRadius="4" Padding="10,2" HorizontalAlignment="Left">
+                                        <TextBlock Text="{Binding CurrentStock}" FontWeight="Bold" Foreground="#2E7D32"/>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </materialDesign:Card>
+
     </Grid>
 </UserControl>

@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq; // ✅ 必须引用 Linq 进行排序
 using System.Threading.Tasks;
 using System.Windows;
 using WMS.Client.Models;
@@ -13,12 +14,30 @@ namespace WMS.Client.ViewModels
     {
         private readonly DatabaseService _dbService;
 
-        // 列表數據源
+        // 列表数据源
         public ObservableCollection<InboundModel> InboundList { get; } = new();
-        // 供應商下拉框數據源
+        // 供应商下拉框
         public ObservableCollection<string> Suppliers { get; } = new();
 
-        // 輸入框綁定對象
+        // 🔴 新增：排序选项列表
+        public ObservableCollection<string> SortOptions { get; } = new()
+        {
+            "时间 (最新)",
+            "时间 (最早)",
+            "产品名称",
+            "供应商"
+        };
+
+        // 🔴 新增：当前选中的排序方式
+        [ObservableProperty]
+        private string _selectedSortOption = "时间 (最新)";
+
+        // 🔴 监听：当 SelectedSortOption 改变时，自动触发排序
+        partial void OnSelectedSortOptionChanged(string value)
+        {
+            SortData();
+        }
+
         [ObservableProperty]
         private InboundModel _newInbound = new();
 
@@ -29,39 +48,59 @@ namespace WMS.Client.ViewModels
             _ = LoadSuppliers();
         }
 
+        // 🔴 新增：排序核心逻辑
+        private void SortData()
+        {
+            // 如果列表为空，直接返回
+            if (InboundList.Count == 0) return;
+
+            // 根据选中的选项进行排序
+            var sortedList = SelectedSortOption switch
+            {
+                "时间 (最新)" => InboundList.OrderByDescending(x => x.InboundDate).ToList(),
+                "时间 (最早)" => InboundList.OrderBy(x => x.InboundDate).ToList(),
+                "产品名称" => InboundList.OrderBy(x => x.ProductName).ToList(),
+                "供应商" => InboundList.OrderBy(x => x.Supplier).ToList(),
+                _ => InboundList.OrderByDescending(x => x.InboundDate).ToList()
+            };
+
+            // 重新填充 ObservableCollection 以更新界面
+            InboundList.Clear();
+            foreach (var item in sortedList)
+            {
+                InboundList.Add(item);
+            }
+        }
+
         [RelayCommand]
         private async Task Save()
         {
             if (string.IsNullOrWhiteSpace(NewInbound.ProductName))
             {
-                MessageBox.Show("產品名稱不能為空！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("产品名称不能为空！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             if (NewInbound.Quantity <= 0)
             {
-                MessageBox.Show("入庫數量必須大於 0！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("入库数量必须大于 0！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             try
             {
-                // 自動生成單號 RK + 時間戳
                 NewInbound.OrderNo = $"RK{DateTime.Now:yyyyMMddHHmmss}";
                 NewInbound.InboundDate = DateTime.Now;
 
-                // 保存到數據庫 (這裡會自動使用 Quantity 和 Price 字段)
                 await _dbService.SaveInboundOrderAsync(NewInbound);
 
-                // 刷新界面
                 await LoadData();
                 await LoadSuppliers();
 
-                // 清空輸入框
                 NewInbound = new InboundModel();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"保存失敗：{ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"保存失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -69,7 +108,7 @@ namespace WMS.Client.ViewModels
         private async Task Delete(InboundModel item)
         {
             if (item == null) return;
-            if (MessageBox.Show($"確定要刪除單號 [{item.OrderNo}] 嗎？", "確認刪除", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            if (MessageBox.Show($"确定要删除单号 [{item.OrderNo}] 吗？", "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
                 await _dbService.DeleteInboundOrderAsync(item);
                 await LoadData();
@@ -80,8 +119,10 @@ namespace WMS.Client.ViewModels
         {
             var list = await _dbService.GetInboundOrdersAsync();
             InboundList.Clear();
-            list.Reverse(); // 最新數據在最上面
             foreach (var item in list) InboundList.Add(item);
+
+            // 🔴 加载完数据后，应用当前的排序
+            SortData();
         }
 
         private async Task LoadSuppliers()

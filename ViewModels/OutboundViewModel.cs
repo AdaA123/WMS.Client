@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq; // ✅ 必须引用，用于排序
 using System.Threading.Tasks;
 using System.Windows;
 using WMS.Client.Models;
@@ -18,7 +19,27 @@ namespace WMS.Client.ViewModels
         // 客户下拉框数据源
         public ObservableCollection<string> Customers { get; } = new();
 
-        // ✅ 解决 CS0103：添加输入对象绑定
+        // 🔴 1. 补全：排序选项列表
+        public ObservableCollection<string> SortOptions { get; } = new()
+        {
+            "时间 (最新)",
+            "时间 (最早)",
+            "产品名称",
+            "客户"
+        };
+
+        // 🔴 2. 补全：当前选中的排序方式
+        // 漏了这一段，就会报 CS0103 和 CS0759 错误
+        [ObservableProperty]
+        private string _selectedSortOption = "时间 (最新)";
+
+        // 🔴 3. 补全：监听排序变化
+        partial void OnSelectedSortOptionChanged(string value)
+        {
+            SortData();
+        }
+
+        // 绑定输入框的对象
         [ObservableProperty]
         private OutboundModel _newOutbound = new();
 
@@ -29,11 +50,30 @@ namespace WMS.Client.ViewModels
             _ = LoadCustomers();
         }
 
-        // ✅ 保存逻辑 (对应界面“确认出库”)
+        // 🔴 4. 补全：排序逻辑
+        private void SortData()
+        {
+            if (OutboundList.Count == 0) return;
+
+            var sortedList = SelectedSortOption switch
+            {
+                "时间 (最新)" => OutboundList.OrderByDescending(x => x.OutboundDate).ToList(),
+                "时间 (最早)" => OutboundList.OrderBy(x => x.OutboundDate).ToList(),
+                "产品名称" => OutboundList.OrderBy(x => x.ProductName).ToList(),
+                "客户" => OutboundList.OrderBy(x => x.Customer).ToList(),
+                _ => OutboundList.OrderByDescending(x => x.OutboundDate).ToList()
+            };
+
+            OutboundList.Clear();
+            foreach (var item in sortedList)
+            {
+                OutboundList.Add(item);
+            }
+        }
+
         [RelayCommand]
         private async Task Save()
         {
-            // 1. 校验
             if (string.IsNullOrWhiteSpace(NewOutbound.ProductName))
             {
                 MessageBox.Show("产品名称不能为空！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -47,22 +87,17 @@ namespace WMS.Client.ViewModels
 
             try
             {
-                // 2. 自动生成单号 CK + 时间
                 NewOutbound.OrderNo = $"CK{DateTime.Now:yyyyMMddHHmmss}";
                 NewOutbound.OutboundDate = DateTime.Now;
 
-                // 默认客户
                 if (string.IsNullOrEmpty(NewOutbound.Customer))
                     NewOutbound.Customer = "散客";
 
-                // 3. 保存
                 await _dbService.SaveOutboundOrderAsync(NewOutbound);
 
-                // 4. 刷新
                 await LoadData();
                 await LoadCustomers();
 
-                // 5. 清空输入
                 NewOutbound = new OutboundModel();
             }
             catch (Exception ex)
@@ -86,8 +121,10 @@ namespace WMS.Client.ViewModels
         {
             var list = await _dbService.GetOutboundOrdersAsync();
             OutboundList.Clear();
-            list.Reverse(); // 新的在上面
             foreach (var item in list) OutboundList.Add(item);
+
+            // 加载完后自动排序
+            SortData();
         }
 
         private async Task LoadCustomers()

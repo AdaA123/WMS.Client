@@ -16,27 +16,34 @@
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <materialDesign:PackIcon Kind="PlaylistPlus" Width="25" Height="25" VerticalAlignment="Center" Margin="0,0,15,0" Foreground="Gray"/>
 
-                <TextBox Width="140" Margin="0,0,15,0"
+                <TextBox Width="120" Margin="0,0,15,0"
                          materialDesign:HintAssist.Hint="产品名称"
                          Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                          Text="{Binding NewInbound.ProductName}" />
 
-                <TextBox Width="80" Margin="0,0,15,0"
+                <TextBox Width="70" Margin="0,0,15,0"
                          materialDesign:HintAssist.Hint="数量"
                          Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                          Text="{Binding NewInbound.Quantity}" />
 
-                <TextBox Width="80" Margin="0,0,15,0"
+                <TextBox Width="70" Margin="0,0,15,0"
                          materialDesign:HintAssist.Hint="单价"
                          Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                          Text="{Binding NewInbound.Price}" />
 
-                <ComboBox Width="140" Margin="0,0,15,0"
+                <ComboBox Width="120" Margin="0,0,15,0"
                           materialDesign:HintAssist.Hint="供应商"
                           IsEditable="True"
                           Style="{StaticResource MaterialDesignFloatingHintComboBox}"
                           ItemsSource="{Binding Suppliers}"
                           Text="{Binding NewInbound.Supplier}" />
+
+                <ComboBox Width="110" Margin="0,0,15,0"
+                          materialDesign:HintAssist.Hint="排序方式"
+                          Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                          ItemsSource="{Binding SortOptions}"
+                          SelectedItem="{Binding SelectedSortOption}" 
+                          Foreground="{DynamicResource PrimaryHueMidBrush}"/>
 
                 <Button Content="确认入库" Command="{Binding SaveCommand}" Width="100" Margin="10,0,0,0"/>
             </StackPanel>
@@ -50,7 +57,6 @@
                   HeadersVisibility="All"
                   SelectionMode="Single"
                   Style="{StaticResource MaterialDesignDataGrid}">
-
             <DataGrid.Columns>
                 <DataGridTextColumn Header="入库单号" Binding="{Binding OrderNo}" Width="160" FontWeight="Bold"/>
 
@@ -63,11 +69,8 @@
                 </DataGridTemplateColumn>
 
                 <DataGridTextColumn Header="供应商" Binding="{Binding Supplier}" Width="150"/>
-
                 <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="80"/>
-
                 <DataGridTextColumn Header="单价" Binding="{Binding Price, StringFormat=C2}" Width="100" Foreground="#4CAF50"/>
-
                 <DataGridTextColumn Header="入库日期" Binding="{Binding InboundDate, StringFormat=yyyy-MM-dd HH:mm}" Width="150"/>
 
                 <DataGridTemplateColumn Header="操作" Width="80">
