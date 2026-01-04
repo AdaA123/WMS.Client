@@ -2,7 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.ObjectModel;
-using System.Linq; // ✅ 必须引用，用于排序
+using System.Linq; // ✅ 必须引用 Linq
 using System.Threading.Tasks;
 using System.Windows;
 using WMS.Client.Models;
@@ -13,13 +13,14 @@ namespace WMS.Client.ViewModels
     public partial class OutboundViewModel : ObservableObject
     {
         private readonly DatabaseService _dbService;
+        private readonly PrintService _printService; // 1. 引入打印服务
 
         // 列表数据源
         public ObservableCollection<OutboundModel> OutboundList { get; } = new();
-        // 客户下拉框数据源
+        // 客户下拉框
         public ObservableCollection<string> Customers { get; } = new();
 
-        // 🔴 1. 补全：排序选项列表
+        // 排序选项
         public ObservableCollection<string> SortOptions { get; } = new()
         {
             "时间 (最新)",
@@ -28,29 +29,27 @@ namespace WMS.Client.ViewModels
             "客户"
         };
 
-        // 🔴 2. 补全：当前选中的排序方式
-        // 漏了这一段，就会报 CS0103 和 CS0759 错误
         [ObservableProperty]
         private string _selectedSortOption = "时间 (最新)";
 
-        // 🔴 3. 补全：监听排序变化
+        // 监听排序变化
         partial void OnSelectedSortOptionChanged(string value)
         {
             SortData();
         }
 
-        // 绑定输入框的对象
         [ObservableProperty]
         private OutboundModel _newOutbound = new();
 
         public OutboundViewModel()
         {
             _dbService = new DatabaseService();
+            _printService = new PrintService(); // 2. 初始化打印服务
             _ = LoadData();
             _ = LoadCustomers();
         }
 
-        // 🔴 4. 补全：排序逻辑
+        // 排序逻辑
         private void SortData()
         {
             if (OutboundList.Count == 0) return;
@@ -68,6 +67,26 @@ namespace WMS.Client.ViewModels
             foreach (var item in sortedList)
             {
                 OutboundList.Add(item);
+            }
+        }
+
+        // 🔴 3. 打印命令
+        [RelayCommand]
+        private void Print()
+        {
+            if (OutboundList.Count == 0)
+            {
+                MessageBox.Show("当前没有数据可打印！", "提示");
+                return;
+            }
+
+            try
+            {
+                _printService.PrintOutboundReport(OutboundList);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"打印失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -123,7 +142,7 @@ namespace WMS.Client.ViewModels
             OutboundList.Clear();
             foreach (var item in list) OutboundList.Add(item);
 
-            // 加载完后自动排序
+            // 应用排序
             SortData();
         }
 

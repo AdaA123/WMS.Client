@@ -63,10 +63,22 @@
                 </Grid.RowDefinitions>
 
                 <Border Background="#F5F5F5" Padding="15,10">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="Poll" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="Gray"/>
-                        <TextBlock Text="详细库存汇总 (按产品)" FontWeight="Bold" Foreground="#666" VerticalAlignment="Center"/>
-                    </StackPanel>
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                            <materialDesign:PackIcon Kind="Poll" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="Gray"/>
+                            <TextBlock Text="详细库存汇总 (按产品)" FontWeight="Bold" Foreground="#666" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <Button HorizontalAlignment="Right"
+                                Command="{Binding PrintCommand}"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Height="30" Padding="10,0" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Printer" Width="16" Height="16" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="打印报表" FontSize="12" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
                 </Border>
 
                 <DataGrid Grid.Row="1"
@@ -90,7 +102,6 @@
                         </DataGridTemplateColumn>
 
                         <DataGridTextColumn Header="入库总量" Binding="{Binding TotalInbound}" Width="120" />
-
                         <DataGridTextColumn Header="出库总量" Binding="{Binding TotalOutbound}" Width="120" />
 
                         <DataGridTemplateColumn Header="当前库存" Width="150">

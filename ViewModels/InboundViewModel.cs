@@ -2,7 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.ObjectModel;
-using System.Linq; // ✅ 必须引用 Linq 进行排序
+using System.Linq; // ✅ 必须引用
 using System.Threading.Tasks;
 using System.Windows;
 using WMS.Client.Models;
@@ -13,13 +13,12 @@ namespace WMS.Client.ViewModels
     public partial class InboundViewModel : ObservableObject
     {
         private readonly DatabaseService _dbService;
+        private readonly PrintService _printService; // 1. 引入打印服务
 
-        // 列表数据源
         public ObservableCollection<InboundModel> InboundList { get; } = new();
-        // 供应商下拉框
         public ObservableCollection<string> Suppliers { get; } = new();
 
-        // 🔴 新增：排序选项列表
+        // 排序选项
         public ObservableCollection<string> SortOptions { get; } = new()
         {
             "时间 (最新)",
@@ -28,11 +27,10 @@ namespace WMS.Client.ViewModels
             "供应商"
         };
 
-        // 🔴 新增：当前选中的排序方式
         [ObservableProperty]
         private string _selectedSortOption = "时间 (最新)";
 
-        // 🔴 监听：当 SelectedSortOption 改变时，自动触发排序
+        // 监听排序选项变化
         partial void OnSelectedSortOptionChanged(string value)
         {
             SortData();
@@ -44,17 +42,16 @@ namespace WMS.Client.ViewModels
         public InboundViewModel()
         {
             _dbService = new DatabaseService();
+            _printService = new PrintService(); // 2. 初始化打印服务
             _ = LoadData();
             _ = LoadSuppliers();
         }
 
-        // 🔴 新增：排序核心逻辑
+        // 排序逻辑
         private void SortData()
         {
-            // 如果列表为空，直接返回
             if (InboundList.Count == 0) return;
 
-            // 根据选中的选项进行排序
             var sortedList = SelectedSortOption switch
             {
                 "时间 (最新)" => InboundList.OrderByDescending(x => x.InboundDate).ToList(),
@@ -64,11 +61,30 @@ namespace WMS.Client.ViewModels
                 _ => InboundList.OrderByDescending(x => x.InboundDate).ToList()
             };
 
-            // 重新填充 ObservableCollection 以更新界面
             InboundList.Clear();
             foreach (var item in sortedList)
             {
                 InboundList.Add(item);
+            }
+        }
+
+        // 3. 打印命令
+        [RelayCommand]
+        private void Print()
+        {
+            if (InboundList.Count == 0)
+            {
+                MessageBox.Show("当前没有数据可打印！", "提示");
+                return;
+            }
+
+            try
+            {
+                _printService.PrintInboundReport(InboundList);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"打印失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -121,7 +137,7 @@ namespace WMS.Client.ViewModels
             InboundList.Clear();
             foreach (var item in list) InboundList.Add(item);
 
-            // 🔴 加载完数据后，应用当前的排序
+            // 加载完数据后应用排序
             SortData();
         }
 
