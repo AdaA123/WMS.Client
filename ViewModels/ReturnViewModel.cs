@@ -72,7 +72,8 @@ namespace WMS.Client.ViewModels
 
         private async Task LoadLists()
         {
-            var prods = await _dbService.GetProductListAsync();
+            // 🔴 关键修改：改为获取“已出库产品列表”
+            var prods = await _dbService.GetShippedProductListAsync();
             ProductList.Clear();
             foreach (var p in prods) if (!string.IsNullOrEmpty(p)) ProductList.Add(p);
 

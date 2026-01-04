@@ -113,5 +113,8 @@ namespace WMS.Client.Services
 
         // 获取产品列表
         public async Task<List<string>> GetProductListAsync() => await _database.QueryScalarsAsync<string>("SELECT DISTINCT ProductName FROM InboundModel WHERE ProductName IS NOT NULL");
+        // 🔴 2. 新增：获取已出库产品 (用于退货选择)
+        public async Task<List<string>> GetShippedProductListAsync()
+            => await _database.QueryScalarsAsync<string>("SELECT DISTINCT ProductName FROM OutboundModel WHERE ProductName IS NOT NULL");
     }
 }
