@@ -31,7 +31,6 @@ namespace WMS.Client.ViewModels
             _ = LoadLists();
         }
 
-        // 🔴 新增：编辑
         [RelayCommand]
         private void Edit(ReturnModel item)
         {
@@ -49,7 +48,6 @@ namespace WMS.Client.ViewModels
             };
         }
 
-        // 🔴 新增：取消
         [RelayCommand]
         private void Cancel()
         {
@@ -60,11 +58,10 @@ namespace WMS.Client.ViewModels
         private async Task Save()
         {
             if (string.IsNullOrWhiteSpace(NewReturn.ProductName)) { MessageBox.Show("请选择产品！"); return; }
-            if (NewReturn.Quantity <= 0) { MessageBox.Show("数量必须大于0！"); return; }
+            if (NewReturn.Quantity <= 0) { MessageBox.Show("数量必须大于 0！"); return; }
 
             try
             {
-                // 🔴 修改逻辑：Id=0 才生成新单号
                 if (NewReturn.Id == 0)
                 {
                     NewReturn.ReturnNo = $"TH{DateTime.Now:yyyyMMddHHmmss}";
@@ -83,7 +80,7 @@ namespace WMS.Client.ViewModels
         [RelayCommand]
         private async Task Delete(ReturnModel item)
         {
-            if (MessageBox.Show($"确定删除单号 {item.ReturnNo} 吗？", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            if (MessageBox.Show($"确定删除单号 {item.ReturnNo} 吗？", "删除确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 await _dbService.DeleteReturnOrderAsync(item);
                 await LoadData();
@@ -101,7 +98,6 @@ namespace WMS.Client.ViewModels
 
         private async Task LoadLists()
         {
-            // 使用之前改好的 "已出库产品" 列表
             var prods = await _dbService.GetShippedProductListAsync();
             ProductList.Clear();
             foreach (var p in prods) if (!string.IsNullOrEmpty(p)) ProductList.Add(p);

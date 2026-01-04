@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input; // ✅ 引用 RelayCommand
-using System;
+using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using WMS.Client.Models;
@@ -12,59 +12,48 @@ namespace WMS.Client.ViewModels
     public partial class HomeViewModel : ObservableObject
     {
         private readonly DatabaseService _dbService;
-        private readonly PrintService _printService; // 1. 引入打印服务
+        private readonly PrintService _printService;
 
-        // 三个卡片的数字
-        [ObservableProperty] private int _totalInbound;
-        [ObservableProperty] private int _totalOutbound;
-        [ObservableProperty] private int _currentStock;
+        [ObservableProperty]
+        private int _totalInbound;
 
-        // 用于绑定表格的库存汇总列表
-        public ObservableCollection<InventorySummaryModel> SummaryList { get; } = new();
+        [ObservableProperty]
+        private int _totalOutbound;
+
+        [ObservableProperty]
+        private int _totalReturn;
+
+        public ObservableCollection<InventorySummaryModel> InventoryList { get; } = new();
 
         public HomeViewModel()
         {
             _dbService = new DatabaseService();
-            _printService = new PrintService(); // 2. 初始化
-            LoadDashboardData();
+            _printService = new PrintService();
+            _ = LoadDashboardData();
         }
 
-        // 🔴 3. 打印命令
+        [RelayCommand]
+        public async Task LoadDashboardData()
+        {
+            var inbounds = await _dbService.GetInboundOrdersAsync();
+            TotalInbound = inbounds.Sum(x => x.Quantity);
+
+            var outbounds = await _dbService.GetOutboundOrdersAsync();
+            TotalOutbound = outbounds.Sum(x => x.Quantity);
+
+            var returns = await _dbService.GetReturnOrdersAsync();
+            TotalReturn = returns.Sum(x => x.Quantity);
+
+            var summary = await _dbService.GetInventorySummaryAsync();
+            InventoryList.Clear();
+            foreach (var item in summary) InventoryList.Add(item);
+        }
+
         [RelayCommand]
         private void Print()
         {
-            if (SummaryList.Count == 0)
-            {
-                MessageBox.Show("当前没有数据可打印！", "提示");
-                return;
-            }
-
-            try
-            {
-                _printService.PrintInventoryReport(SummaryList);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"打印失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        // 加载数据
-        public async void LoadDashboardData()
-        {
-            // 1. 加载顶部卡片统计
-            TotalInbound = await _dbService.GetTotalInboundCountAsync();
-            TotalOutbound = await _dbService.GetTotalOutboundCountAsync();
-            CurrentStock = TotalInbound - TotalOutbound;
-
-            // 2. 加载底部详细汇总
-            var summary = await _dbService.GetInventorySummaryAsync();
-
-            SummaryList.Clear();
-            foreach (var item in summary)
-            {
-                SummaryList.Add(item);
-            }
+            if (InventoryList.Count == 0) { MessageBox.Show("当前没有数据可打印"); return; }
+            _printService.PrintInventoryReport(InventoryList);
         }
     }
 }

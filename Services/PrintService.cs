@@ -55,6 +55,7 @@ namespace WMS.Client.Services
             PackageStore.RemovePackage(packUri);
         }
 
+        // 简体中文报表
         public void PrintInboundReport(IEnumerable<InboundModel> data)
         {
             var doc = CreateFlowDocument("入库单汇总报表", new string[] { "单号", "产品名称", "供应商", "数量", "单价", "日期" });

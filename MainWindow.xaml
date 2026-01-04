@@ -34,45 +34,28 @@
                 </StackPanel>
 
                 <StackPanel DockPanel.Dock="Top">
-                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
-                                 Height="55" Margin="10,5" Padding="15,0"
-                                 Command="{Binding NavigateCommand}" CommandParameter="Home"
-                                 Foreground="White" BorderThickness="0"
-                                 materialDesign:ButtonAssist.CornerRadius="8"
-                                 IsChecked="True">
+                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}" Height="55" Margin="10,5" Padding="15,0" Command="{Binding NavigateCommand}" CommandParameter="Home" Foreground="White" BorderThickness="0" materialDesign:ButtonAssist.CornerRadius="8" IsChecked="True">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="ViewDashboard" Width="22" Height="22" VerticalAlignment="Center"/>
                             <TextBlock Text="系统首页" Margin="15,0,0,0" FontSize="15" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
 
-                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
-                                 Height="55" Margin="10,5" Padding="15,0"
-                                 Command="{Binding NavigateCommand}" CommandParameter="Inbound"
-                                 Foreground="White" BorderThickness="0"
-                                 materialDesign:ButtonAssist.CornerRadius="8">
+                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}" Height="55" Margin="10,5" Padding="15,0" Command="{Binding NavigateCommand}" CommandParameter="Inbound" Foreground="White" BorderThickness="0" materialDesign:ButtonAssist.CornerRadius="8">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="TruckDelivery" Width="22" Height="22" VerticalAlignment="Center"/>
                             <TextBlock Text="入库管理" Margin="15,0,0,0" FontSize="15" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
 
-                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
-                                 Height="55" Margin="10,5" Padding="15,0"
-                                 Command="{Binding NavigateCommand}" CommandParameter="Outbound"
-                                 Foreground="White" BorderThickness="0"
-                                 materialDesign:ButtonAssist.CornerRadius="8">
+                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}" Height="55" Margin="10,5" Padding="15,0" Command="{Binding NavigateCommand}" CommandParameter="Outbound" Foreground="White" BorderThickness="0" materialDesign:ButtonAssist.CornerRadius="8">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="PackageVariantClosed" Width="22" Height="22" VerticalAlignment="Center"/>
                             <TextBlock Text="出库管理" Margin="15,0,0,0" FontSize="15" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
 
-                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
-                                 Height="55" Margin="10,5" Padding="15,0"
-                                 Command="{Binding NavigateCommand}" CommandParameter="Return"
-                                 Foreground="White" BorderThickness="0"
-                                 materialDesign:ButtonAssist.CornerRadius="8">
+                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}" Height="55" Margin="10,5" Padding="15,0" Command="{Binding NavigateCommand}" CommandParameter="Return" Foreground="White" BorderThickness="0" materialDesign:ButtonAssist.CornerRadius="8">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="KeyboardReturn" Width="22" Height="22" VerticalAlignment="Center"/>
                             <TextBlock Text="退货管理" Margin="15,0,0,0" FontSize="15" VerticalAlignment="Center"/>
@@ -93,28 +76,17 @@
                     <TextBlock Text="欢迎使用仓储管理系统" VerticalAlignment="Center" Margin="20,0" 
                                FontSize="16" FontWeight="SemiBold" Foreground="#555"/>
 
-                    <materialDesign:PopupBox HorizontalAlignment="Right" VerticalAlignment="Center" 
-                                             Margin="0,0,20,0"
-                                             PlacementMode="BottomAndAlignRightEdges"
-                                             StaysOpen="False">
+                    <materialDesign:PopupBox HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0" PlacementMode="BottomAndAlignRightEdges" StaysOpen="False">
                         <materialDesign:PopupBox.ToggleContent>
                             <StackPanel Orientation="Horizontal" Cursor="Hand">
-                                <materialDesign:PackIcon Kind="AccountCircle" Width="28" Height="28" 
-                                                         Foreground="{DynamicResource PrimaryHueMidBrush}" 
-                                                         VerticalAlignment="Center"/>
-                                <TextBlock Text="管理员 (Admin)" VerticalAlignment="Center" 
-                                           Margin="10,0,0,0" 
-                                           Foreground="#555" FontWeight="Medium"/>
-                                <materialDesign:PackIcon Kind="ChevronDown" Width="20" Height="20" 
-                                                         Foreground="#999" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                                <materialDesign:PackIcon Kind="AccountCircle" Width="28" Height="28" Foreground="{DynamicResource PrimaryHueMidBrush}" VerticalAlignment="Center"/>
+                                <TextBlock Text="管理员 (Admin)" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="#555" FontWeight="Medium"/>
+                                <materialDesign:PackIcon Kind="ChevronDown" Width="20" Height="20" Foreground="#999" VerticalAlignment="Center" Margin="5,0,0,0"/>
                             </StackPanel>
                         </materialDesign:PopupBox.ToggleContent>
 
                         <StackPanel Width="150">
-                            <Button Command="{Binding OpenChangePasswordCommand}"
-                                    Content="修改密码"
-                                    HorizontalContentAlignment="Left"
-                                    Style="{StaticResource MaterialDesignFlatButton}">
+                            <Button Command="{Binding OpenChangePasswordCommand}" Content="修改密码" HorizontalContentAlignment="Left" Style="{StaticResource MaterialDesignFlatButton}">
                                 <Button.ContentTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
@@ -125,11 +97,7 @@
                                 </Button.ContentTemplate>
                             </Button>
                             <Separator Margin="0,5"/>
-                            <Button Command="{Binding LogoutCommand}"
-                                    Content="退出登录"
-                                    HorizontalContentAlignment="Left"
-                                    Foreground="#FF5252"
-                                    Style="{StaticResource MaterialDesignFlatButton}">
+                            <Button Command="{Binding LogoutCommand}" Content="退出登录" HorizontalContentAlignment="Left" Foreground="#FF5252" Style="{StaticResource MaterialDesignFlatButton}">
                                 <Button.ContentTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
