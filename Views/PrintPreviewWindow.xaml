@@ -13,7 +13,7 @@
         </Grid.RowDefinitions>
 
         <materialDesign:Card Grid.Row="0" Margin="10" Padding="15" UniformCornerRadius="8" 
-                               materialDesign:ShadowAssist.ShadowDepth="Depth4">
+                             materialDesign:ElevationAssist.Elevation="Dp4">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

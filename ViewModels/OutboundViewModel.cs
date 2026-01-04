@@ -15,28 +15,16 @@ namespace WMS.Client.ViewModels
         private readonly DatabaseService _dbService;
         private readonly PrintService _printService;
 
-        // 列表数据源
         public ObservableCollection<OutboundModel> OutboundList { get; } = new();
-
-        // 客户列表
         public ObservableCollection<string> Customers { get; } = new();
-
-        // 🔴 新增：产品名称列表 (用于下拉选择)
         public ObservableCollection<string> ProductList { get; } = new();
 
-        // 排序选项
-        public ObservableCollection<string> SortOptions { get; } = new()
-        {
-            "时间 (最新)", "时间 (最早)", "产品名称", "客户"
-        };
-
-        [ObservableProperty]
-        private string _selectedSortOption = "时间 (最新)";
-
+        // 简体化
+        public ObservableCollection<string> SortOptions { get; } = new() { "时间 (最新)", "时间 (最早)", "产品名称", "客户" };
+        [ObservableProperty] private string _selectedSortOption = "时间 (最新)";
         partial void OnSelectedSortOptionChanged(string value) => SortData();
 
-        [ObservableProperty]
-        private OutboundModel _newOutbound = new();
+        [ObservableProperty] private OutboundModel _newOutbound = new();
 
         public OutboundViewModel()
         {
@@ -44,76 +32,75 @@ namespace WMS.Client.ViewModels
             _printService = new PrintService();
             _ = LoadData();
             _ = LoadCustomers();
-            _ = LoadProductList(); // 🔴 启动时加载产品列表
-        }
-
-        // 排序逻辑
-        private void SortData()
-        {
-            if (OutboundList.Count == 0) return;
-            var sortedList = SelectedSortOption switch
-            {
-                "时间 (最新)" => OutboundList.OrderByDescending(x => x.OutboundDate).ToList(),
-                "时间 (最早)" => OutboundList.OrderBy(x => x.OutboundDate).ToList(),
-                "产品名称" => OutboundList.OrderBy(x => x.ProductName).ToList(),
-                "客户" => OutboundList.OrderBy(x => x.Customer).ToList(),
-                _ => OutboundList.OrderByDescending(x => x.OutboundDate).ToList()
-            };
-            OutboundList.Clear();
-            foreach (var item in sortedList) OutboundList.Add(item);
+            _ = LoadProductList();
         }
 
         [RelayCommand]
-        private void Print()
+        private void Edit(OutboundModel item)
         {
-            if (OutboundList.Count == 0) { MessageBox.Show("当前没有数据可打印！"); return; }
-            try { _printService.PrintOutboundReport(OutboundList); }
-            catch (Exception ex) { MessageBox.Show($"打印失败：{ex.Message}"); }
+            if (item == null) return;
+            NewOutbound = new OutboundModel
+            {
+                Id = item.Id,
+                OrderNo = item.OrderNo,
+                ProductName = item.ProductName,
+                Quantity = item.Quantity,
+                Price = item.Price,
+                Customer = item.Customer,
+                OutboundDate = item.OutboundDate
+            };
+        }
+
+        [RelayCommand]
+        private void Cancel()
+        {
+            NewOutbound = new OutboundModel();
         }
 
         [RelayCommand]
         private async Task Save()
         {
-            if (string.IsNullOrWhiteSpace(NewOutbound.ProductName))
-            {
-                MessageBox.Show("产品名称不能为空！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            if (NewOutbound.Quantity <= 0)
-            {
-                MessageBox.Show("出库数量必须大于 0！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+            // 简体提示
+            if (string.IsNullOrWhiteSpace(NewOutbound.ProductName)) { MessageBox.Show("产品名称不能为空！"); return; }
+            if (NewOutbound.Quantity <= 0) { MessageBox.Show("数量必须大于 0！"); return; }
 
             try
             {
-                NewOutbound.OrderNo = $"CK{DateTime.Now:yyyyMMddHHmmss}";
-                NewOutbound.OutboundDate = DateTime.Now;
-
+                if (NewOutbound.Id == 0)
+                {
+                    NewOutbound.OrderNo = $"CK{DateTime.Now:yyyyMMddHHmmss}";
+                    NewOutbound.OutboundDate = DateTime.Now;
+                }
                 if (string.IsNullOrEmpty(NewOutbound.Customer)) NewOutbound.Customer = "散客";
 
                 await _dbService.SaveOutboundOrderAsync(NewOutbound);
 
                 await LoadData();
                 await LoadCustomers();
-                // 注意：出库不会产生新产品名，所以不需要刷新 ProductList
-
                 NewOutbound = new OutboundModel();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"出库失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"保存失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        [RelayCommand]
+        private void Print()
+        {
+            if (OutboundList.Count == 0) { MessageBox.Show("无数据可打印"); return; }
+            _printService.PrintOutboundReport(OutboundList);
         }
 
         [RelayCommand]
         private async Task Delete(OutboundModel item)
         {
             if (item == null) return;
-            if (MessageBox.Show($"确认删除单号 [{item.OrderNo}] 吗？", "删除确认", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            if (MessageBox.Show($"确认删除单号 [{item.OrderNo}] 吗？", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 await _dbService.DeleteOutboundOrderAsync(item);
                 await LoadData();
+                if (NewOutbound.Id == item.Id) NewOutbound = new OutboundModel();
             }
         }
 
@@ -132,15 +119,26 @@ namespace WMS.Client.ViewModels
             foreach (var item in list) if (!string.IsNullOrEmpty(item)) Customers.Add(item);
         }
 
-        // 🔴 加载产品列表的方法
         private async Task LoadProductList()
         {
             var list = await _dbService.GetProductListAsync();
             ProductList.Clear();
-            foreach (var item in list)
+            foreach (var item in list) if (!string.IsNullOrEmpty(item)) ProductList.Add(item);
+        }
+
+        private void SortData()
+        {
+            if (OutboundList.Count == 0) return;
+            var sorted = SelectedSortOption switch
             {
-                if (!string.IsNullOrEmpty(item)) ProductList.Add(item);
-            }
+                "时间 (最新)" => OutboundList.OrderByDescending(x => x.OutboundDate).ToList(),
+                "时间 (最早)" => OutboundList.OrderBy(x => x.OutboundDate).ToList(),
+                "产品名称" => OutboundList.OrderBy(x => x.ProductName).ToList(),
+                "客户" => OutboundList.OrderBy(x => x.Customer).ToList(),
+                _ => OutboundList.OrderByDescending(x => x.OutboundDate).ToList()
+            };
+            OutboundList.Clear();
+            foreach (var item in sorted) OutboundList.Add(item);
         }
     }
 }

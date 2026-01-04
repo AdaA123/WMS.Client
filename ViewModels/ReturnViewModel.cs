@@ -31,6 +31,31 @@ namespace WMS.Client.ViewModels
             _ = LoadLists();
         }
 
+        // 🔴 新增：编辑
+        [RelayCommand]
+        private void Edit(ReturnModel item)
+        {
+            if (item == null) return;
+            NewReturn = new ReturnModel
+            {
+                Id = item.Id,
+                ReturnNo = item.ReturnNo,
+                ProductName = item.ProductName,
+                Quantity = item.Quantity,
+                Price = item.Price,
+                Customer = item.Customer,
+                Reason = item.Reason,
+                ReturnDate = item.ReturnDate
+            };
+        }
+
+        // 🔴 新增：取消
+        [RelayCommand]
+        private void Cancel()
+        {
+            NewReturn = new ReturnModel();
+        }
+
         [RelayCommand]
         private async Task Save()
         {
@@ -39,9 +64,12 @@ namespace WMS.Client.ViewModels
 
             try
             {
-                // 生成单号 TH (Tui Huo)
-                NewReturn.ReturnNo = $"TH{DateTime.Now:yyyyMMddHHmmss}";
-                NewReturn.ReturnDate = DateTime.Now;
+                // 🔴 修改逻辑：Id=0 才生成新单号
+                if (NewReturn.Id == 0)
+                {
+                    NewReturn.ReturnNo = $"TH{DateTime.Now:yyyyMMddHHmmss}";
+                    NewReturn.ReturnDate = DateTime.Now;
+                }
                 if (string.IsNullOrEmpty(NewReturn.Customer)) NewReturn.Customer = "散客";
                 if (string.IsNullOrEmpty(NewReturn.Reason)) NewReturn.Reason = "无理由退货";
 
@@ -59,6 +87,7 @@ namespace WMS.Client.ViewModels
             {
                 await _dbService.DeleteReturnOrderAsync(item);
                 await LoadData();
+                if (NewReturn.Id == item.Id) NewReturn = new ReturnModel();
             }
         }
 
@@ -72,7 +101,7 @@ namespace WMS.Client.ViewModels
 
         private async Task LoadLists()
         {
-            // 🔴 关键修改：改为获取“已出库产品列表”
+            // 使用之前改好的 "已出库产品" 列表
             var prods = await _dbService.GetShippedProductListAsync();
             ProductList.Clear();
             foreach (var p in prods) if (!string.IsNullOrEmpty(p)) ProductList.Add(p);

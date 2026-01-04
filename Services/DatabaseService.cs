@@ -23,7 +23,7 @@ namespace WMS.Client.Services
                 db.CreateTable<UserModel>();
                 db.CreateTable<InboundModel>();
                 db.CreateTable<OutboundModel>();
-                db.CreateTable<ReturnModel>(); // 🔴 新增：创建退货表
+                db.CreateTable<ReturnModel>();
 
                 if (db.Table<UserModel>().Count() == 0)
                 {
@@ -54,20 +54,17 @@ namespace WMS.Client.Services
             return true;
         }
 
-        // --- 统计 & 汇总 (核心修改) ---
+        // --- 统计 & 汇总 ---
         public Task<int> GetTotalInboundCountAsync() => _database.Table<InboundModel>().CountAsync();
         public Task<int> GetTotalOutboundCountAsync() => _database.Table<OutboundModel>().CountAsync();
-        // 🔴 新增：获取退货单总数
         public Task<int> GetTotalReturnCountAsync() => _database.Table<ReturnModel>().CountAsync();
 
-        // 🔴 重点修改：库存计算公式
         public async Task<List<InventorySummaryModel>> GetInventorySummaryAsync()
         {
             var inbounds = await _database.Table<InboundModel>().ToListAsync();
             var outbounds = await _database.Table<OutboundModel>().ToListAsync();
-            var returns = await _database.Table<ReturnModel>().ToListAsync(); // 获取所有退货
+            var returns = await _database.Table<ReturnModel>().ToListAsync();
 
-            // 获取所有出现过的产品名称
             var allProducts = inbounds.Select(x => x.ProductName)
                                       .Union(outbounds.Select(x => x.ProductName))
                                       .Union(returns.Select(x => x.ProductName))
@@ -80,14 +77,13 @@ namespace WMS.Client.Services
             {
                 var inQty = inbounds.Where(x => x.ProductName == name).Sum(x => x.Quantity);
                 var outQty = outbounds.Where(x => x.ProductName == name).Sum(x => x.Quantity);
-                var retQty = returns.Where(x => x.ProductName == name).Sum(x => x.Quantity); // 退货数量
+                var retQty = returns.Where(x => x.ProductName == name).Sum(x => x.Quantity);
 
                 summaryList.Add(new InventorySummaryModel
                 {
                     ProductName = name,
                     TotalInbound = inQty,
                     TotalOutbound = outQty,
-                    // 🔴 库存 = 入库 - 出库 + 退货
                     CurrentStock = inQty - outQty + retQty
                 });
             }
@@ -106,14 +102,15 @@ namespace WMS.Client.Services
         public Task DeleteOutboundOrderAsync(OutboundModel item) => _database.DeleteAsync(item);
         public async Task<List<string>> GetCustomerListAsync() => await _database.QueryScalarsAsync<string>("SELECT DISTINCT Customer FROM OutboundModel WHERE Customer IS NOT NULL");
 
-        // --- 🔴 退货管理 (新增) ---
+        // --- 退货 ---
         public Task<List<ReturnModel>> GetReturnOrdersAsync() => _database.Table<ReturnModel>().ToListAsync();
         public Task SaveReturnOrderAsync(ReturnModel item) => item.Id != 0 ? _database.UpdateAsync(item) : _database.InsertAsync(item);
         public Task DeleteReturnOrderAsync(ReturnModel item) => _database.DeleteAsync(item);
 
-        // 获取产品列表
-        public async Task<List<string>> GetProductListAsync() => await _database.QueryScalarsAsync<string>("SELECT DISTINCT ProductName FROM InboundModel WHERE ProductName IS NOT NULL");
-        // 🔴 2. 新增：获取已出库产品 (用于退货选择)
+        // --- 下拉列表辅助 ---
+        public async Task<List<string>> GetProductListAsync()
+            => await _database.QueryScalarsAsync<string>("SELECT DISTINCT ProductName FROM InboundModel WHERE ProductName IS NOT NULL");
+
         public async Task<List<string>> GetShippedProductListAsync()
             => await _database.QueryScalarsAsync<string>("SELECT DISTINCT ProductName FROM OutboundModel WHERE ProductName IS NOT NULL");
     }
