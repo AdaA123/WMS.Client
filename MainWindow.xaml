@@ -17,18 +17,6 @@
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}">
 
-    <Window.Resources>
-        <DataTemplate DataType="{x:Type vm:HomeViewModel}">
-            <v:HomeView />
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:InboundViewModel}">
-            <v:InboundView />
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:OutboundViewModel}">
-            <v:OutboundView />
-        </DataTemplate>
-    </Window.Resources>
-
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="240"/>
@@ -79,6 +67,17 @@
                             <TextBlock Text="出库管理" Margin="15,0,0,0" FontSize="15" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
+
+                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
+                                 Height="55" Margin="10,5" Padding="15,0"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Return"
+                                 Foreground="White" BorderThickness="0"
+                                 materialDesign:ButtonAssist.CornerRadius="8">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="KeyboardReturn" Width="22" Height="22" VerticalAlignment="Center"/>
+                            <TextBlock Text="退货管理" Margin="15,0,0,0" FontSize="15" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -98,7 +97,6 @@
                                              Margin="0,0,20,0"
                                              PlacementMode="BottomAndAlignRightEdges"
                                              StaysOpen="False">
-
                         <materialDesign:PopupBox.ToggleContent>
                             <StackPanel Orientation="Horizontal" Cursor="Hand">
                                 <materialDesign:PackIcon Kind="AccountCircle" Width="28" Height="28" 
@@ -126,9 +124,7 @@
                                     </DataTemplate>
                                 </Button.ContentTemplate>
                             </Button>
-
                             <Separator Margin="0,5"/>
-
                             <Button Command="{Binding LogoutCommand}"
                                     Content="退出登录"
                                     HorizontalContentAlignment="Left"
