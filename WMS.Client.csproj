@@ -11,10 +11,12 @@
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
 		<PackageReference Include="MaterialDesignThemes" Version="4.9.0" />
 		<PackageReference Include="MaterialDesignColors" Version="2.1.4" />
-		<PackageReference Include="sqlite-net-pcl" Version="1.8.116" />
+		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<Folder Include="Models\" />
+		<Folder Include="Services\" />
 		<Folder Include="ViewModels\" />
 		<Folder Include="Views\" />
 	</ItemGroup>
