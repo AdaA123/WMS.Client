@@ -1,5 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LiveCharts;
+using LiveCharts.Wpf;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -16,19 +18,32 @@ namespace WMS.Client.ViewModels
         private readonly ExportService _exportService;
         private readonly PrintService _printService;
 
+        // --- 顶部卡片数据 ---
         [ObservableProperty] private decimal _totalRevenue;
         [ObservableProperty] private decimal _totalCost;
         [ObservableProperty] private decimal _totalGrossProfit;
 
-        // 🟢 日期筛选
+        // --- 筛选条件 ---
         [ObservableProperty] private DateTime _startDate;
         [ObservableProperty] private DateTime _endDate;
 
+        // --- 表格数据 ---
         public ObservableCollection<FinancialSummaryModel> FinancialList { get; } = new();
         public ObservableCollection<FinancialReportModel> MonthlyList { get; } = new();
         public ObservableCollection<FinancialReportModel> YearlyList { get; } = new();
 
         [ObservableProperty] private int _selectedTabIndex;
+
+        // 🟢 新增：控制图表是否展开 (默认为 true)
+        [ObservableProperty] private bool _isChartExpanded = true;
+
+        // --- 图表数据 ---
+        [ObservableProperty]
+        private SeriesCollection _chartSeries = new SeriesCollection();
+        [ObservableProperty]
+        private string[] _chartLabels = Array.Empty<string>();
+
+        public Func<double, string> YFormatter { get; set; }
 
         public FinancialViewModel()
         {
@@ -36,14 +51,14 @@ namespace WMS.Client.ViewModels
             _exportService = new ExportService();
             _printService = new PrintService();
 
-            // 🟢 默认显示今年的数据
+            YFormatter = value => value.ToString("C0");
+
             StartDate = new DateTime(DateTime.Now.Year, 1, 1);
-            EndDate = DateTime.Now.Date.AddDays(1).AddSeconds(-1); // 今天的最后一刻
+            EndDate = DateTime.Now.Date.AddDays(1).AddSeconds(-1);
 
             _ = RefreshDataAsync();
         }
 
-        // 🟢 刷新数据命令 (点击按钮触发)
         [RelayCommand]
         public async Task RefreshDataAsync()
         {
@@ -53,65 +68,70 @@ namespace WMS.Client.ViewModels
                 return;
             }
 
-            // 1. 加载单品分析 (带日期筛选)
             var data = await _dbService.GetFinancialSummaryAsync(StartDate, EndDate);
             FinancialList.Clear();
             foreach (var item in data) FinancialList.Add(item);
 
-            // 计算顶部卡片
             TotalRevenue = FinancialList.Sum(x => x.TotalRevenue);
             TotalCost = FinancialList.Sum(x => x.TotalCost);
             TotalGrossProfit = TotalRevenue - TotalCost - FinancialList.Sum(x => x.TotalRefund);
 
-            // 2. 加载月度报表 (带日期筛选)
             var monthData = await _dbService.GetPeriodReportAsync(isMonthly: true, StartDate, EndDate);
             MonthlyList.Clear();
             foreach (var item in monthData) MonthlyList.Add(item);
 
-            // 3. 加载年度报表 (带日期筛选)
             var yearData = await _dbService.GetPeriodReportAsync(isMonthly: false, StartDate, EndDate);
             YearlyList.Clear();
             foreach (var item in yearData) YearlyList.Add(item);
+
+            UpdateChart(monthData);
+        }
+
+        private void UpdateChart(System.Collections.Generic.List<FinancialReportModel> data)
+        {
+            var sortedData = data.OrderBy(x => x.PeriodDate).ToList();
+            ChartLabels = sortedData.Select(x => x.PeriodName).ToArray();
+
+            ChartSeries = new SeriesCollection
+            {
+                new ColumnSeries
+                {
+                    Title = "总收入",
+                    Values = new ChartValues<decimal>(sortedData.Select(x => x.Revenue)),
+                    Fill = System.Windows.Media.Brushes.MediumSeaGreen
+                },
+                new ColumnSeries
+                {
+                    Title = "总成本",
+                    Values = new ChartValues<decimal>(sortedData.Select(x => x.Cost)),
+                    Fill = System.Windows.Media.Brushes.IndianRed
+                },
+                new LineSeries
+                {
+                    Title = "净利润趋势",
+                    Values = new ChartValues<decimal>(sortedData.Select(x => x.Profit)),
+                    Stroke = System.Windows.Media.Brushes.DodgerBlue,
+                    Fill = System.Windows.Media.Brushes.Transparent,
+                    PointGeometrySize = 10,
+                    StrokeThickness = 3
+                }
+            };
         }
 
         [RelayCommand]
         private void Export()
         {
-            if (SelectedTabIndex == 0)
-            {
-                if (FinancialList.Count == 0) { MessageBox.Show("无数据可导出"); return; }
-                _exportService.ExportFinancials(FinancialList);
-            }
-            else if (SelectedTabIndex == 1)
-            {
-                if (MonthlyList.Count == 0) { MessageBox.Show("无数据可导出"); return; }
-                _exportService.ExportPeriodReport(MonthlyList, "月度财务");
-            }
-            else if (SelectedTabIndex == 2)
-            {
-                if (YearlyList.Count == 0) { MessageBox.Show("无数据可导出"); return; }
-                _exportService.ExportPeriodReport(YearlyList, "年度财务");
-            }
+            if (SelectedTabIndex == 0) _exportService.ExportFinancials(FinancialList);
+            else if (SelectedTabIndex == 1) _exportService.ExportPeriodReport(MonthlyList, "月度财务");
+            else if (SelectedTabIndex == 2) _exportService.ExportPeriodReport(YearlyList, "年度财务");
         }
 
         [RelayCommand]
         private void Print()
         {
-            if (SelectedTabIndex == 0)
-            {
-                if (FinancialList.Count == 0) { MessageBox.Show("无数据可打印"); return; }
-                _printService.PrintFinancialReport(FinancialList);
-            }
-            else if (SelectedTabIndex == 1)
-            {
-                if (MonthlyList.Count == 0) { MessageBox.Show("无数据可打印"); return; }
-                _printService.PrintPeriodReport(MonthlyList, "月度财务报表");
-            }
-            else if (SelectedTabIndex == 2)
-            {
-                if (YearlyList.Count == 0) { MessageBox.Show("无数据可打印"); return; }
-                _printService.PrintPeriodReport(YearlyList, "年度财务报表");
-            }
+            if (SelectedTabIndex == 0) _printService.PrintFinancialReport(FinancialList);
+            else if (SelectedTabIndex == 1) _printService.PrintPeriodReport(MonthlyList, "月度财务报表");
+            else if (SelectedTabIndex == 2) _printService.PrintPeriodReport(YearlyList, "年度财务报表");
         }
     }
 }

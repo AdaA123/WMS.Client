@@ -4,7 +4,8 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="900">
+             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+             mc:Ignorable="d" d:DesignHeight="1000" d:DesignWidth="900">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
@@ -55,7 +56,6 @@
                               VerticalScrollBarVisibility="Disabled"
                               Focusable="False"
                               materialDesign:DataGridAssist.ColumnHeaderPadding="8">
-
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="200" FontWeight="Medium"/>
                             <DataGridTextColumn Header="收入" Binding="{Binding Revenue, StringFormat=C2}" Width="100" Foreground="#4CAF50"/>
@@ -69,61 +69,77 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
 
-        <TextBlock Text="财务收支概览" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+        <StackPanel Margin="0,0,10,20">
 
-        <Grid Grid.Row="1" Margin="0,0,0,20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+            <TextBlock Text="财务收支概览" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
 
-            <materialDesign:Card Grid.Column="0" Margin="0,0,10,0" Padding="20" UniformCornerRadius="8" Background="#4CAF50">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <materialDesign:PackIcon Kind="CashMultiple" Width="30" Height="30" Foreground="White" VerticalAlignment="Center"/>
-                        <TextBlock Text="销售总收入" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <materialDesign:Card Grid.Column="0" Margin="0,0,10,0" Padding="15" UniformCornerRadius="8" Background="#4CAF50">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                            <materialDesign:PackIcon Kind="CashMultiple" Width="24" Height="24" Foreground="White" VerticalAlignment="Center"/>
+                            <TextBlock Text="销售总收入" Foreground="White" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding TotalRevenue, StringFormat=C2}" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Right"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding TotalRevenue, StringFormat=C2}" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Right"/>
-                </StackPanel>
+                </materialDesign:Card>
+
+                <materialDesign:Card Grid.Column="1" Margin="10,0,10,0" Padding="15" UniformCornerRadius="8" Background="#F44336">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                            <materialDesign:PackIcon Kind="CartOutline" Width="24" Height="24" Foreground="White" VerticalAlignment="Center"/>
+                            <TextBlock Text="采购总成本" Foreground="White" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding TotalCost, StringFormat=C2}" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Right"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <materialDesign:Card Grid.Column="2" Margin="10,0,0,0" Padding="15" UniformCornerRadius="8" Background="#2196F3">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                            <materialDesign:PackIcon Kind="ChartLine" Width="24" Height="24" Foreground="White" VerticalAlignment="Center"/>
+                            <TextBlock Text="总毛利 (结余)" Foreground="White" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding TotalGrossProfit, StringFormat=C2}" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Right"/>
+                    </StackPanel>
+                </materialDesign:Card>
+            </Grid>
+
+            <materialDesign:Card Margin="0,0,0,10" UniformCornerRadius="8">
+                <Expander Header="收支趋势分析图表" 
+                          IsExpanded="{Binding IsChartExpanded, Mode=TwoWay}" 
+                          Background="White" Padding="10">
+                    <Grid Height="200">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <lvc:CartesianChart Grid.Row="1" Series="{Binding ChartSeries}" LegendLocation="Right">
+                            <lvc:CartesianChart.AxisX>
+                                <lvc:Axis Title="月份" Labels="{Binding ChartLabels}" Separator="{x:Static lvc:DefaultAxes.CleanSeparator}"/>
+                            </lvc:CartesianChart.AxisX>
+                            <lvc:CartesianChart.AxisY>
+                                <lvc:Axis Title="金额" LabelFormatter="{Binding YFormatter}"/>
+                            </lvc:CartesianChart.AxisY>
+                            <lvc:CartesianChart.DataTooltip>
+                                <lvc:DefaultTooltip SelectionMode="SharedYValues" ShowTitle="True"/>
+                            </lvc:CartesianChart.DataTooltip>
+                        </lvc:CartesianChart>
+                    </Grid>
+                </Expander>
             </materialDesign:Card>
 
-            <materialDesign:Card Grid.Column="1" Margin="10,0,10,0" Padding="20" UniformCornerRadius="8" Background="#F44336">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <materialDesign:PackIcon Kind="CartOutline" Width="30" Height="30" Foreground="White" VerticalAlignment="Center"/>
-                        <TextBlock Text="采购总成本" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <TextBlock Text="{Binding TotalCost, StringFormat=C2}" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Right"/>
-                </StackPanel>
-            </materialDesign:Card>
-
-            <materialDesign:Card Grid.Column="2" Margin="10,0,0,0" Padding="20" UniformCornerRadius="8" Background="#2196F3">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <materialDesign:PackIcon Kind="ChartLine" Width="30" Height="30" Foreground="White" VerticalAlignment="Center"/>
-                        <TextBlock Text="总毛利 (结余)" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <TextBlock Text="{Binding TotalGrossProfit, StringFormat=C2}" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Right"/>
-                </StackPanel>
-            </materialDesign:Card>
-        </Grid>
-
-        <materialDesign:Card Grid.Row="2" Padding="0" UniformCornerRadius="8" VerticalAlignment="Stretch">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <Grid Grid.Row="0" Margin="20,15,20,5">
+            <materialDesign:Card Margin="0,0,0,10" Padding="15" UniformCornerRadius="8">
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -147,13 +163,17 @@
                         <Button Content="打印报表" Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
                     </StackPanel>
                 </Grid>
+            </materialDesign:Card>
 
-                <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}" Margin="5">
+            <materialDesign:Card Padding="0" UniformCornerRadius="8">
+                <TabControl SelectedIndex="{Binding SelectedTabIndex}" Margin="5">
                     <TabItem Header="单品利润分析" FontSize="16">
                         <DataGrid ItemsSource="{Binding FinancialList}" 
-                                  ScrollViewer.CanContentScroll="False"
+                                  PreviewMouseWheel="MainDataGrid_PreviewMouseWheel"
                                   AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                                   HeadersVisibility="All" SelectionMode="Single"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  MinHeight="100"
                                   Style="{StaticResource MaterialDesignDataGrid}">
                             <DataGrid.ColumnHeaderStyle>
                                 <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
@@ -188,10 +208,12 @@
 
                     <TabItem Header="月度报表" FontSize="16">
                         <DataGrid ItemsSource="{Binding MonthlyList}" 
-                                  ScrollViewer.CanContentScroll="False"
+                                  PreviewMouseWheel="MainDataGrid_PreviewMouseWheel"
                                   AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                                   HeadersVisibility="All" SelectionMode="Extended"
                                   RowDetailsTemplate="{StaticResource FinancialDetailsTemplate}"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  MinHeight="100"
                                   Style="{StaticResource MaterialDesignDataGrid}">
 
                             <DataGrid.RowStyle>
@@ -236,10 +258,12 @@
 
                     <TabItem Header="年度报表" FontSize="16">
                         <DataGrid ItemsSource="{Binding YearlyList}" 
-                                  ScrollViewer.CanContentScroll="False"
+                                  PreviewMouseWheel="MainDataGrid_PreviewMouseWheel"
                                   AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                                   HeadersVisibility="All" SelectionMode="Extended"
                                   RowDetailsTemplate="{StaticResource FinancialDetailsTemplate}"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  MinHeight="100"
                                   Style="{StaticResource MaterialDesignDataGrid}">
 
                             <DataGrid.RowStyle>
@@ -282,7 +306,7 @@
                         </DataGrid>
                     </TabItem>
                 </TabControl>
-            </Grid>
-        </materialDesign:Card>
-    </Grid>
+            </materialDesign:Card>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>
