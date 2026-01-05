@@ -4,7 +4,6 @@ using System.IO;
 using System.IO.Packaging;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Xps;
@@ -55,7 +54,7 @@ namespace WMS.Client.Services
             PackageStore.RemovePackage(packUri);
         }
 
-        // 简体中文报表
+        // 1. 打印入库单 (简体中文)
         public void PrintInboundReport(IEnumerable<InboundModel> data)
         {
             var doc = CreateFlowDocument("入库单汇总报表", new string[] { "单号", "产品名称", "供应商", "数量", "单价", "日期" });
@@ -78,6 +77,7 @@ namespace WMS.Client.Services
             PrintDocument(doc, "InboundReport");
         }
 
+        // 2. 打印出库单 (简体中文)
         public void PrintOutboundReport(IEnumerable<OutboundModel> data)
         {
             var doc = CreateFlowDocument("出库单汇总报表", new string[] { "单号", "产品名称", "客户", "数量", "售价", "日期" });
@@ -100,6 +100,7 @@ namespace WMS.Client.Services
             PrintDocument(doc, "OutboundReport");
         }
 
+        // 3. 打印库存汇总 (简体中文)
         public void PrintInventoryReport(IEnumerable<InventorySummaryModel> data)
         {
             var doc = CreateFlowDocument("当前库存汇总报表", new string[] { "产品名称", "入库总量", "出库总量", "当前库存" });

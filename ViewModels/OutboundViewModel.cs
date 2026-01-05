@@ -14,12 +14,12 @@ namespace WMS.Client.ViewModels
     {
         private readonly DatabaseService _dbService;
         private readonly PrintService _printService;
+        private readonly ExportService _exportService;
 
         public ObservableCollection<OutboundModel> OutboundList { get; } = new();
         public ObservableCollection<string> Customers { get; } = new();
         public ObservableCollection<string> ProductList { get; } = new();
 
-        // 简体化
         public ObservableCollection<string> SortOptions { get; } = new() { "时间 (最新)", "时间 (最早)", "产品名称", "客户" };
         [ObservableProperty] private string _selectedSortOption = "时间 (最新)";
         partial void OnSelectedSortOptionChanged(string value) => SortData();
@@ -30,6 +30,7 @@ namespace WMS.Client.ViewModels
         {
             _dbService = new DatabaseService();
             _printService = new PrintService();
+            _exportService = new ExportService();
             _ = LoadData();
             _ = LoadCustomers();
             _ = LoadProductList();
@@ -60,7 +61,6 @@ namespace WMS.Client.ViewModels
         [RelayCommand]
         private async Task Save()
         {
-            // 简体提示
             if (string.IsNullOrWhiteSpace(NewOutbound.ProductName)) { MessageBox.Show("产品名称不能为空！"); return; }
             if (NewOutbound.Quantity <= 0) { MessageBox.Show("数量必须大于 0！"); return; }
 
@@ -74,15 +74,11 @@ namespace WMS.Client.ViewModels
                 if (string.IsNullOrEmpty(NewOutbound.Customer)) NewOutbound.Customer = "散客";
 
                 await _dbService.SaveOutboundOrderAsync(NewOutbound);
-
                 await LoadData();
                 await LoadCustomers();
                 NewOutbound = new OutboundModel();
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"保存失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            catch (Exception ex) { MessageBox.Show($"保存失败：{ex.Message}"); }
         }
 
         [RelayCommand]
@@ -90,6 +86,14 @@ namespace WMS.Client.ViewModels
         {
             if (OutboundList.Count == 0) { MessageBox.Show("无数据可打印"); return; }
             _printService.PrintOutboundReport(OutboundList);
+        }
+
+        // 🟢 确保此方法存在
+        [RelayCommand]
+        private void Export()
+        {
+            if (OutboundList.Count == 0) { MessageBox.Show("无数据可导出"); return; }
+            _exportService.ExportOutbound(OutboundList);
         }
 
         [RelayCommand]

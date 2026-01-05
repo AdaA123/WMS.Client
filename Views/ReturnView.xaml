@@ -50,6 +50,10 @@
                         </Style>
                     </Button.Style>
                 </Button>
+
+                <Button Command="{Binding ExportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="导出Excel" Width="40" Margin="10,0,0,0" Padding="0">
+                    <materialDesign:PackIcon Kind="FileExcel" Width="20" Height="20"/>
+                </Button>
             </StackPanel>
         </materialDesign:Card>
 

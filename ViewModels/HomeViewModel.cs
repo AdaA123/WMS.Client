@@ -13,15 +13,11 @@ namespace WMS.Client.ViewModels
     {
         private readonly DatabaseService _dbService;
         private readonly PrintService _printService;
+        private readonly ExportService _exportService; // 确保声明了服务
 
-        [ObservableProperty]
-        private int _totalInbound;
-
-        [ObservableProperty]
-        private int _totalOutbound;
-
-        [ObservableProperty]
-        private int _totalReturn;
+        [ObservableProperty] private int _totalInbound;
+        [ObservableProperty] private int _totalOutbound;
+        [ObservableProperty] private int _totalReturn;
 
         public ObservableCollection<InventorySummaryModel> InventoryList { get; } = new();
 
@@ -29,6 +25,7 @@ namespace WMS.Client.ViewModels
         {
             _dbService = new DatabaseService();
             _printService = new PrintService();
+            _exportService = new ExportService(); // 确保初始化了服务
             _ = LoadDashboardData();
         }
 
@@ -54,6 +51,14 @@ namespace WMS.Client.ViewModels
         {
             if (InventoryList.Count == 0) { MessageBox.Show("当前没有数据可打印"); return; }
             _printService.PrintInventoryReport(InventoryList);
+        }
+
+        // 🟢 关键：这个方法必须存在，界面上的按钮才能找到 ExportCommand
+        [RelayCommand]
+        private void Export()
+        {
+            if (InventoryList.Count == 0) { MessageBox.Show("当前没有数据可导出"); return; }
+            _exportService.ExportInventory(InventoryList);
         }
     }
 }

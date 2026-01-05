@@ -1,34 +1,45 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Threading.Tasks;
 using System.Windows;
+using WMS.Client.Models;
 using WMS.Client.Views;
 
 namespace WMS.Client.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
-        // 1. 定义各子页面
-        private readonly HomeViewModel _homeVM;
-        private readonly InboundViewModel _inboundVM;
-        private readonly OutboundViewModel _outboundVM;
-        private readonly ReturnViewModel _returnVM; // 🔴 新增
+        // 当前登录用户
+        [ObservableProperty]
+        private UserModel _currentUser;
 
+        // 当前显示的视图模型
         [ObservableProperty]
         private object _currentView;
 
-        public MainViewModel()
+        // 缓存各个 ViewModel
+        private readonly HomeViewModel _homeVM;
+        private readonly InboundViewModel _inboundVM;
+        private readonly OutboundViewModel _outboundVM;
+        private readonly ReturnViewModel _returnVM;
+
+        public MainViewModel(UserModel user)
         {
-            // 2. 初始化
+            CurrentUser = user;
+
+            // 初始化子页面
             _homeVM = new HomeViewModel();
             _inboundVM = new InboundViewModel();
             _outboundVM = new OutboundViewModel();
-            _returnVM = new ReturnViewModel(); // 🔴 新增
+            _returnVM = new ReturnViewModel();
 
             // 默认显示首页
             CurrentView = _homeVM;
         }
 
-        // 3. 导航跳转逻辑
+        // 无参构造函数供设计器使用（可选）
+        public MainViewModel() : this(new UserModel { Username = "Admin" }) { }
+
         [RelayCommand]
         private void Navigate(string viewName)
         {
@@ -36,50 +47,43 @@ namespace WMS.Client.ViewModels
             {
                 case "Home":
                     CurrentView = _homeVM;
-                    _homeVM.LoadDashboardData(); // 刷新首页数据
+                    // 🔴 修复 CS4014：使用 _ = 忽略等待警告
+                    _ = _homeVM.LoadDashboardDataCommand.ExecuteAsync(null);
                     break;
-
                 case "Inbound":
                     CurrentView = _inboundVM;
                     break;
-
                 case "Outbound":
                     CurrentView = _outboundVM;
                     break;
-
-                case "Return": // 🔴 新增：跳转到退货页
+                case "Return":
                     CurrentView = _returnVM;
                     break;
             }
         }
 
         [RelayCommand]
-        private void Logout()
+        private void OpenChangePassword()
         {
-            var loginView = new Views.LoginView();
-            loginView.Show();
-
-            foreach (Window window in Application.Current.Windows)
+            // 🔴 这里调用 ChangePasswordViewModel 的带参构造函数
+            // 将 CurrentUser 传进去，解决了 CS1729 错误
+            var vm = new ChangePasswordViewModel(CurrentUser);
+            var view = new ChangePasswordView
             {
-                if (window is MainWindow)
-                {
-                    window.Close();
-                    break;
-                }
-            }
+                DataContext = vm,
+                Owner = Application.Current.MainWindow
+            };
+            view.ShowDialog();
         }
 
         [RelayCommand]
-        private void OpenChangePassword()
+        private void Logout()
         {
-            string currentUser = "admin";
-            var view = new Views.ChangePasswordView();
-            view.DataContext = new ChangePasswordViewModel(currentUser);
+            var loginView = new LoginView();
+            loginView.Show();
 
-            if (view.ShowDialog() == true)
-            {
-                Logout();
-            }
+            Application.Current.MainWindow?.Close();
+            Application.Current.MainWindow = loginView;
         }
     }
 }

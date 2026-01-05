@@ -13,6 +13,7 @@ namespace WMS.Client.ViewModels
     public partial class ReturnViewModel : ObservableObject
     {
         private readonly DatabaseService _dbService;
+        private readonly ExportService _exportService;
 
         public ObservableCollection<ReturnModel> ReturnList { get; } = new();
         public ObservableCollection<string> ProductList { get; } = new();
@@ -27,6 +28,7 @@ namespace WMS.Client.ViewModels
         public ReturnViewModel()
         {
             _dbService = new DatabaseService();
+            _exportService = new ExportService();
             _ = LoadData();
             _ = LoadLists();
         }
@@ -52,6 +54,14 @@ namespace WMS.Client.ViewModels
         private void Cancel()
         {
             NewReturn = new ReturnModel();
+        }
+
+        // 🟢 确保此方法存在
+        [RelayCommand]
+        private void Export()
+        {
+            if (ReturnList.Count == 0) { MessageBox.Show("无数据可导出"); return; }
+            _exportService.ExportReturn(ReturnList);
         }
 
         [RelayCommand]
