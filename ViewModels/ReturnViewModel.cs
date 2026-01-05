@@ -29,8 +29,14 @@ namespace WMS.Client.ViewModels
         {
             _dbService = new DatabaseService();
             _exportService = new ExportService();
-            _ = LoadData();
-            _ = LoadLists();
+            _ = RefreshDataAsync(); // 初始加载
+        }
+
+        // 🟢 关键：这个方法供 MainViewModel 切换页面时调用
+        public async Task RefreshDataAsync()
+        {
+            await LoadData();
+            await LoadLists(); // 重新加载下拉列表（这就包含了新出库的香蕉）
         }
 
         [RelayCommand]
@@ -56,7 +62,6 @@ namespace WMS.Client.ViewModels
             NewReturn = new ReturnModel();
         }
 
-        // 🟢 确保此方法存在
         [RelayCommand]
         private void Export()
         {
@@ -81,7 +86,7 @@ namespace WMS.Client.ViewModels
                 if (string.IsNullOrEmpty(NewReturn.Reason)) NewReturn.Reason = "无理由退货";
 
                 await _dbService.SaveReturnOrderAsync(NewReturn);
-                await LoadData();
+                await RefreshDataAsync(); // 保存后自动刷新
                 NewReturn = new ReturnModel();
             }
             catch (Exception ex) { MessageBox.Show($"保存失败：{ex.Message}"); }
@@ -93,7 +98,7 @@ namespace WMS.Client.ViewModels
             if (MessageBox.Show($"确定删除单号 {item.ReturnNo} 吗？", "删除确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 await _dbService.DeleteReturnOrderAsync(item);
-                await LoadData();
+                await RefreshDataAsync();
                 if (NewReturn.Id == item.Id) NewReturn = new ReturnModel();
             }
         }

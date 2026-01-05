@@ -9,15 +9,12 @@ namespace WMS.Client.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
-        // 当前登录用户
         [ObservableProperty]
         private UserModel _currentUser;
 
-        // 当前显示的视图模型
         [ObservableProperty]
         private object _currentView;
 
-        // 缓存各个 ViewModel
         private readonly HomeViewModel _homeVM;
         private readonly InboundViewModel _inboundVM;
         private readonly OutboundViewModel _outboundVM;
@@ -27,17 +24,14 @@ namespace WMS.Client.ViewModels
         {
             CurrentUser = user;
 
-            // 初始化子页面
             _homeVM = new HomeViewModel();
             _inboundVM = new InboundViewModel();
             _outboundVM = new OutboundViewModel();
             _returnVM = new ReturnViewModel();
 
-            // 默认显示首页
             CurrentView = _homeVM;
         }
 
-        // 无参构造函数供设计器使用（可选）
         public MainViewModel() : this(new UserModel { Username = "Admin" }) { }
 
         [RelayCommand]
@@ -47,17 +41,23 @@ namespace WMS.Client.ViewModels
             {
                 case "Home":
                     CurrentView = _homeVM;
-                    // 🔴 修复 CS4014：使用 _ = 忽略等待警告
+                    // 首页刷新
                     _ = _homeVM.LoadDashboardDataCommand.ExecuteAsync(null);
                     break;
                 case "Inbound":
                     CurrentView = _inboundVM;
+                    // 🟢 切换到入库页时，刷新数据
+                    _ = _inboundVM.RefreshDataAsync();
                     break;
                 case "Outbound":
                     CurrentView = _outboundVM;
+                    // 🟢 切换到出库页时，刷新数据（比如产品列表）
+                    _ = _outboundVM.RefreshDataAsync();
                     break;
                 case "Return":
                     CurrentView = _returnVM;
+                    // 🟢 切换到退货页时，刷新数据（立刻就能看到新出库的香蕉了）
+                    _ = _returnVM.RefreshDataAsync();
                     break;
             }
         }
@@ -65,8 +65,6 @@ namespace WMS.Client.ViewModels
         [RelayCommand]
         private void OpenChangePassword()
         {
-            // 🔴 这里调用 ChangePasswordViewModel 的带参构造函数
-            // 将 CurrentUser 传进去，解决了 CS1729 错误
             var vm = new ChangePasswordViewModel(CurrentUser);
             var view = new ChangePasswordView
             {

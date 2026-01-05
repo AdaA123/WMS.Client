@@ -23,15 +23,22 @@ namespace WMS.Client.ViewModels
         [ObservableProperty] private string _selectedSortOption = "时间 (最新)";
         partial void OnSelectedSortOptionChanged(string value) => SortData();
 
-        [ObservableProperty] private InboundModel _newInbound = new();
+        [ObservableProperty]
+        private InboundModel _newInbound = new();
 
         public InboundViewModel()
         {
             _dbService = new DatabaseService();
             _printService = new PrintService();
             _exportService = new ExportService();
-            _ = LoadData();
-            _ = LoadSuppliers();
+            _ = RefreshDataAsync();
+        }
+
+        // 🟢 供外部调用的刷新方法
+        public async Task RefreshDataAsync()
+        {
+            await LoadData();
+            await LoadSuppliers();
         }
 
         [RelayCommand]
@@ -59,8 +66,14 @@ namespace WMS.Client.ViewModels
         [RelayCommand]
         private async Task Save()
         {
-            if (string.IsNullOrWhiteSpace(NewInbound.ProductName)) { MessageBox.Show("产品名称不能为空！"); return; }
-            if (NewInbound.Quantity <= 0) { MessageBox.Show("数量必须大于 0！"); return; }
+            if (string.IsNullOrWhiteSpace(NewInbound.ProductName))
+            {
+                MessageBox.Show("产品名称不能为空！"); return;
+            }
+            if (NewInbound.Quantity <= 0)
+            {
+                MessageBox.Show("数量必须大于 0！"); return;
+            }
 
             try
             {
@@ -71,11 +84,13 @@ namespace WMS.Client.ViewModels
                 }
 
                 await _dbService.SaveInboundOrderAsync(NewInbound);
-                await LoadData();
-                await LoadSuppliers();
+                await RefreshDataAsync();
                 NewInbound = new InboundModel();
             }
-            catch (Exception ex) { MessageBox.Show($"保存失败：{ex.Message}"); }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"保存失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         [RelayCommand]
@@ -85,7 +100,6 @@ namespace WMS.Client.ViewModels
             _printService.PrintInboundReport(InboundList);
         }
 
-        // 🟢 确保此方法存在
         [RelayCommand]
         private void Export()
         {
@@ -100,7 +114,7 @@ namespace WMS.Client.ViewModels
             if (MessageBox.Show($"确认删除单号 [{item.OrderNo}] 吗？", "删除确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 await _dbService.DeleteInboundOrderAsync(item);
-                await LoadData();
+                await RefreshDataAsync();
                 if (NewInbound.Id == item.Id) NewInbound = new InboundModel();
             }
         }

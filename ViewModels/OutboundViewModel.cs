@@ -31,9 +31,15 @@ namespace WMS.Client.ViewModels
             _dbService = new DatabaseService();
             _printService = new PrintService();
             _exportService = new ExportService();
-            _ = LoadData();
-            _ = LoadCustomers();
-            _ = LoadProductList();
+            _ = RefreshDataAsync();
+        }
+
+        // 🟢 供外部调用的刷新方法
+        public async Task RefreshDataAsync()
+        {
+            await LoadData();
+            await LoadCustomers();
+            await LoadProductList();
         }
 
         [RelayCommand]
@@ -74,11 +80,13 @@ namespace WMS.Client.ViewModels
                 if (string.IsNullOrEmpty(NewOutbound.Customer)) NewOutbound.Customer = "散客";
 
                 await _dbService.SaveOutboundOrderAsync(NewOutbound);
-                await LoadData();
-                await LoadCustomers();
+                await RefreshDataAsync();
                 NewOutbound = new OutboundModel();
             }
-            catch (Exception ex) { MessageBox.Show($"保存失败：{ex.Message}"); }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"保存失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         [RelayCommand]
@@ -88,7 +96,6 @@ namespace WMS.Client.ViewModels
             _printService.PrintOutboundReport(OutboundList);
         }
 
-        // 🟢 确保此方法存在
         [RelayCommand]
         private void Export()
         {
@@ -103,7 +110,7 @@ namespace WMS.Client.ViewModels
             if (MessageBox.Show($"确认删除单号 [{item.OrderNo}] 吗？", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 await _dbService.DeleteOutboundOrderAsync(item);
-                await LoadData();
+                await RefreshDataAsync();
                 if (NewOutbound.Id == item.Id) NewOutbound = new OutboundModel();
             }
         }
