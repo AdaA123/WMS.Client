@@ -88,8 +88,27 @@
                 </Grid.RowDefinitions>
 
                 <Grid Grid.Row="0" Margin="20,15,20,5">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="刷新数据" Command="{Binding RefreshDataCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0"/>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <materialDesign:PackIcon Kind="CalendarRange" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="Gray"/>
+
+                        <DatePicker SelectedDate="{Binding StartDate}" Width="100" 
+                                    materialDesign:HintAssist.Hint="开始日期" 
+                                    VerticalAlignment="Center"/>
+
+                        <TextBlock Text=" - " VerticalAlignment="Center" Margin="5,0"/>
+
+                        <DatePicker SelectedDate="{Binding EndDate}" Width="100" 
+                                    materialDesign:HintAssist.Hint="结束日期" 
+                                    VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="查询/刷新" Command="{Binding RefreshDataCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0,0,15,0"/>
 
                         <Button Command="{Binding ExportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0">
                             <StackPanel Orientation="Horizontal">
@@ -98,7 +117,7 @@
                             </StackPanel>
                         </Button>
 
-                        <Button Content="打印报表" Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignRaisedButton}"/>
+                        <Button Content="打印报表" Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
                     </StackPanel>
                 </Grid>
 

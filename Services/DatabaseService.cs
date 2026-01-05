@@ -57,12 +57,18 @@ namespace WMS.Client.Services
         public Task<int> GetTotalOutboundCountAsync() => _database.Table<OutboundModel>().CountAsync();
         public Task<int> GetTotalReturnCountAsync() => _database.Table<ReturnModel>().CountAsync();
 
-        // 1. 单品财务汇总
-        public async Task<List<FinancialSummaryModel>> GetFinancialSummaryAsync()
+        // 🟢 1. 单品财务汇总 (支持日期筛选)
+        public async Task<List<FinancialSummaryModel>> GetFinancialSummaryAsync(DateTime start, DateTime end)
         {
-            var inbounds = await _database.Table<InboundModel>().ToListAsync();
-            var outbounds = await _database.Table<OutboundModel>().ToListAsync();
-            var returns = await _database.Table<ReturnModel>().ToListAsync();
+            // 先获取所有数据，再在内存中筛选日期 (SQLite LINQ 对日期支持有时不稳定，内存筛选更稳健)
+            var allIn = await _database.Table<InboundModel>().ToListAsync();
+            var allOut = await _database.Table<OutboundModel>().ToListAsync();
+            var allRet = await _database.Table<ReturnModel>().ToListAsync();
+
+            // 筛选符合日期的记录
+            var inbounds = allIn.Where(x => x.InboundDate >= start && x.InboundDate <= end).ToList();
+            var outbounds = allOut.Where(x => x.OutboundDate >= start && x.OutboundDate <= end).ToList();
+            var returns = allRet.Where(x => x.ReturnDate >= start && x.ReturnDate <= end).ToList();
 
             var allProducts = inbounds.Select(x => x.ProductName)
                                       .Union(outbounds.Select(x => x.ProductName))
@@ -89,16 +95,21 @@ namespace WMS.Client.Services
             return list.OrderByDescending(x => x.GrossProfit).ToList();
         }
 
-        // 🟢 2. 时间段报表 (含详细数据)
-        public async Task<List<FinancialReportModel>> GetPeriodReportAsync(bool isMonthly)
+        // 🟢 2. 时间段报表 (支持日期筛选)
+        public async Task<List<FinancialReportModel>> GetPeriodReportAsync(bool isMonthly, DateTime start, DateTime end)
         {
-            var inbounds = await _database.Table<InboundModel>().ToListAsync();
-            var outbounds = await _database.Table<OutboundModel>().ToListAsync();
-            var returns = await _database.Table<ReturnModel>().ToListAsync();
+            var allIn = await _database.Table<InboundModel>().ToListAsync();
+            var allOut = await _database.Table<OutboundModel>().ToListAsync();
+            var allRet = await _database.Table<ReturnModel>().ToListAsync();
+
+            // 筛选符合日期的记录
+            var inbounds = allIn.Where(x => x.InboundDate >= start && x.InboundDate <= end).ToList();
+            var outbounds = allOut.Where(x => x.OutboundDate >= start && x.OutboundDate <= end).ToList();
+            var returns = allRet.Where(x => x.ReturnDate >= start && x.ReturnDate <= end).ToList();
 
             string dateFormat = isMonthly ? "yyyy-MM" : "yyyy";
 
-            // 获取所有涉及的时间段
+            // 获取该范围内涉及的所有时间段
             var periods = inbounds.Select(x => x.InboundDate.ToString(dateFormat))
                           .Union(outbounds.Select(x => x.OutboundDate.ToString(dateFormat)))
                           .Union(returns.Select(x => x.ReturnDate.ToString(dateFormat)))
@@ -110,12 +121,14 @@ namespace WMS.Client.Services
 
             foreach (var p in periods)
             {
-                // 筛选出当前时间段的所有记录
                 var currentIn = inbounds.Where(x => x.InboundDate.ToString(dateFormat) == p).ToList();
                 var currentOut = outbounds.Where(x => x.OutboundDate.ToString(dateFormat) == p).ToList();
                 var currentRet = returns.Where(x => x.ReturnDate.ToString(dateFormat) == p).ToList();
 
-                // 找出该时间段内涉及的所有产品
+                // 解析时间段为日期对象，方便后续处理
+                DateTime periodDate = DateTime.MinValue;
+                DateTime.TryParse(p + (isMonthly ? "-01" : "-01-01"), out periodDate);
+
                 var productsInPeriod = currentIn.Select(x => x.ProductName)
                                        .Union(currentOut.Select(x => x.ProductName))
                                        .Union(currentRet.Select(x => x.ProductName))
@@ -124,7 +137,6 @@ namespace WMS.Client.Services
 
                 var details = new List<FinancialDetailModel>();
 
-                // 计算每个产品的明细
                 foreach (var prod in productsInPeriod)
                 {
                     details.Add(new FinancialDetailModel
@@ -136,14 +148,14 @@ namespace WMS.Client.Services
                     });
                 }
 
-                // 汇总该时间段的总数据
                 report.Add(new FinancialReportModel
                 {
                     PeriodName = p + (isMonthly ? " 月" : " 年"),
+                    PeriodDate = periodDate, // 🟢 存入日期
                     Cost = details.Sum(x => x.Cost),
                     Revenue = details.Sum(x => x.Revenue),
                     Refund = details.Sum(x => x.Refund),
-                    Details = details.OrderByDescending(x => x.Profit).ToList() // 明细按利润排序
+                    Details = details.OrderByDescending(x => x.Profit).ToList()
                 });
             }
 

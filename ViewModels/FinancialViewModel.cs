@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,17 +16,18 @@ namespace WMS.Client.ViewModels
         private readonly ExportService _exportService;
         private readonly PrintService _printService;
 
-        // 顶部总览卡片数据
         [ObservableProperty] private decimal _totalRevenue;
         [ObservableProperty] private decimal _totalCost;
         [ObservableProperty] private decimal _totalGrossProfit;
 
-        // 表格数据列表
-        public ObservableCollection<FinancialSummaryModel> FinancialList { get; } = new(); // 单品分析
-        public ObservableCollection<FinancialReportModel> MonthlyList { get; } = new();    // 月度报表
-        public ObservableCollection<FinancialReportModel> YearlyList { get; } = new();     // 年度报表
+        // 🟢 日期筛选
+        [ObservableProperty] private DateTime _startDate;
+        [ObservableProperty] private DateTime _endDate;
 
-        // 当前选中的标签页索引 (0=单品, 1=月度, 2=年度)
+        public ObservableCollection<FinancialSummaryModel> FinancialList { get; } = new();
+        public ObservableCollection<FinancialReportModel> MonthlyList { get; } = new();
+        public ObservableCollection<FinancialReportModel> YearlyList { get; } = new();
+
         [ObservableProperty] private int _selectedTabIndex;
 
         public FinancialViewModel()
@@ -34,13 +36,25 @@ namespace WMS.Client.ViewModels
             _exportService = new ExportService();
             _printService = new PrintService();
 
+            // 🟢 默认显示今年的数据
+            StartDate = new DateTime(DateTime.Now.Year, 1, 1);
+            EndDate = DateTime.Now.Date.AddDays(1).AddSeconds(-1); // 今天的最后一刻
+
             _ = RefreshDataAsync();
         }
 
+        // 🟢 刷新数据命令 (点击按钮触发)
+        [RelayCommand]
         public async Task RefreshDataAsync()
         {
-            // 1. 加载单品分析
-            var data = await _dbService.GetFinancialSummaryAsync();
+            if (StartDate > EndDate)
+            {
+                MessageBox.Show("开始日期不能晚于结束日期！");
+                return;
+            }
+
+            // 1. 加载单品分析 (带日期筛选)
+            var data = await _dbService.GetFinancialSummaryAsync(StartDate, EndDate);
             FinancialList.Clear();
             foreach (var item in data) FinancialList.Add(item);
 
@@ -49,13 +63,13 @@ namespace WMS.Client.ViewModels
             TotalCost = FinancialList.Sum(x => x.TotalCost);
             TotalGrossProfit = TotalRevenue - TotalCost - FinancialList.Sum(x => x.TotalRefund);
 
-            // 2. 加载月度报表
-            var monthData = await _dbService.GetPeriodReportAsync(isMonthly: true);
+            // 2. 加载月度报表 (带日期筛选)
+            var monthData = await _dbService.GetPeriodReportAsync(isMonthly: true, StartDate, EndDate);
             MonthlyList.Clear();
             foreach (var item in monthData) MonthlyList.Add(item);
 
-            // 3. 加载年度报表
-            var yearData = await _dbService.GetPeriodReportAsync(isMonthly: false);
+            // 3. 加载年度报表 (带日期筛选)
+            var yearData = await _dbService.GetPeriodReportAsync(isMonthly: false, StartDate, EndDate);
             YearlyList.Clear();
             foreach (var item in yearData) YearlyList.Add(item);
         }
@@ -71,12 +85,12 @@ namespace WMS.Client.ViewModels
             else if (SelectedTabIndex == 1)
             {
                 if (MonthlyList.Count == 0) { MessageBox.Show("无数据可导出"); return; }
-                _exportService.ExportPeriodReport(MonthlyList, "月度财务"); // 🟢 修正为简体
+                _exportService.ExportPeriodReport(MonthlyList, "月度财务");
             }
             else if (SelectedTabIndex == 2)
             {
                 if (YearlyList.Count == 0) { MessageBox.Show("无数据可导出"); return; }
-                _exportService.ExportPeriodReport(YearlyList, "年度财务"); // 🟢 修正为简体
+                _exportService.ExportPeriodReport(YearlyList, "年度财务");
             }
         }
 
@@ -91,12 +105,12 @@ namespace WMS.Client.ViewModels
             else if (SelectedTabIndex == 1)
             {
                 if (MonthlyList.Count == 0) { MessageBox.Show("无数据可打印"); return; }
-                _printService.PrintPeriodReport(MonthlyList, "月度财务报表"); // 🟢 修正为简体
+                _printService.PrintPeriodReport(MonthlyList, "月度财务报表");
             }
             else if (SelectedTabIndex == 2)
             {
                 if (YearlyList.Count == 0) { MessageBox.Show("无数据可打印"); return; }
-                _printService.PrintPeriodReport(YearlyList, "年度财务报表"); // 🟢 修正为简体
+                _printService.PrintPeriodReport(YearlyList, "年度财务报表");
             }
         }
     }
