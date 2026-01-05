@@ -40,7 +40,7 @@ namespace WMS.Client.Services
             }
         }
 
-        // 🟢 财务报表导出
+        // 🟢 修正为简体中文
         public void ExportFinancials(IEnumerable<FinancialSummaryModel> data)
         {
             string header = "产品名称,采购总成本,销售总收入,退款总额,毛利润(现金流)";
@@ -50,7 +50,19 @@ namespace WMS.Client.Services
                 string name = item.ProductName?.Replace(",", "，") ?? "";
                 lines.Add($"{name},{item.TotalCost},{item.TotalRevenue},{item.TotalRefund},{item.GrossProfit}");
             }
-            SaveCsv("财务收支报表", header, lines);
+            SaveCsv("单品利润报表", header, lines);
+        }
+
+        // 🟢 修正为简体中文
+        public void ExportPeriodReport(IEnumerable<FinancialReportModel> data, string typeName)
+        {
+            string header = "时间段,总收入,总成本,总退款,净利润,利润率";
+            var lines = new List<string>();
+            foreach (var item in data)
+            {
+                lines.Add($"{item.PeriodName},{item.Revenue},{item.Cost},{item.Refund},{item.Profit},{item.ProfitMargin}");
+            }
+            SaveCsv(typeName + "报表", header, lines);
         }
 
         public void ExportInventory(IEnumerable<InventorySummaryModel> data)

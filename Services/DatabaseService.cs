@@ -34,7 +34,6 @@ namespace WMS.Client.Services
             _database = new SQLiteAsyncConnection(_dbPath);
         }
 
-        // --- 登录 ---
         public async Task<bool> LoginAsync(string username, string password)
         {
             var user = await _database.Table<UserModel>()
@@ -54,12 +53,11 @@ namespace WMS.Client.Services
             return true;
         }
 
-        // --- 统计 & 汇总 ---
         public Task<int> GetTotalInboundCountAsync() => _database.Table<InboundModel>().CountAsync();
         public Task<int> GetTotalOutboundCountAsync() => _database.Table<OutboundModel>().CountAsync();
         public Task<int> GetTotalReturnCountAsync() => _database.Table<ReturnModel>().CountAsync();
 
-        // 🟢 财务汇总 (新增)
+        // 1. 单品财务汇总
         public async Task<List<FinancialSummaryModel>> GetFinancialSummaryAsync()
         {
             var inbounds = await _database.Table<InboundModel>().ToListAsync();
@@ -76,10 +74,9 @@ namespace WMS.Client.Services
             var list = new List<FinancialSummaryModel>();
             foreach (var name in allProducts)
             {
-                // 计算该产品的各项总金额
                 var cost = inbounds.Where(x => x.ProductName == name).Sum(x => x.Quantity * x.Price);
                 var rev = outbounds.Where(x => x.ProductName == name).Sum(x => x.Quantity * x.Price);
-                var refd = returns.Where(x => x.ProductName == name).Sum(x => x.Price); // 退货表中的Price即为退款金额
+                var refd = returns.Where(x => x.ProductName == name).Sum(x => x.Price);
 
                 list.Add(new FinancialSummaryModel
                 {
@@ -90,6 +87,67 @@ namespace WMS.Client.Services
                 });
             }
             return list.OrderByDescending(x => x.GrossProfit).ToList();
+        }
+
+        // 🟢 2. 时间段报表 (含详细数据)
+        public async Task<List<FinancialReportModel>> GetPeriodReportAsync(bool isMonthly)
+        {
+            var inbounds = await _database.Table<InboundModel>().ToListAsync();
+            var outbounds = await _database.Table<OutboundModel>().ToListAsync();
+            var returns = await _database.Table<ReturnModel>().ToListAsync();
+
+            string dateFormat = isMonthly ? "yyyy-MM" : "yyyy";
+
+            // 获取所有涉及的时间段
+            var periods = inbounds.Select(x => x.InboundDate.ToString(dateFormat))
+                          .Union(outbounds.Select(x => x.OutboundDate.ToString(dateFormat)))
+                          .Union(returns.Select(x => x.ReturnDate.ToString(dateFormat)))
+                          .Distinct()
+                          .OrderByDescending(x => x)
+                          .ToList();
+
+            var report = new List<FinancialReportModel>();
+
+            foreach (var p in periods)
+            {
+                // 筛选出当前时间段的所有记录
+                var currentIn = inbounds.Where(x => x.InboundDate.ToString(dateFormat) == p).ToList();
+                var currentOut = outbounds.Where(x => x.OutboundDate.ToString(dateFormat) == p).ToList();
+                var currentRet = returns.Where(x => x.ReturnDate.ToString(dateFormat) == p).ToList();
+
+                // 找出该时间段内涉及的所有产品
+                var productsInPeriod = currentIn.Select(x => x.ProductName)
+                                       .Union(currentOut.Select(x => x.ProductName))
+                                       .Union(currentRet.Select(x => x.ProductName))
+                                       .Distinct()
+                                       .ToList();
+
+                var details = new List<FinancialDetailModel>();
+
+                // 计算每个产品的明细
+                foreach (var prod in productsInPeriod)
+                {
+                    details.Add(new FinancialDetailModel
+                    {
+                        ProductName = prod,
+                        Cost = currentIn.Where(x => x.ProductName == prod).Sum(x => x.Quantity * x.Price),
+                        Revenue = currentOut.Where(x => x.ProductName == prod).Sum(x => x.Quantity * x.Price),
+                        Refund = currentRet.Where(x => x.ProductName == prod).Sum(x => x.Price)
+                    });
+                }
+
+                // 汇总该时间段的总数据
+                report.Add(new FinancialReportModel
+                {
+                    PeriodName = p + (isMonthly ? " 月" : " 年"),
+                    Cost = details.Sum(x => x.Cost),
+                    Revenue = details.Sum(x => x.Revenue),
+                    Refund = details.Sum(x => x.Refund),
+                    Details = details.OrderByDescending(x => x.Profit).ToList() // 明细按利润排序
+                });
+            }
+
+            return report;
         }
 
         public async Task<List<InventorySummaryModel>> GetInventorySummaryAsync()
@@ -123,24 +181,20 @@ namespace WMS.Client.Services
             return summaryList.OrderByDescending(x => x.CurrentStock).ToList();
         }
 
-        // --- 入库 ---
         public Task<List<InboundModel>> GetInboundOrdersAsync() => _database.Table<InboundModel>().ToListAsync();
         public Task SaveInboundOrderAsync(InboundModel item) => item.Id != 0 ? _database.UpdateAsync(item) : _database.InsertAsync(item);
         public Task DeleteInboundOrderAsync(InboundModel item) => _database.DeleteAsync(item);
         public async Task<List<string>> GetSupplierListAsync() => await _database.QueryScalarsAsync<string>("SELECT DISTINCT Supplier FROM InboundModel WHERE Supplier IS NOT NULL");
 
-        // --- 出库 ---
         public Task<List<OutboundModel>> GetOutboundOrdersAsync() => _database.Table<OutboundModel>().ToListAsync();
         public Task SaveOutboundOrderAsync(OutboundModel item) => item.Id != 0 ? _database.UpdateAsync(item) : _database.InsertAsync(item);
         public Task DeleteOutboundOrderAsync(OutboundModel item) => _database.DeleteAsync(item);
         public async Task<List<string>> GetCustomerListAsync() => await _database.QueryScalarsAsync<string>("SELECT DISTINCT Customer FROM OutboundModel WHERE Customer IS NOT NULL");
 
-        // --- 退货 ---
         public Task<List<ReturnModel>> GetReturnOrdersAsync() => _database.Table<ReturnModel>().ToListAsync();
         public Task SaveReturnOrderAsync(ReturnModel item) => item.Id != 0 ? _database.UpdateAsync(item) : _database.InsertAsync(item);
         public Task DeleteReturnOrderAsync(ReturnModel item) => _database.DeleteAsync(item);
 
-        // --- 下拉列表辅助 ---
         public async Task<List<string>> GetProductListAsync()
             => await _database.QueryScalarsAsync<string>("SELECT DISTINCT ProductName FROM InboundModel WHERE ProductName IS NOT NULL");
 

@@ -54,7 +54,7 @@ namespace WMS.Client.Services
             PackageStore.RemovePackage(packUri);
         }
 
-        // 🟢 财务报表打印
+        // 🟢 修正为简体中文
         public void PrintFinancialReport(IEnumerable<FinancialSummaryModel> data)
         {
             var doc = CreateFlowDocument("财务收支统计报表", new string[] { "产品名称", "采购总成本", "销售总收入", "退款总额", "毛利/结余" });
@@ -72,7 +72,6 @@ namespace WMS.Client.Services
                 row.Cells.Add(CreateCell(item.TotalRefund.ToString("C2")));
 
                 var profitCell = CreateCell(item.GrossProfit.ToString("C2"));
-                // 利润为负数时标红
                 if (item.GrossProfit < 0) profitCell.Foreground = Brushes.Red;
                 else profitCell.Foreground = Brushes.Green;
 
@@ -80,6 +79,33 @@ namespace WMS.Client.Services
                 rowGroup.Rows.Add(row);
             }
             PrintDocument(doc, "FinancialReport");
+        }
+
+        // 🟢 修正为简体中文
+        public void PrintPeriodReport(IEnumerable<FinancialReportModel> data, string reportTitle)
+        {
+            var doc = CreateFlowDocument(reportTitle, new string[] { "时间段", "总收入", "总成本", "总退款", "净利润" });
+
+            var table = doc.Blocks.OfType<Table>().FirstOrDefault();
+            if (table == null) return;
+            var rowGroup = table.RowGroups[1];
+
+            foreach (var item in data)
+            {
+                var row = new TableRow();
+                row.Cells.Add(CreateCell(item.PeriodName));
+                row.Cells.Add(CreateCell(item.Revenue.ToString("C2")));
+                row.Cells.Add(CreateCell(item.Cost.ToString("C2")));
+                row.Cells.Add(CreateCell(item.Refund.ToString("C2")));
+
+                var profitCell = CreateCell(item.Profit.ToString("C2"));
+                if (item.Profit < 0) profitCell.Foreground = Brushes.Red;
+                else profitCell.Foreground = Brushes.Green;
+
+                row.Cells.Add(profitCell);
+                rowGroup.Rows.Add(row);
+            }
+            PrintDocument(doc, "PeriodReport");
         }
 
         public void PrintInboundReport(IEnumerable<InboundModel> data)
