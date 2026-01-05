@@ -75,11 +75,56 @@
                           HeadersVisibility="All"
                           SelectionMode="Single"
                           Style="{StaticResource MaterialDesignDataGrid}">
+
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="*" FontWeight="Bold"/>
-                        <DataGridTextColumn Header="入库总量" Binding="{Binding TotalInbound}" Width="150"/>
-                        <DataGridTextColumn Header="出库总量" Binding="{Binding TotalOutbound}" Width="150"/>
-                        <DataGridTextColumn Header="当前库存" Binding="{Binding CurrentStock}" Width="150" FontWeight="Bold" Foreground="#3F51B5"/>
+                        <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="2*">
+                            <DataGridTextColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                    <Setter Property="Padding" Value="10,0,0,0"/>
+                                </Style>
+                            </DataGridTextColumn.HeaderStyle>
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Left" />
+                                    <Setter Property="Padding" Value="10,0,0,0"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="入库总量" Binding="{Binding TotalInbound}" Width="1*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="出库总量" Binding="{Binding TotalOutbound}" Width="1*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="当前库存" Binding="{Binding CurrentStock}" Width="1*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#3F51B5"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Setter Property="HorizontalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>
