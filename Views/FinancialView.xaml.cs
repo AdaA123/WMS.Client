@@ -1,28 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace WMS.Client.Views
 {
-    /// <summary>
-    /// FinancialView.xaml 的交互逻辑
-    /// </summary>
     public partial class FinancialView : UserControl
     {
         public FinancialView()
         {
             InitializeComponent();
+        }
+
+        // 🟢 核心修复：处理子表格的滚轮事件
+        private void InnerDataGrid_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (!e.Handled)
+            {
+                // 1. 标记事件已处理，防止子表格内部消化
+                e.Handled = true;
+
+                // 2. 构造一个新的滚轮事件
+                var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta);
+                eventArg.RoutedEvent = UIElement.MouseWheelEvent;
+                eventArg.Source = sender;
+
+                // 3. 获取父级元素 (StackPanel) 并向上冒泡事件
+                var parent = ((Control)sender).Parent as UIElement;
+                parent?.RaiseEvent(eventArg);
+            }
         }
     }
 }

@@ -7,6 +7,8 @@
              mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="900">
 
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+
         <Style x:Key="CenterText" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -41,10 +43,19 @@
                     </StackPanel>
 
                     <DataGrid ItemsSource="{Binding Details}" 
-                              AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                              HeadersVisibility="Column" SelectionMode="Single"
-                              Background="White" BorderThickness="1" BorderBrush="#EEEEEE"
+                              PreviewMouseWheel="InnerDataGrid_PreviewMouseWheel"
+                              AutoGenerateColumns="False" 
+                              CanUserAddRows="False" 
+                              IsReadOnly="True"
+                              HeadersVisibility="Column" 
+                              SelectionMode="Single"
+                              Background="White" 
+                              BorderThickness="1" 
+                              BorderBrush="#EEEEEE"
+                              VerticalScrollBarVisibility="Disabled"
+                              Focusable="False"
                               materialDesign:DataGridAssist.ColumnHeaderPadding="8">
+
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="200" FontWeight="Medium"/>
                             <DataGridTextColumn Header="收入" Binding="{Binding Revenue, StringFormat=C2}" Width="100" Foreground="#4CAF50"/>
@@ -140,6 +151,7 @@
                 <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}" Margin="5">
                     <TabItem Header="单品利润分析" FontSize="16">
                         <DataGrid ItemsSource="{Binding FinancialList}" 
+                                  ScrollViewer.CanContentScroll="False"
                                   AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                                   HeadersVisibility="All" SelectionMode="Single"
                                   Style="{StaticResource MaterialDesignDataGrid}">
@@ -176,6 +188,7 @@
 
                     <TabItem Header="月度报表" FontSize="16">
                         <DataGrid ItemsSource="{Binding MonthlyList}" 
+                                  ScrollViewer.CanContentScroll="False"
                                   AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                                   HeadersVisibility="All" SelectionMode="Extended"
                                   RowDetailsTemplate="{StaticResource FinancialDetailsTemplate}"
@@ -183,12 +196,7 @@
 
                             <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
-                                    <Setter Property="DetailsVisibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsExpanded}" Value="True">
-                                            <Setter Property="DetailsVisibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
+                                    <Setter Property="DetailsVisibility" Value="{Binding IsExpanded, Converter={StaticResource BoolToVisConverter}}"/>
                                 </Style>
                             </DataGrid.RowStyle>
 
@@ -228,6 +236,7 @@
 
                     <TabItem Header="年度报表" FontSize="16">
                         <DataGrid ItemsSource="{Binding YearlyList}" 
+                                  ScrollViewer.CanContentScroll="False"
                                   AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                                   HeadersVisibility="All" SelectionMode="Extended"
                                   RowDetailsTemplate="{StaticResource FinancialDetailsTemplate}"
@@ -235,12 +244,7 @@
 
                             <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
-                                    <Setter Property="DetailsVisibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsExpanded}" Value="True">
-                                            <Setter Property="DetailsVisibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
+                                    <Setter Property="DetailsVisibility" Value="{Binding IsExpanded, Converter={StaticResource BoolToVisConverter}}"/>
                                 </Style>
                             </DataGrid.RowStyle>
 

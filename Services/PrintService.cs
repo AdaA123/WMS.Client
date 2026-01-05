@@ -54,7 +54,6 @@ namespace WMS.Client.Services
             PackageStore.RemovePackage(packUri);
         }
 
-        // 🟢 修正为简体中文
         public void PrintFinancialReport(IEnumerable<FinancialSummaryModel> data)
         {
             var doc = CreateFlowDocument("财务收支统计报表", new string[] { "产品名称", "采购总成本", "销售总收入", "退款总额", "毛利/结余" });
@@ -66,7 +65,8 @@ namespace WMS.Client.Services
             foreach (var item in data)
             {
                 var row = new TableRow();
-                row.Cells.Add(CreateCell(item.ProductName));
+                // 🟢 修复：添加 ?? "" 防止空引用
+                row.Cells.Add(CreateCell(item.ProductName ?? ""));
                 row.Cells.Add(CreateCell(item.TotalCost.ToString("C2")));
                 row.Cells.Add(CreateCell(item.TotalRevenue.ToString("C2")));
                 row.Cells.Add(CreateCell(item.TotalRefund.ToString("C2")));
@@ -81,7 +81,6 @@ namespace WMS.Client.Services
             PrintDocument(doc, "FinancialReport");
         }
 
-        // 🟢 修正为简体中文
         public void PrintPeriodReport(IEnumerable<FinancialReportModel> data, string reportTitle)
         {
             var doc = CreateFlowDocument(reportTitle, new string[] { "时间段", "总收入", "总成本", "总退款", "净利润" });
@@ -93,7 +92,8 @@ namespace WMS.Client.Services
             foreach (var item in data)
             {
                 var row = new TableRow();
-                row.Cells.Add(CreateCell(item.PeriodName));
+                // 🟢 修复：添加 ?? "" 防止空引用
+                row.Cells.Add(CreateCell(item.PeriodName ?? ""));
                 row.Cells.Add(CreateCell(item.Revenue.ToString("C2")));
                 row.Cells.Add(CreateCell(item.Cost.ToString("C2")));
                 row.Cells.Add(CreateCell(item.Refund.ToString("C2")));
@@ -112,13 +112,15 @@ namespace WMS.Client.Services
         {
             var doc = CreateFlowDocument("入库单汇总报表", new string[] { "单号", "产品名称", "供应商", "数量", "单价", "日期" });
             var table = doc.Blocks.OfType<Table>().FirstOrDefault();
+            if (table == null) return;
             var rowGroup = table.RowGroups[1];
             foreach (var item in data)
             {
                 var row = new TableRow();
-                row.Cells.Add(CreateCell(item.OrderNo));
-                row.Cells.Add(CreateCell(item.ProductName));
-                row.Cells.Add(CreateCell(item.Supplier));
+                // 🟢 修复：处理多个可能为空的字段
+                row.Cells.Add(CreateCell(item.OrderNo ?? ""));
+                row.Cells.Add(CreateCell(item.ProductName ?? ""));
+                row.Cells.Add(CreateCell(item.Supplier ?? ""));
                 row.Cells.Add(CreateCell(item.Quantity.ToString()));
                 row.Cells.Add(CreateCell(item.Price.ToString("C2")));
                 row.Cells.Add(CreateCell(item.InboundDate.ToString("yyyy-MM-dd")));
@@ -131,13 +133,14 @@ namespace WMS.Client.Services
         {
             var doc = CreateFlowDocument("出库单汇总报表", new string[] { "单号", "产品名称", "客户", "数量", "售价", "日期" });
             var table = doc.Blocks.OfType<Table>().FirstOrDefault();
+            if (table == null) return;
             var rowGroup = table.RowGroups[1];
             foreach (var item in data)
             {
                 var row = new TableRow();
-                row.Cells.Add(CreateCell(item.OrderNo));
-                row.Cells.Add(CreateCell(item.ProductName));
-                row.Cells.Add(CreateCell(item.Customer));
+                row.Cells.Add(CreateCell(item.OrderNo ?? ""));
+                row.Cells.Add(CreateCell(item.ProductName ?? ""));
+                row.Cells.Add(CreateCell(item.Customer ?? ""));
                 row.Cells.Add(CreateCell(item.Quantity.ToString()));
                 row.Cells.Add(CreateCell(item.Price.ToString("C2")));
                 row.Cells.Add(CreateCell(item.OutboundDate.ToString("yyyy-MM-dd")));
@@ -150,11 +153,12 @@ namespace WMS.Client.Services
         {
             var doc = CreateFlowDocument("当前库存汇总报表", new string[] { "产品名称", "入库总量", "出库总量", "当前库存" });
             var table = doc.Blocks.OfType<Table>().FirstOrDefault();
+            if (table == null) return;
             var rowGroup = table.RowGroups[1];
             foreach (var item in data)
             {
                 var row = new TableRow();
-                row.Cells.Add(CreateCell(item.ProductName));
+                row.Cells.Add(CreateCell(item.ProductName ?? ""));
                 row.Cells.Add(CreateCell(item.TotalInbound.ToString()));
                 row.Cells.Add(CreateCell(item.TotalOutbound.ToString()));
                 var stockCell = CreateCell(item.CurrentStock.ToString());

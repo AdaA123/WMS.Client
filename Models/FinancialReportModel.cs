@@ -6,18 +6,18 @@ namespace WMS.Client.Models
 {
     public partial class FinancialReportModel : ObservableObject
     {
-        public string PeriodName { get; set; }
+        // 🟢 修复：初始化为 string.Empty 消除 CS8618 警告
+        public string PeriodName { get; set; } = string.Empty;
         public DateTime PeriodDate { get; set; }
+
         public decimal Revenue { get; set; }
         public decimal Cost { get; set; }
         public decimal Refund { get; set; }
-
         public decimal Profit => Revenue - Cost - Refund;
         public string ProfitMargin => Revenue == 0 ? "0%" : $"{(Profit / Revenue):P1}";
 
         public List<FinancialDetailModel> Details { get; set; } = new List<FinancialDetailModel>();
 
-        // 🟢 手动实现属性通知，确保万无一失
         private bool _isExpanded;
         public bool IsExpanded
         {
@@ -28,7 +28,8 @@ namespace WMS.Client.Models
 
     public class FinancialDetailModel
     {
-        public string ProductName { get; set; }
+        // 🟢 修复：初始化为 string.Empty 消除 CS8618 警告
+        public string ProductName { get; set; } = string.Empty;
         public decimal Revenue { get; set; }
         public decimal Cost { get; set; }
         public decimal Refund { get; set; }
