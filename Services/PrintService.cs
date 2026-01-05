@@ -54,15 +54,39 @@ namespace WMS.Client.Services
             PackageStore.RemovePackage(packUri);
         }
 
-        // 1. 打印入库单 (简体中文)
-        public void PrintInboundReport(IEnumerable<InboundModel> data)
+        // 🟢 财务报表打印
+        public void PrintFinancialReport(IEnumerable<FinancialSummaryModel> data)
         {
-            var doc = CreateFlowDocument("入库单汇总报表", new string[] { "单号", "产品名称", "供应商", "数量", "单价", "日期" });
+            var doc = CreateFlowDocument("财务收支统计报表", new string[] { "产品名称", "采购总成本", "销售总收入", "退款总额", "毛利/结余" });
 
             var table = doc.Blocks.OfType<Table>().FirstOrDefault();
             if (table == null) return;
             var rowGroup = table.RowGroups[1];
 
+            foreach (var item in data)
+            {
+                var row = new TableRow();
+                row.Cells.Add(CreateCell(item.ProductName));
+                row.Cells.Add(CreateCell(item.TotalCost.ToString("C2")));
+                row.Cells.Add(CreateCell(item.TotalRevenue.ToString("C2")));
+                row.Cells.Add(CreateCell(item.TotalRefund.ToString("C2")));
+
+                var profitCell = CreateCell(item.GrossProfit.ToString("C2"));
+                // 利润为负数时标红
+                if (item.GrossProfit < 0) profitCell.Foreground = Brushes.Red;
+                else profitCell.Foreground = Brushes.Green;
+
+                row.Cells.Add(profitCell);
+                rowGroup.Rows.Add(row);
+            }
+            PrintDocument(doc, "FinancialReport");
+        }
+
+        public void PrintInboundReport(IEnumerable<InboundModel> data)
+        {
+            var doc = CreateFlowDocument("入库单汇总报表", new string[] { "单号", "产品名称", "供应商", "数量", "单价", "日期" });
+            var table = doc.Blocks.OfType<Table>().FirstOrDefault();
+            var rowGroup = table.RowGroups[1];
             foreach (var item in data)
             {
                 var row = new TableRow();
@@ -77,15 +101,11 @@ namespace WMS.Client.Services
             PrintDocument(doc, "InboundReport");
         }
 
-        // 2. 打印出库单 (简体中文)
         public void PrintOutboundReport(IEnumerable<OutboundModel> data)
         {
             var doc = CreateFlowDocument("出库单汇总报表", new string[] { "单号", "产品名称", "客户", "数量", "售价", "日期" });
-
             var table = doc.Blocks.OfType<Table>().FirstOrDefault();
-            if (table == null) return;
             var rowGroup = table.RowGroups[1];
-
             foreach (var item in data)
             {
                 var row = new TableRow();
@@ -100,26 +120,20 @@ namespace WMS.Client.Services
             PrintDocument(doc, "OutboundReport");
         }
 
-        // 3. 打印库存汇总 (简体中文)
         public void PrintInventoryReport(IEnumerable<InventorySummaryModel> data)
         {
             var doc = CreateFlowDocument("当前库存汇总报表", new string[] { "产品名称", "入库总量", "出库总量", "当前库存" });
-
             var table = doc.Blocks.OfType<Table>().FirstOrDefault();
-            if (table == null) return;
             var rowGroup = table.RowGroups[1];
-
             foreach (var item in data)
             {
                 var row = new TableRow();
                 row.Cells.Add(CreateCell(item.ProductName));
                 row.Cells.Add(CreateCell(item.TotalInbound.ToString()));
                 row.Cells.Add(CreateCell(item.TotalOutbound.ToString()));
-
                 var stockCell = CreateCell(item.CurrentStock.ToString());
                 if (item.CurrentStock < 10) stockCell.Foreground = Brushes.Red;
                 row.Cells.Add(stockCell);
-
                 rowGroup.Rows.Add(row);
             }
             PrintDocument(doc, "InventoryReport");

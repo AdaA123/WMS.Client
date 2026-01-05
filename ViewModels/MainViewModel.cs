@@ -19,6 +19,7 @@ namespace WMS.Client.ViewModels
         private readonly InboundViewModel _inboundVM;
         private readonly OutboundViewModel _outboundVM;
         private readonly ReturnViewModel _returnVM;
+        private readonly FinancialViewModel _financialVM; // 🟢 新增
 
         public MainViewModel(UserModel user)
         {
@@ -28,6 +29,7 @@ namespace WMS.Client.ViewModels
             _inboundVM = new InboundViewModel();
             _outboundVM = new OutboundViewModel();
             _returnVM = new ReturnViewModel();
+            _financialVM = new FinancialViewModel(); // 🟢 初始化
 
             CurrentView = _homeVM;
         }
@@ -41,23 +43,23 @@ namespace WMS.Client.ViewModels
             {
                 case "Home":
                     CurrentView = _homeVM;
-                    // 首页刷新
                     _ = _homeVM.LoadDashboardDataCommand.ExecuteAsync(null);
                     break;
                 case "Inbound":
                     CurrentView = _inboundVM;
-                    // 🟢 切换到入库页时，刷新数据
                     _ = _inboundVM.RefreshDataAsync();
                     break;
                 case "Outbound":
                     CurrentView = _outboundVM;
-                    // 🟢 切换到出库页时，刷新数据（比如产品列表）
                     _ = _outboundVM.RefreshDataAsync();
                     break;
                 case "Return":
                     CurrentView = _returnVM;
-                    // 🟢 切换到退货页时，刷新数据（立刻就能看到新出库的香蕉了）
                     _ = _returnVM.RefreshDataAsync();
+                    break;
+                case "Financial": // 🟢 新增导航 case
+                    CurrentView = _financialVM;
+                    _ = _financialVM.RefreshDataAsync();
                     break;
             }
         }

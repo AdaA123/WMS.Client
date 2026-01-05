@@ -61,6 +61,13 @@
                             <TextBlock Text="退货管理" Margin="15,0,0,0" FontSize="15" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
+
+                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}" Height="55" Margin="10,5" Padding="15,0" Command="{Binding NavigateCommand}" CommandParameter="Financial" Foreground="White" BorderThickness="0" materialDesign:ButtonAssist.CornerRadius="8">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Finance" Width="22" Height="22" VerticalAlignment="Center"/>
+                            <TextBlock Text="财务管理" Margin="15,0,0,0" FontSize="15" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
                 </StackPanel>
             </DockPanel>
         </Border>

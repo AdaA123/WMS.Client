@@ -59,6 +59,39 @@ namespace WMS.Client.Services
         public Task<int> GetTotalOutboundCountAsync() => _database.Table<OutboundModel>().CountAsync();
         public Task<int> GetTotalReturnCountAsync() => _database.Table<ReturnModel>().CountAsync();
 
+        // 🟢 财务汇总 (新增)
+        public async Task<List<FinancialSummaryModel>> GetFinancialSummaryAsync()
+        {
+            var inbounds = await _database.Table<InboundModel>().ToListAsync();
+            var outbounds = await _database.Table<OutboundModel>().ToListAsync();
+            var returns = await _database.Table<ReturnModel>().ToListAsync();
+
+            var allProducts = inbounds.Select(x => x.ProductName)
+                                      .Union(outbounds.Select(x => x.ProductName))
+                                      .Union(returns.Select(x => x.ProductName))
+                                      .Distinct()
+                                      .Where(x => !string.IsNullOrEmpty(x))
+                                      .ToList();
+
+            var list = new List<FinancialSummaryModel>();
+            foreach (var name in allProducts)
+            {
+                // 计算该产品的各项总金额
+                var cost = inbounds.Where(x => x.ProductName == name).Sum(x => x.Quantity * x.Price);
+                var rev = outbounds.Where(x => x.ProductName == name).Sum(x => x.Quantity * x.Price);
+                var refd = returns.Where(x => x.ProductName == name).Sum(x => x.Price); // 退货表中的Price即为退款金额
+
+                list.Add(new FinancialSummaryModel
+                {
+                    ProductName = name,
+                    TotalCost = cost,
+                    TotalRevenue = rev,
+                    TotalRefund = refd
+                });
+            }
+            return list.OrderByDescending(x => x.GrossProfit).ToList();
+        }
+
         public async Task<List<InventorySummaryModel>> GetInventorySummaryAsync()
         {
             var inbounds = await _database.Table<InboundModel>().ToListAsync();

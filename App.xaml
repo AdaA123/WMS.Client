@@ -24,15 +24,21 @@
             <DataTemplate DataType="{x:Type vm:HomeViewModel}">
                 <v:HomeView />
             </DataTemplate>
+
             <DataTemplate DataType="{x:Type vm:InboundViewModel}">
                 <v:InboundView />
             </DataTemplate>
+
             <DataTemplate DataType="{x:Type vm:OutboundViewModel}">
                 <v:OutboundView />
             </DataTemplate>
 
             <DataTemplate DataType="{x:Type vm:ReturnViewModel}">
                 <v:ReturnView />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:FinancialViewModel}">
+                <v:FinancialView />
             </DataTemplate>
 
         </ResourceDictionary>

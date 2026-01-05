@@ -23,7 +23,6 @@ namespace WMS.Client.Services
 
                 if (dialog.ShowDialog() == true)
                 {
-                    // 使用带 BOM 的 UTF8，确保 Excel 打开中文不乱码
                     using (var sw = new StreamWriter(dialog.FileName, false, new UTF8Encoding(true)))
                     {
                         sw.WriteLine(header);
@@ -39,6 +38,19 @@ namespace WMS.Client.Services
             {
                 MessageBox.Show($"导出过程中发生错误：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        // 🟢 财务报表导出
+        public void ExportFinancials(IEnumerable<FinancialSummaryModel> data)
+        {
+            string header = "产品名称,采购总成本,销售总收入,退款总额,毛利润(现金流)";
+            var lines = new List<string>();
+            foreach (var item in data)
+            {
+                string name = item.ProductName?.Replace(",", "，") ?? "";
+                lines.Add($"{name},{item.TotalCost},{item.TotalRevenue},{item.TotalRefund},{item.GrossProfit}");
+            }
+            SaveCsv("财务收支报表", header, lines);
         }
 
         public void ExportInventory(IEnumerable<InventorySummaryModel> data)
