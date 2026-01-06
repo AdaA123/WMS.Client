@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,12 +20,18 @@ namespace WMS.Client.ViewModels
         public ObservableCollection<InboundModel> InboundList { get; } = new();
         public ObservableCollection<string> Suppliers { get; } = new();
 
+        // 🟢 缓存原始数据
+        private List<InboundModel> _cachedList = new();
+
+        // 🟢 搜索属性
+        [ObservableProperty] private string _searchText = "";
+        partial void OnSearchTextChanged(string value) => ProcessData();
+
         public ObservableCollection<string> SortOptions { get; } = new() { "时间 (最新)", "时间 (最早)", "产品名称", "供应商" };
         [ObservableProperty] private string _selectedSortOption = "时间 (最新)";
-        partial void OnSelectedSortOptionChanged(string value) => SortData();
+        partial void OnSelectedSortOptionChanged(string value) => ProcessData();
 
-        [ObservableProperty]
-        private InboundModel _newInbound = new();
+        [ObservableProperty] private InboundModel _newInbound = new();
 
         public InboundViewModel()
         {
@@ -34,11 +41,44 @@ namespace WMS.Client.ViewModels
             _ = RefreshDataAsync();
         }
 
-        // 🟢 供外部调用的刷新方法
         public async Task RefreshDataAsync()
         {
-            await LoadData();
-            await LoadSuppliers();
+            // 1. 加载数据到缓存
+            _cachedList = await _dbService.GetInboundOrdersAsync();
+            // 2. 加载下拉框
+            var suppliers = await _dbService.GetSupplierListAsync();
+            Suppliers.Clear();
+            foreach (var s in suppliers) Suppliers.Add(s);
+            // 3. 处理筛选和排序
+            ProcessData();
+        }
+
+        private void ProcessData()
+        {
+            var query = _cachedList.AsEnumerable();
+
+            // 筛选
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                string key = SearchText.Trim().ToLower();
+                query = query.Where(x =>
+                    (x.OrderNo?.ToLower().Contains(key) ?? false) ||
+                    (x.ProductName?.ToLower().Contains(key) ?? false) ||
+                    (x.Supplier?.ToLower().Contains(key) ?? false));
+            }
+
+            // 排序
+            query = SelectedSortOption switch
+            {
+                "时间 (最新)" => query.OrderByDescending(x => x.InboundDate),
+                "时间 (最早)" => query.OrderBy(x => x.InboundDate),
+                "产品名称" => query.OrderBy(x => x.ProductName),
+                "供应商" => query.OrderBy(x => x.Supplier),
+                _ => query.OrderByDescending(x => x.InboundDate)
+            };
+
+            InboundList.Clear();
+            foreach (var item in query) InboundList.Add(item);
         }
 
         [RelayCommand]
@@ -58,23 +98,13 @@ namespace WMS.Client.ViewModels
         }
 
         [RelayCommand]
-        private void Cancel()
-        {
-            NewInbound = new InboundModel();
-        }
+        private void Cancel() => NewInbound = new InboundModel();
 
         [RelayCommand]
         private async Task Save()
         {
-            if (string.IsNullOrWhiteSpace(NewInbound.ProductName))
-            {
-                MessageBox.Show("产品名称不能为空！"); return;
-            }
-            if (NewInbound.Quantity <= 0)
-            {
-                MessageBox.Show("数量必须大于 0！"); return;
-            }
-
+            if (string.IsNullOrWhiteSpace(NewInbound.ProductName)) { MessageBox.Show("产品名称不能为空！"); return; }
+            if (NewInbound.Quantity <= 0) { MessageBox.Show("数量必须大于 0！"); return; }
             try
             {
                 if (NewInbound.Id == 0)
@@ -82,15 +112,11 @@ namespace WMS.Client.ViewModels
                     NewInbound.OrderNo = $"RK{DateTime.Now:yyyyMMddHHmmss}";
                     NewInbound.InboundDate = DateTime.Now;
                 }
-
                 await _dbService.SaveInboundOrderAsync(NewInbound);
                 await RefreshDataAsync();
                 NewInbound = new InboundModel();
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"保存失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            catch (Exception ex) { MessageBox.Show($"保存失败：{ex.Message}"); }
         }
 
         [RelayCommand]
@@ -111,42 +137,12 @@ namespace WMS.Client.ViewModels
         private async Task Delete(InboundModel item)
         {
             if (item == null) return;
-            if (MessageBox.Show($"确认删除单号 [{item.OrderNo}] 吗？", "删除确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            if (MessageBox.Show($"确认删除单号 [{item.OrderNo}] 吗？", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 await _dbService.DeleteInboundOrderAsync(item);
                 await RefreshDataAsync();
                 if (NewInbound.Id == item.Id) NewInbound = new InboundModel();
             }
-        }
-
-        private async Task LoadData()
-        {
-            var list = await _dbService.GetInboundOrdersAsync();
-            InboundList.Clear();
-            foreach (var item in list) InboundList.Add(item);
-            SortData();
-        }
-
-        private async Task LoadSuppliers()
-        {
-            var list = await _dbService.GetSupplierListAsync();
-            Suppliers.Clear();
-            foreach (var item in list) if (!string.IsNullOrEmpty(item)) Suppliers.Add(item);
-        }
-
-        private void SortData()
-        {
-            if (InboundList.Count == 0) return;
-            var sorted = SelectedSortOption switch
-            {
-                "时间 (最新)" => InboundList.OrderByDescending(x => x.InboundDate).ToList(),
-                "时间 (最早)" => InboundList.OrderBy(x => x.InboundDate).ToList(),
-                "产品名称" => InboundList.OrderBy(x => x.ProductName).ToList(),
-                "供应商" => InboundList.OrderBy(x => x.Supplier).ToList(),
-                _ => InboundList.OrderByDescending(x => x.InboundDate).ToList()
-            };
-            InboundList.Clear();
-            foreach (var item in sorted) InboundList.Add(item);
         }
     }
 }

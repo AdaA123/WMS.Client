@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,9 +20,14 @@ namespace WMS.Client.ViewModels
         public ObservableCollection<string> ProductList { get; } = new();
         public ObservableCollection<string> Customers { get; } = new();
 
+        private List<ReturnModel> _cachedList = new();
+
+        [ObservableProperty] private string _searchText = "";
+        partial void OnSearchTextChanged(string value) => ProcessData();
+
         public ObservableCollection<string> SortOptions { get; } = new() { "时间 (最新)", "时间 (最早)", "产品名称", "客户" };
         [ObservableProperty] private string _selectedSortOption = "时间 (最新)";
-        partial void OnSelectedSortOptionChanged(string value) => SortData();
+        partial void OnSelectedSortOptionChanged(string value) => ProcessData();
 
         [ObservableProperty] private ReturnModel _newReturn = new();
 
@@ -29,52 +35,54 @@ namespace WMS.Client.ViewModels
         {
             _dbService = new DatabaseService();
             _exportService = new ExportService();
-            _ = RefreshDataAsync(); // 初始加载
+            _ = RefreshDataAsync();
         }
 
-        // 🟢 关键：这个方法供 MainViewModel 切换页面时调用
         public async Task RefreshDataAsync()
         {
-            await LoadData();
-            await LoadLists(); // 重新加载下拉列表（这就包含了新出库的香蕉）
+            _cachedList = await _dbService.GetReturnOrdersAsync();
+            var prods = await _dbService.GetShippedProductListAsync();
+            ProductList.Clear(); foreach (var p in prods) ProductList.Add(p);
+            var custs = await _dbService.GetCustomerListAsync();
+            Customers.Clear(); foreach (var c in custs) Customers.Add(c);
+            ProcessData();
         }
 
-        [RelayCommand]
-        private void Edit(ReturnModel item)
+        private void ProcessData()
         {
-            if (item == null) return;
-            NewReturn = new ReturnModel
+            var query = _cachedList.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(SearchText))
             {
-                Id = item.Id,
-                ReturnNo = item.ReturnNo,
-                ProductName = item.ProductName,
-                Quantity = item.Quantity,
-                Price = item.Price,
-                Customer = item.Customer,
-                Reason = item.Reason,
-                ReturnDate = item.ReturnDate
+                string key = SearchText.Trim().ToLower();
+                query = query.Where(x =>
+                    (x.ReturnNo?.ToLower().Contains(key) ?? false) ||
+                    (x.ProductName?.ToLower().Contains(key) ?? false) ||
+                    (x.Customer?.ToLower().Contains(key) ?? false));
+            }
+
+            query = SelectedSortOption switch
+            {
+                "时间 (最新)" => query.OrderByDescending(x => x.ReturnDate),
+                "时间 (最早)" => query.OrderBy(x => x.ReturnDate),
+                "产品名称" => query.OrderBy(x => x.ProductName),
+                "客户" => query.OrderBy(x => x.Customer),
+                _ => query.OrderByDescending(x => x.ReturnDate)
             };
+
+            ReturnList.Clear();
+            foreach (var item in query) ReturnList.Add(item);
         }
 
-        [RelayCommand]
-        private void Cancel()
-        {
-            NewReturn = new ReturnModel();
-        }
-
-        [RelayCommand]
-        private void Export()
-        {
-            if (ReturnList.Count == 0) { MessageBox.Show("无数据可导出"); return; }
-            _exportService.ExportReturn(ReturnList);
-        }
+        [RelayCommand] private void Edit(ReturnModel item) { if (item == null) return; NewReturn = new ReturnModel { Id = item.Id, ReturnNo = item.ReturnNo, ProductName = item.ProductName, Quantity = item.Quantity, Price = item.Price, Customer = item.Customer, Reason = item.Reason, ReturnDate = item.ReturnDate }; }
+        [RelayCommand] private void Cancel() => NewReturn = new ReturnModel();
+        [RelayCommand] private void Export() { if (ReturnList.Count == 0) { MessageBox.Show("无数据可导出"); return; } _exportService.ExportReturn(ReturnList); }
 
         [RelayCommand]
         private async Task Save()
         {
             if (string.IsNullOrWhiteSpace(NewReturn.ProductName)) { MessageBox.Show("请选择产品！"); return; }
             if (NewReturn.Quantity <= 0) { MessageBox.Show("数量必须大于 0！"); return; }
-
             try
             {
                 if (NewReturn.Id == 0)
@@ -84,9 +92,8 @@ namespace WMS.Client.ViewModels
                 }
                 if (string.IsNullOrEmpty(NewReturn.Customer)) NewReturn.Customer = "散客";
                 if (string.IsNullOrEmpty(NewReturn.Reason)) NewReturn.Reason = "无理由退货";
-
                 await _dbService.SaveReturnOrderAsync(NewReturn);
-                await RefreshDataAsync(); // 保存后自动刷新
+                await RefreshDataAsync();
                 NewReturn = new ReturnModel();
             }
             catch (Exception ex) { MessageBox.Show($"保存失败：{ex.Message}"); }
@@ -101,40 +108,6 @@ namespace WMS.Client.ViewModels
                 await RefreshDataAsync();
                 if (NewReturn.Id == item.Id) NewReturn = new ReturnModel();
             }
-        }
-
-        private async Task LoadData()
-        {
-            var list = await _dbService.GetReturnOrdersAsync();
-            ReturnList.Clear();
-            foreach (var item in list) ReturnList.Add(item);
-            SortData();
-        }
-
-        private async Task LoadLists()
-        {
-            var prods = await _dbService.GetShippedProductListAsync();
-            ProductList.Clear();
-            foreach (var p in prods) if (!string.IsNullOrEmpty(p)) ProductList.Add(p);
-
-            var custs = await _dbService.GetCustomerListAsync();
-            Customers.Clear();
-            foreach (var c in custs) if (!string.IsNullOrEmpty(c)) Customers.Add(c);
-        }
-
-        private void SortData()
-        {
-            if (ReturnList.Count == 0) return;
-            var sorted = SelectedSortOption switch
-            {
-                "时间 (最新)" => ReturnList.OrderByDescending(x => x.ReturnDate).ToList(),
-                "时间 (最早)" => ReturnList.OrderBy(x => x.ReturnDate).ToList(),
-                "产品名称" => ReturnList.OrderBy(x => x.ProductName).ToList(),
-                "客户" => ReturnList.OrderBy(x => x.Customer).ToList(),
-                _ => ReturnList.OrderByDescending(x => x.ReturnDate).ToList()
-            };
-            ReturnList.Clear();
-            foreach (var item in sorted) ReturnList.Add(item);
         }
     }
 }

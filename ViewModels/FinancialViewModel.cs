@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using LiveCharts;
 using LiveCharts.Wpf;
 using System;
+using System.Collections.Generic; // 引入 List
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -27,14 +28,19 @@ namespace WMS.Client.ViewModels
         [ObservableProperty] private DateTime _startDate;
         [ObservableProperty] private DateTime _endDate;
 
+        // 🟢 缓存单品分析数据
+        private List<FinancialSummaryModel> _cachedFinancialList = new();
+
+        // 🟢 搜索属性
+        [ObservableProperty] private string _searchText = "";
+        partial void OnSearchTextChanged(string value) => FilterFinancialList();
+
         // --- 表格数据 ---
         public ObservableCollection<FinancialSummaryModel> FinancialList { get; } = new();
         public ObservableCollection<FinancialReportModel> MonthlyList { get; } = new();
         public ObservableCollection<FinancialReportModel> YearlyList { get; } = new();
 
         [ObservableProperty] private int _selectedTabIndex;
-
-        // 🟢 新增：控制图表是否展开 (默认为 true)
         [ObservableProperty] private bool _isChartExpanded = true;
 
         // --- 图表数据 ---
@@ -68,13 +74,16 @@ namespace WMS.Client.ViewModels
                 return;
             }
 
-            var data = await _dbService.GetFinancialSummaryAsync(StartDate, EndDate);
-            FinancialList.Clear();
-            foreach (var item in data) FinancialList.Add(item);
+            // 1. 获取并缓存单品数据
+            _cachedFinancialList = await _dbService.GetFinancialSummaryAsync(StartDate, EndDate);
 
-            TotalRevenue = FinancialList.Sum(x => x.TotalRevenue);
-            TotalCost = FinancialList.Sum(x => x.TotalCost);
-            TotalGrossProfit = TotalRevenue - TotalCost - FinancialList.Sum(x => x.TotalRefund);
+            // 2. 应用过滤
+            FilterFinancialList();
+
+            // 3. 计算总额 (基于缓存的全量数据)
+            TotalRevenue = _cachedFinancialList.Sum(x => x.TotalRevenue);
+            TotalCost = _cachedFinancialList.Sum(x => x.TotalCost);
+            TotalGrossProfit = TotalRevenue - TotalCost - _cachedFinancialList.Sum(x => x.TotalRefund);
 
             var monthData = await _dbService.GetPeriodReportAsync(isMonthly: true, StartDate, EndDate);
             MonthlyList.Clear();
@@ -87,7 +96,21 @@ namespace WMS.Client.ViewModels
             UpdateChart(monthData);
         }
 
-        private void UpdateChart(System.Collections.Generic.List<FinancialReportModel> data)
+        private void FilterFinancialList()
+        {
+            FinancialList.Clear();
+            var query = _cachedFinancialList.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                string key = SearchText.Trim().ToLower();
+                query = query.Where(x => x.ProductName != null && x.ProductName.ToLower().Contains(key));
+            }
+
+            foreach (var item in query) FinancialList.Add(item);
+        }
+
+        private void UpdateChart(List<FinancialReportModel> data)
         {
             var sortedData = data.OrderBy(x => x.PeriodDate).ToList();
             ChartLabels = sortedData.Select(x => x.PeriodName).ToArray();

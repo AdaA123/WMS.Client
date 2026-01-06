@@ -66,54 +66,63 @@
                 </StackPanel>
             </materialDesign:Card>
 
-            <DataGrid Grid.Row="1" 
-                      ItemsSource="{Binding InboundList}" 
-                      PreviewMouseWheel="DataGrid_PreviewMouseWheel"
-                      VerticalScrollBarVisibility="Disabled"
-                      HorizontalScrollBarVisibility="Auto"
-                      MinHeight="400"
-                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="All" SelectionMode="Single" Style="{StaticResource MaterialDesignDataGrid}">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="入库单号" Binding="{Binding OrderNo}" Width="Auto" MinWidth="150" FontWeight="Bold"/>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                    <DataGridTemplateColumn Header="产品名称" Width="2*">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding ProductName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding ProductName}"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10">
+                    <materialDesign:PackIcon Kind="Magnify" VerticalAlignment="Center" Foreground="Gray" Width="20" Height="20"/>
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                             materialDesign:HintAssist.Hint="搜索单号/产品/供应商..."
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                             Width="220" Margin="10,-10,0,0"/>
+                </StackPanel>
 
-                    <DataGridTextColumn Header="供应商" Binding="{Binding Supplier}" Width="1.5*"/>
-                    <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="0.8*"/>
-                    <DataGridTextColumn Header="单价" Binding="{Binding Price, StringFormat=C2}" Width="1*" Foreground="#4CAF50"/>
+                <DataGrid Grid.Row="1" 
+                          ItemsSource="{Binding InboundList}" 
+                          PreviewMouseWheel="DataGrid_PreviewMouseWheel"
+                          VerticalScrollBarVisibility="Disabled"
+                          HorizontalScrollBarVisibility="Auto"
+                          MinHeight="400"
+                          AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="All" SelectionMode="Single" Style="{StaticResource MaterialDesignDataGrid}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="入库单号" Binding="{Binding OrderNo}" Width="Auto" MinWidth="150" FontWeight="Bold"/>
 
-                    <DataGridTextColumn Header="总金额" 
-                                        Binding="{Binding TotalAmount, StringFormat=C2}" 
-                                        Width="1*" 
-                                        FontWeight="Bold" 
-                                        Foreground="#E91E63"/>
+                        <DataGridTemplateColumn Header="产品名称" Width="2*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding ProductName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding ProductName}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                    <DataGridTextColumn Header="入库日期" Binding="{Binding InboundDate, StringFormat=yyyy-MM-dd HH:mm}" Width="Auto" MinWidth="140"/>
+                        <DataGridTextColumn Header="供应商" Binding="{Binding Supplier}" Width="1.5*"/>
+                        <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="0.8*"/>
+                        <DataGridTextColumn Header="单价" Binding="{Binding Price, StringFormat=C2}" Width="1*" Foreground="#4CAF50"/>
+                        <DataGridTextColumn Header="总金额" Binding="{Binding TotalAmount, StringFormat=C2}" Width="1*" FontWeight="Bold" Foreground="#E91E63"/>
+                        <DataGridTextColumn Header="入库日期" Binding="{Binding InboundDate, StringFormat=yyyy-MM-dd HH:mm}" Width="Auto" MinWidth="140"/>
 
-                    <DataGridTemplateColumn Header="操作" Width="120">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" Width="30" Height="30"
-                                            Command="{Binding DataContext.EditCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                        <materialDesign:PackIcon Kind="Pencil" />
-                                    </Button>
-                                    <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="删除" Foreground="Red" Width="30" Height="30"
-                                            Command="{Binding DataContext.DeleteCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                        <materialDesign:PackIcon Kind="Delete" />
-                                    </Button>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
+                        <DataGridTemplateColumn Header="操作" Width="120">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" Width="30" Height="30"
+                                                Command="{Binding DataContext.EditCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                            <materialDesign:PackIcon Kind="Pencil" />
+                                        </Button>
+                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="删除" Foreground="Red" Width="30" Height="30"
+                                                Command="{Binding DataContext.DeleteCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                            <materialDesign:PackIcon Kind="Delete" />
+                                        </Button>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
         </Grid>
     </ScrollViewer>
 </UserControl>

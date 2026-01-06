@@ -6,131 +6,177 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignHeight="768" d:DesignWidth="1024"
              x:Name="Root">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
 
-        <StackPanel Margin="20">
+    <materialDesign:DialogHost Identifier="HomeDialogHost" DialogTheme="Inherit">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
 
-            <TextBlock Text="库存概览" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+            <StackPanel Margin="20">
 
-            <Grid Margin="0,0,0,20">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+                <Grid Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <materialDesign:Card Grid.Column="0" Margin="0,0,10,0" Padding="20" UniformCornerRadius="8" Background="#4CAF50">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <materialDesign:PackIcon Kind="Dolly" Width="30" Height="30" Foreground="White" VerticalAlignment="Center"/>
-                            <TextBlock Text="入库总量" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="库存概览" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Command="{Binding QuickInboundCommand}" 
+                                Style="{StaticResource MaterialDesignRaisedButton}" 
+                                Background="#4CAF50" BorderBrush="#4CAF50"
+                                Margin="0,0,10,0">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="PlaylistPlus" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="快速入库" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Command="{Binding QuickOutboundCommand}" 
+                                Style="{StaticResource MaterialDesignRaisedButton}" 
+                                Background="#2196F3" BorderBrush="#2196F3">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="PackageUp" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="快速出库" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <Grid Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <materialDesign:Card Grid.Column="0" Margin="0,0,10,0" Padding="20" UniformCornerRadius="8" Background="#4CAF50">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <materialDesign:PackIcon Kind="Dolly" Width="30" Height="30" Foreground="White" VerticalAlignment="Center"/>
+                                <TextBlock Text="入库总量" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding TotalInbound}" Foreground="White" FontSize="36" FontWeight="Bold" HorizontalAlignment="Right"/>
                         </StackPanel>
-                        <TextBlock Text="{Binding TotalInbound}" Foreground="White" FontSize="36" FontWeight="Bold" HorizontalAlignment="Right"/>
+                    </materialDesign:Card>
+
+                    <materialDesign:Card Grid.Column="1" Margin="10,0,10,0" Padding="20" UniformCornerRadius="8" Background="#2196F3">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <materialDesign:PackIcon Kind="TruckDelivery" Width="30" Height="30" Foreground="White" VerticalAlignment="Center"/>
+                                <TextBlock Text="出库总量" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding TotalOutbound}" Foreground="White" FontSize="36" FontWeight="Bold" HorizontalAlignment="Right"/>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <materialDesign:Card Grid.Column="2" Margin="10,0,0,0" Padding="20" UniformCornerRadius="8" Background="#FF9800">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <materialDesign:PackIcon Kind="KeyboardReturn" Width="30" Height="30" Foreground="White" VerticalAlignment="Center"/>
+                                <TextBlock Text="退货总量" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding TotalReturn}" Foreground="White" FontSize="36" FontWeight="Bold" HorizontalAlignment="Right"/>
+                        </StackPanel>
+                    </materialDesign:Card>
+                </Grid>
+
+                <materialDesign:Card Padding="0" UniformCornerRadius="8">
+                    <StackPanel>
+                        <Grid Margin="20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="当前库存排行" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="30,0,0,0">
+                                <materialDesign:PackIcon Kind="Magnify" VerticalAlignment="Center" Foreground="Gray" Width="20" Height="20"/>
+                                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                         materialDesign:HintAssist.Hint="搜索产品名称..."
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                         Width="200" Margin="10,-10,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="刷新数据" Command="{Binding LoadDataCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0"/>
+                                <Button Command="{Binding ExportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="FileExcel" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="导出Excel" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Content="打印报表" Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignRaisedButton}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <DataGrid ItemsSource="{Binding InventoryList}" 
+                                  PreviewMouseWheel="DataGrid_PreviewMouseWheel"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  MinHeight="400"
+                                  AutoGenerateColumns="False" 
+                                  CanUserAddRows="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="All"
+                                  SelectionMode="Single"
+                                  Style="{StaticResource MaterialDesignDataGrid}">
+
+                            <DataGrid.ColumnHeaderStyle>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                </Style>
+                            </DataGrid.ColumnHeaderStyle>
+
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="Auto" MinWidth="200">
+                                    <DataGridTextColumn.HeaderStyle>
+                                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                            <Setter Property="Padding" Value="10,0,0,0"/>
+                                        </Style>
+                                    </DataGridTextColumn.HeaderStyle>
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Left" />
+                                            <Setter Property="Padding" Value="10,0,0,0"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn Header="入库总量" Binding="{Binding TotalInbound}" Width="1*">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn Header="出库总量" Binding="{Binding TotalOutbound}" Width="1*">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn Header="当前库存" Binding="{Binding CurrentStock}" Width="1*">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#3F51B5"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
                     </StackPanel>
                 </materialDesign:Card>
-
-                <materialDesign:Card Grid.Column="1" Margin="10,0,10,0" Padding="20" UniformCornerRadius="8" Background="#2196F3">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <materialDesign:PackIcon Kind="TruckDelivery" Width="30" Height="30" Foreground="White" VerticalAlignment="Center"/>
-                            <TextBlock Text="出库总量" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <TextBlock Text="{Binding TotalOutbound}" Foreground="White" FontSize="36" FontWeight="Bold" HorizontalAlignment="Right"/>
-                    </StackPanel>
-                </materialDesign:Card>
-
-                <materialDesign:Card Grid.Column="2" Margin="10,0,0,0" Padding="20" UniformCornerRadius="8" Background="#FF9800">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <materialDesign:PackIcon Kind="KeyboardReturn" Width="30" Height="30" Foreground="White" VerticalAlignment="Center"/>
-                            <TextBlock Text="退货总量" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <TextBlock Text="{Binding TotalReturn}" Foreground="White" FontSize="36" FontWeight="Bold" HorizontalAlignment="Right"/>
-                    </StackPanel>
-                </materialDesign:Card>
-            </Grid>
-
-            <materialDesign:Card Padding="0" UniformCornerRadius="8">
-                <StackPanel>
-                    <Grid Margin="20">
-                        <TextBlock Text="当前库存排行" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="刷新数据" Command="{Binding LoadDataCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0"/>
-                            <Button Command="{Binding ExportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="FileExcel" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="导出Excel" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                            <Button Content="打印报表" Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignRaisedButton}"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <DataGrid ItemsSource="{Binding InventoryList}" 
-                              PreviewMouseWheel="DataGrid_PreviewMouseWheel"
-                              VerticalScrollBarVisibility="Disabled"
-                              HorizontalScrollBarVisibility="Auto"
-                              MinHeight="400"
-                              AutoGenerateColumns="False" 
-                              CanUserAddRows="False"
-                              IsReadOnly="True"
-                              HeadersVisibility="All"
-                              SelectionMode="Single"
-                              Style="{StaticResource MaterialDesignDataGrid}">
-
-                        <DataGrid.ColumnHeaderStyle>
-                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
-                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                <Setter Property="FontWeight" Value="Bold"/>
-                            </Style>
-                        </DataGrid.ColumnHeaderStyle>
-
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="Auto" MinWidth="200">
-                                <DataGridTextColumn.HeaderStyle>
-                                    <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Left"/>
-                                        <Setter Property="Padding" Value="10,0,0,0"/>
-                                    </Style>
-                                </DataGridTextColumn.HeaderStyle>
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Left" />
-                                        <Setter Property="Padding" Value="10,0,0,0"/>
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <DataGridTextColumn Header="入库总量" Binding="{Binding TotalInbound}" Width="1*">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center" />
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <DataGridTextColumn Header="出库总量" Binding="{Binding TotalOutbound}" Width="1*">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center" />
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <DataGridTextColumn Header="当前库存" Binding="{Binding CurrentStock}" Width="1*">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="#3F51B5"/>
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                        <Setter Property="HorizontalAlignment" Value="Center" />
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </StackPanel>
-            </materialDesign:Card>
-        </StackPanel>
-    </ScrollViewer>
+            </StackPanel>
+        </ScrollViewer>
+    </materialDesign:DialogHost>
 </UserControl>

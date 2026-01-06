@@ -5,45 +5,21 @@
              Width="420" Height="Auto" Background="White">
     <Grid Margin="20">
         <StackPanel>
-            <TextBox Text="新建出库单" 
-                     Style="{StaticResource SelectableTextBlock}" 
-                     FontSize="20" 
-                     FontWeight="Bold"
-                     Margin="0,0,0,20"/>
+            <TextBox Text="新建出库单" Style="{StaticResource SelectableTextBlock}" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
 
-            <TextBox Text="{Binding OrderNo}"
-                     materialDesign:HintAssist.Hint="出库单号 (自动生成)"
-                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                     IsReadOnly="True" 
-                     Margin="0,10"/>
+            <TextBox Text="{Binding OrderNo}" materialDesign:HintAssist.Hint="出库单号 (自动生成)" Style="{StaticResource MaterialDesignFloatingHintTextBox}" IsReadOnly="True" Margin="0,10"/>
 
-            <ComboBox x:Name="CmbProduct"
-                      SelectedValue="{Binding ProductName}"
-                      materialDesign:HintAssist.Hint="选择库存产品"
-                      Style="{StaticResource MaterialDesignFloatingHintComboBox}"
-                      Margin="0,10">
-                     </ComboBox>
+            <ComboBox x:Name="CmbProduct" SelectedValue="{Binding ProductName}" materialDesign:HintAssist.Hint="选择库存产品" Style="{StaticResource MaterialDesignFloatingHintComboBox}" Margin="0,10"/>
 
-            <ComboBox x:Name="CmbCustomer"
-                        Text="{Binding Customer}"
-                        materialDesign:HintAssist.Hint="选择或输入客户"
-                        Style="{StaticResource MaterialDesignFloatingHintComboBox}"
-                        IsEditable="True"
-                        Margin="0,10"/>
+            <ComboBox x:Name="CmbCustomer" Text="{Binding Customer}" materialDesign:HintAssist.Hint="选择或输入客户" Style="{StaticResource MaterialDesignFloatingHintComboBox}" IsEditable="True" Margin="0,10"/>
 
-            <TextBox Text="{Binding Count}"
-                     materialDesign:HintAssist.Hint="出库数量"
-                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                     Margin="0,10"/>
+            <TextBox Text="{Binding Quantity}" materialDesign:HintAssist.Hint="出库数量" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0,10"/>
+
+            <TextBox Text="{Binding Price}" materialDesign:HintAssist.Hint="销售单价" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0,10"/>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,30,0,0">
-                <Button Content="取消" Style="{StaticResource MaterialDesignFlatButton}" 
-                        Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}"
-                        CommandParameter="False"/>
-
-                <Button Content="确定" Style="{StaticResource MaterialDesignRaisedButton}" Margin="10,0,0,0"
-                        Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}"
-                        CommandParameter="True"/>
+                <Button Content="取消" Style="{StaticResource MaterialDesignFlatButton}" Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}" CommandParameter="False"/>
+                <Button Content="确定" Style="{StaticResource MaterialDesignRaisedButton}" Margin="10,0,0,0" Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}" CommandParameter="True"/>
             </StackPanel>
         </StackPanel>
     </Grid>
