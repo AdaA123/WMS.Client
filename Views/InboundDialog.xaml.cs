@@ -20,17 +20,15 @@ namespace WMS.Client.Views
     /// </summary>
     public partial class InboundDialog : UserControl
     {
-        // 允许接收供应商列表
-        public InboundDialog(List<string>? supplierList = null)
+        // 🟢 修改：构造函数增加 productList 参数
+        public InboundDialog(List<string>? supplierList = null, List<string>? productList = null)
         {
             InitializeComponent();
 
-            if (supplierList != null)
-            {
-                CmbSupplier.ItemsSource = supplierList;
-            }
+            if (supplierList != null) CmbSupplier.ItemsSource = supplierList;
+            if (productList != null) CmbProduct.ItemsSource = productList;
         }
 
-        public InboundDialog() : this(null) { }
+        public InboundDialog() : this(null, null) { }
     }
 }

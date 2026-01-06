@@ -8,9 +8,22 @@
             <TextBox Text="新建入库单" Style="{StaticResource SelectableTextBlock}" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
 
             <TextBox Text="{Binding OrderNo}" materialDesign:HintAssist.Hint="入库单号 (自动生成)" Style="{StaticResource MaterialDesignFloatingHintTextBox}" IsReadOnly="True" Margin="0,10"/>
-            <TextBox Text="{Binding ProductName}" materialDesign:HintAssist.Hint="产品名称 (如: iPhone 15)" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0,10"/>
 
-            <ComboBox x:Name="CmbSupplier" Text="{Binding Supplier}" materialDesign:HintAssist.Hint="选择或输入供应商" Style="{StaticResource MaterialDesignFloatingHintComboBox}" IsEditable="True" Margin="0,10"/>
+            <ComboBox x:Name="CmbProduct" 
+                      Text="{Binding ProductName}" 
+                      materialDesign:HintAssist.Hint="产品名称 (搜索/录入)" 
+                      IsEditable="True" 
+                      StaysOpenOnEdit="True"
+                      Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
+                      Margin="0,10"/>
+
+            <ComboBox x:Name="CmbSupplier" 
+                      Text="{Binding Supplier}" 
+                      materialDesign:HintAssist.Hint="选择或输入供应商" 
+                      IsEditable="True" 
+                      StaysOpenOnEdit="True"
+                      Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
+                      Margin="0,10"/>
 
             <TextBox Text="{Binding Quantity}" materialDesign:HintAssist.Hint="入库数量" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0,10"/>
 

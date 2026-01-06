@@ -23,15 +23,10 @@ namespace WMS.Client.ViewModels
         [ObservableProperty] private int _totalOutbound;
         [ObservableProperty] private int _totalReturn;
 
-        // 🟢 1. 搜索功能相关
         [ObservableProperty] private string _searchText = "";
-
-        // 当搜索文本变化时，自动触发筛选
         partial void OnSearchTextChanged(string value) => FilterInventoryList();
 
-        // 用于缓存所有库存数据，方便在内存中快速搜索
         private List<InventorySummaryModel> _allInventory = new();
-
         public ObservableCollection<InventorySummaryModel> InventoryList { get; } = new();
 
         public HomeViewModel()
@@ -45,7 +40,6 @@ namespace WMS.Client.ViewModels
         [RelayCommand]
         public async Task LoadDashboardData()
         {
-            // 1. 获取统计数据
             var inbounds = await _dbService.GetInboundOrdersAsync();
             TotalInbound = inbounds.Sum(x => x.Quantity);
 
@@ -55,32 +49,22 @@ namespace WMS.Client.ViewModels
             var returns = await _dbService.GetReturnOrdersAsync();
             TotalReturn = returns.Sum(x => x.Quantity);
 
-            // 2. 获取所有库存数据并缓存
             _allInventory = await _dbService.GetInventorySummaryAsync();
-
-            // 3. 应用筛选显示
             FilterInventoryList();
         }
 
-        // 🟢 筛选逻辑
         private void FilterInventoryList()
         {
             InventoryList.Clear();
             var query = _allInventory.AsEnumerable();
-
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 string key = SearchText.Trim().ToLower();
                 query = query.Where(x => x.ProductName != null && x.ProductName.ToLower().Contains(key));
             }
-
-            foreach (var item in query)
-            {
-                InventoryList.Add(item);
-            }
+            foreach (var item in query) InventoryList.Add(item);
         }
 
-        // 🟢 快速入库 (保留)
         [RelayCommand]
         private async Task QuickInbound()
         {
@@ -92,7 +76,11 @@ namespace WMS.Client.ViewModels
             };
 
             var suppliers = await _dbService.GetSupplierListAsync();
-            var view = new InboundDialog(suppliers) { DataContext = newOrder };
+            // 🟢 新增：获取产品列表
+            var products = await _dbService.GetProductListAsync();
+
+            // 🟢 将产品列表传给 Dialog
+            var view = new InboundDialog(suppliers, products) { DataContext = newOrder };
             var result = await DialogHost.Show(view, "HomeDialogHost");
 
             if (result is bool confirm && confirm)
@@ -108,7 +96,6 @@ namespace WMS.Client.ViewModels
             }
         }
 
-        // 🟢 快速出库 (保留)
         [RelayCommand]
         private async Task QuickOutbound()
         {
