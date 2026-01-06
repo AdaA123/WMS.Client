@@ -7,7 +7,6 @@
              mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="900">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-
         <Grid Background="White" Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -19,23 +18,27 @@
                     <materialDesign:PackIcon Kind="PackageVariantClosedPlus" Width="25" Height="25" VerticalAlignment="Center" Margin="0,0,15,0" Foreground="Gray"/>
 
                     <ComboBox Width="140" Margin="0,0,15,0" 
-                              materialDesign:HintAssist.Hint="产品名称" 
-                              IsEditable="True" 
+                              materialDesign:HintAssist.Hint="产品名称 (可搜索)" 
+                              IsEditable="True"
                               StaysOpenOnEdit="True"
+                              IsTextSearchEnabled="False"
+                              KeyUp="ComboBox_KeyUp"
                               Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
                               ItemsSource="{Binding ProductList}" 
-                              Text="{Binding NewOutbound.ProductName}" />
+                              Text="{Binding NewOutbound.ProductName, UpdateSourceTrigger=PropertyChanged}" />
 
                     <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="数量" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewOutbound.Quantity}" />
                     <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="售价 (元)" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewOutbound.Price}" />
 
                     <ComboBox Width="120" Margin="0,0,15,0" 
                               materialDesign:HintAssist.Hint="客户" 
-                              IsEditable="True" 
+                              IsEditable="True"
                               StaysOpenOnEdit="True"
+                              IsTextSearchEnabled="False"
+                              KeyUp="ComboBox_KeyUp"
                               Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
                               ItemsSource="{Binding Customers}" 
-                              Text="{Binding NewOutbound.Customer}" />
+                              Text="{Binding NewOutbound.Customer, UpdateSourceTrigger=PropertyChanged}" />
 
                     <ComboBox Width="110" Margin="0,0,15,0" materialDesign:HintAssist.Hint="排序方式" Style="{StaticResource MaterialDesignFloatingHintComboBox}" ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
 
@@ -55,8 +58,7 @@
                         </Button.Style>
                     </Button>
 
-                    <Button Command="{Binding CancelCommand}" Content="取消" 
-                            Foreground="Gray" BorderBrush="Gray" Width="80" Margin="10,0,0,0">
+                    <Button Command="{Binding CancelCommand}" Content="取消" Foreground="Gray" BorderBrush="Gray" Width="80" Margin="10,0,0,0">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
                                 <Style.Triggers>
@@ -71,7 +73,6 @@
                     <Button Command="{Binding ExportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="导出Excel" Width="40" Margin="10,0,0,0" Padding="0">
                         <materialDesign:PackIcon Kind="FileExcel" Width="20" Height="20"/>
                     </Button>
-
                     <Button Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="打印" Width="80" Margin="10,0,0,0">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="Printer" Margin="0,0,5,0" VerticalAlignment="Center"/>
@@ -109,17 +110,14 @@
                         <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="80"/>
                         <DataGridTextColumn Header="售价" Binding="{Binding Price, StringFormat=C2}" Width="100" Foreground="#FF5252"/>
                         <DataGridTextColumn Header="出库日期" Binding="{Binding OutboundDate, StringFormat=yyyy-MM-dd HH:mm}" Width="160"/>
-
                         <DataGridTemplateColumn Header="操作" Width="120">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
-                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" Width="30" Height="30"
-                                                Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" Width="30" Height="30" Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                                             <materialDesign:PackIcon Kind="Pencil" />
                                         </Button>
-                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="删除" Foreground="Red" Width="30" Height="30"
-                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="删除" Foreground="Red" Width="30" Height="30" Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                                             <materialDesign:PackIcon Kind="Delete" />
                                         </Button>
                                     </StackPanel>

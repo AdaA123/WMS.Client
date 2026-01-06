@@ -1,5 +1,5 @@
-﻿using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace WMS.Client.Views
@@ -11,18 +11,33 @@ namespace WMS.Client.Views
             InitializeComponent();
         }
 
-        // 🟢 必须添加此方法
-        private void DataGrid_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        private void ComboBox_KeyUp(object sender, KeyEventArgs e)
         {
-            if (!e.Handled)
+            var cmb = sender as ComboBox;
+            if (cmb?.ItemsSource == null) return;
+
+            var view = CollectionViewSource.GetDefaultView(cmb.ItemsSource);
+            if (view == null) return;
+
+            var text = cmb.Text;
+
+            if (string.IsNullOrEmpty(text))
             {
-                e.Handled = true;
-                var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta);
-                eventArg.RoutedEvent = UIElement.MouseWheelEvent;
-                eventArg.Source = sender;
-                var parent = ((Control)sender).Parent as UIElement;
-                parent?.RaiseEvent(eventArg);
+                view.Filter = null;
             }
+            else
+            {
+                // 🟢 修复 CS8602: 安全的空值判断
+                view.Filter = item =>
+                {
+                    if (item == null) return false;
+                    string? s = item.ToString();
+                    // 确保 s 不为 null 再调用 IndexOf
+                    return s != null && s.IndexOf(text, System.StringComparison.OrdinalIgnoreCase) >= 0;
+                };
+            }
+
+            cmb.IsDropDownOpen = true;
         }
     }
 }

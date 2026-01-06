@@ -6,12 +6,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignHeight="768" d:DesignWidth="1024"
              x:Name="Root">
+
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
 
         <Grid Background="White" Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
             <materialDesign:Card Grid.Row="0" Margin="0,0,0,20" Padding="15" UniformCornerRadius="6">
@@ -22,9 +23,11 @@
                               materialDesign:HintAssist.Hint="产品名称 (搜索/录入)" 
                               IsEditable="True"
                               StaysOpenOnEdit="True"
+                              IsTextSearchEnabled="False"
+                              KeyUp="ComboBox_KeyUp"
                               Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
                               ItemsSource="{Binding ProductList}" 
-                              Text="{Binding NewInbound.ProductName}" />
+                              Text="{Binding NewInbound.ProductName, UpdateSourceTrigger=PropertyChanged}" />
 
                     <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="数量" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewInbound.Quantity}" />
                     <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="单价" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewInbound.Price}" />
@@ -33,9 +36,11 @@
                               materialDesign:HintAssist.Hint="供应商" 
                               IsEditable="True" 
                               StaysOpenOnEdit="True"
+                              IsTextSearchEnabled="False"
+                              KeyUp="ComboBox_KeyUp"
                               Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
                               ItemsSource="{Binding Suppliers}" 
-                              Text="{Binding NewInbound.Supplier}" />
+                              Text="{Binding NewInbound.Supplier, UpdateSourceTrigger=PropertyChanged}" />
 
                     <ComboBox Width="110" Margin="0,0,15,0" materialDesign:HintAssist.Hint="排序方式" Style="{StaticResource MaterialDesignFloatingHintComboBox}" ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
 
@@ -70,7 +75,6 @@
                     <Button Command="{Binding ExportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="导出Excel" Width="40" Margin="10,0,0,0" Padding="0">
                         <materialDesign:PackIcon Kind="FileExcel" Width="20" Height="20"/>
                     </Button>
-
                     <Button Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="打印" Width="80" Margin="10,0,0,0">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="Printer" Margin="0,0,5,0" VerticalAlignment="Center"/>
