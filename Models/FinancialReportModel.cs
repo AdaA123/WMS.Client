@@ -6,7 +6,6 @@ namespace WMS.Client.Models
 {
     public partial class FinancialReportModel : ObservableObject
     {
-        // 🟢 修复：初始化为 string.Empty 消除 CS8618 警告
         public string PeriodName { get; set; } = string.Empty;
         public DateTime PeriodDate { get; set; }
 
@@ -28,11 +27,15 @@ namespace WMS.Client.Models
 
     public class FinancialDetailModel
     {
-        // 🟢 修复：初始化为 string.Empty 消除 CS8618 警告
         public string ProductName { get; set; } = string.Empty;
         public decimal Revenue { get; set; }
         public decimal Cost { get; set; }
         public decimal Refund { get; set; }
+
+        // 🟢 新增：销售利润 (收入 - 成本)
+        public decimal SalesProfit => Revenue - Cost;
+
+        // 最终贡献毛利
         public decimal Profit => Revenue - Cost - Refund;
     }
 }

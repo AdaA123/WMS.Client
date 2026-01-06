@@ -60,6 +60,12 @@
                             <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="200" FontWeight="Medium"/>
                             <DataGridTextColumn Header="收入" Binding="{Binding Revenue, StringFormat=C2}" Width="100" Foreground="#4CAF50"/>
                             <DataGridTextColumn Header="成本" Binding="{Binding Cost, StringFormat=C2}" Width="100" Foreground="#F44336"/>
+
+                            <DataGridTextColumn Header="销售利润" 
+                                                Binding="{Binding SalesProfit, StringFormat=C2}" 
+                                                Width="100" 
+                                                Foreground="#FF9800"/>
+
                             <DataGridTextColumn Header="退款" Binding="{Binding Refund, StringFormat=C2}" Width="80"/>
                             <DataGridTextColumn Header="贡献毛利" Binding="{Binding Profit, StringFormat=C2}" Width="100" FontWeight="Bold" Foreground="#3F51B5"/>
                         </DataGrid.Columns>
@@ -167,6 +173,7 @@
 
             <materialDesign:Card Padding="0" UniformCornerRadius="8">
                 <TabControl SelectedIndex="{Binding SelectedTabIndex}" Margin="5">
+
                     <TabItem Header="单品利润分析" FontSize="16">
                         <DataGrid ItemsSource="{Binding FinancialList}" 
                                   PreviewMouseWheel="MainDataGrid_PreviewMouseWheel"
@@ -192,6 +199,14 @@
                                 </DataGridTextColumn>
                                 <DataGridTextColumn Header="采购总成本" Binding="{Binding TotalCost, StringFormat=C2}" Width="1*" ElementStyle="{StaticResource CenterText}"/>
                                 <DataGridTextColumn Header="销售总收入" Binding="{Binding TotalRevenue, StringFormat=C2}" Width="1*" ElementStyle="{StaticResource CenterText}"/>
+
+                                <DataGridTextColumn Header="销售利润" 
+                                                    Binding="{Binding SalesProfit, StringFormat=C2}" 
+                                                    Width="1*" 
+                                                    ElementStyle="{StaticResource CenterText}"
+                                                    Foreground="#FF9800"
+                                                    FontWeight="SemiBold"/>
+
                                 <DataGridTextColumn Header="退款总额" Binding="{Binding TotalRefund, StringFormat=C2}" Width="1*" ElementStyle="{StaticResource CenterText}"/>
                                 <DataGridTextColumn Header="毛利润" Binding="{Binding GrossProfit, StringFormat=C2}" Width="1*" FontWeight="Bold">
                                     <DataGridTextColumn.ElementStyle>
