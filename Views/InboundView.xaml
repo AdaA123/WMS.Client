@@ -87,6 +87,13 @@
                     <DataGridTextColumn Header="供应商" Binding="{Binding Supplier}" Width="1.5*"/>
                     <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="0.8*"/>
                     <DataGridTextColumn Header="单价" Binding="{Binding Price, StringFormat=C2}" Width="1*" Foreground="#4CAF50"/>
+
+                    <DataGridTextColumn Header="总金额" 
+                                        Binding="{Binding TotalAmount, StringFormat=C2}" 
+                                        Width="1*" 
+                                        FontWeight="Bold" 
+                                        Foreground="#E91E63"/>
+
                     <DataGridTextColumn Header="入库日期" Binding="{Binding InboundDate, StringFormat=yyyy-MM-dd HH:mm}" Width="Auto" MinWidth="140"/>
 
                     <DataGridTemplateColumn Header="操作" Width="120">

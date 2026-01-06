@@ -8,15 +8,23 @@ namespace WMS.Client.Models
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
 
-        // ✅ 初始化为空字符串，消除警告
-        public string OrderNo { get; set; } = string.Empty;
-        public string ProductName { get; set; } = string.Empty;
+        public string? OrderNo { get; set; }
+
+        public string? ProductName { get; set; }
+
+        public string? Supplier { get; set; }
 
         public int Quantity { get; set; }
-        public decimal Price { get; set; }
 
-        public string Supplier { get; set; } = string.Empty;
+        public decimal Price { get; set; } // 单价
 
         public DateTime InboundDate { get; set; }
+
+        // ==========================================
+        // 🟢 新增：总金额计算属性
+        // ==========================================
+        // [Ignore] 告诉 SQLite：这个属性只存在于内存中，不要存到数据库表里
+        [Ignore]
+        public decimal TotalAmount => Quantity * Price;
     }
 }
