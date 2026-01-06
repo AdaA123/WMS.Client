@@ -4,98 +4,109 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="900">
+             mc:Ignorable="d" d:DesignHeight="768" d:DesignWidth="1024"
+             x:Name="Root">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
 
-    <Grid Background="White" Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid Background="White" Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <materialDesign:Card Grid.Row="0" Margin="0,0,0,20" Padding="15" UniformCornerRadius="6">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <materialDesign:PackIcon Kind="PlaylistPlus" Width="25" Height="25" VerticalAlignment="Center" Margin="0,0,15,0" Foreground="Gray"/>
+            <materialDesign:Card Grid.Row="0" Margin="0,0,0,20" Padding="15" UniformCornerRadius="6">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <materialDesign:PackIcon Kind="PlaylistPlus" Width="25" Height="25" VerticalAlignment="Center" Margin="0,0,15,0" Foreground="Gray"/>
 
-                <TextBox Width="120" Margin="0,0,15,0" materialDesign:HintAssist.Hint="产品名称" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewInbound.ProductName}" />
-                <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="数量" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewInbound.Quantity}" />
-                <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="单价" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewInbound.Price}" />
-                <ComboBox Width="120" Margin="0,0,15,0" materialDesign:HintAssist.Hint="供应商" IsEditable="True" Style="{StaticResource MaterialDesignFloatingHintComboBox}" ItemsSource="{Binding Suppliers}" Text="{Binding NewInbound.Supplier}" />
-                <ComboBox Width="110" Margin="0,0,15,0" materialDesign:HintAssist.Hint="排序方式" Style="{StaticResource MaterialDesignFloatingHintComboBox}" ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                    <TextBox Width="120" Margin="0,0,15,0" materialDesign:HintAssist.Hint="产品名称" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewInbound.ProductName}" />
+                    <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="数量" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewInbound.Quantity}" />
+                    <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="单价" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewInbound.Price}" />
+                    <ComboBox Width="120" Margin="0,0,15,0" materialDesign:HintAssist.Hint="供应商" IsEditable="True" Style="{StaticResource MaterialDesignFloatingHintComboBox}" ItemsSource="{Binding Suppliers}" Text="{Binding NewInbound.Supplier}" />
+                    <ComboBox Width="110" Margin="0,0,15,0" materialDesign:HintAssist.Hint="排序方式" Style="{StaticResource MaterialDesignFloatingHintComboBox}" ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
 
-                <Button Command="{Binding SaveCommand}" Width="100" Margin="10,0,0,0">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding NewInbound.Id}" Value="0">
-                                    <Setter Property="Content" Value="确认入库"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding NewInbound.Id}" Value="{x:Null}">
-                                    <Setter Property="Content" Value="确认入库"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                            <Setter Property="Content" Value="保存修改"/>
-                        </Style>
-                    </Button.Style>
-                </Button>
+                    <Button Command="{Binding SaveCommand}" Width="100" Margin="10,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding NewInbound.Id}" Value="0">
+                                        <Setter Property="Content" Value="确认入库"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding NewInbound.Id}" Value="{x:Null}">
+                                        <Setter Property="Content" Value="确认入库"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                                <Setter Property="Content" Value="保存修改"/>
+                            </Style>
+                        </Button.Style>
+                    </Button>
 
-                <Button Command="{Binding CancelCommand}" Content="取消" 
-                        Foreground="Gray" BorderBrush="Gray" Width="80" Margin="10,0,0,0">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding NewInbound.Id}" Value="0">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
+                    <Button Command="{Binding CancelCommand}" Content="取消" 
+                            Foreground="Gray" BorderBrush="Gray" Width="80" Margin="10,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding NewInbound.Id}" Value="0">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
 
-                <Button Command="{Binding ExportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="导出Excel" Width="40" Margin="10,0,0,0" Padding="0">
-                    <materialDesign:PackIcon Kind="FileExcel" Width="20" Height="20"/>
-                </Button>
+                    <Button Command="{Binding ExportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="导出Excel" Width="40" Margin="10,0,0,0" Padding="0">
+                        <materialDesign:PackIcon Kind="FileExcel" Width="20" Height="20"/>
+                    </Button>
 
-                <Button Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="打印" Width="80" Margin="10,0,0,0">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="Printer" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="打印" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-        </materialDesign:Card>
+                    <Button Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="打印" Width="80" Margin="10,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Printer" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="打印" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </materialDesign:Card>
 
-        <DataGrid Grid.Row="1" ItemsSource="{Binding InboundList}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="All" SelectionMode="Single" Style="{StaticResource MaterialDesignDataGrid}">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="入库单号" Binding="{Binding OrderNo}" Width="160" FontWeight="Bold"/>
-                <DataGridTemplateColumn Header="产品名称" Width="*">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding ProductName}" VerticalAlignment="Center"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTextColumn Header="供应商" Binding="{Binding Supplier}" Width="150"/>
-                <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="80"/>
-                <DataGridTextColumn Header="单价" Binding="{Binding Price, StringFormat=C2}" Width="100" Foreground="#4CAF50"/>
-                <DataGridTextColumn Header="入库日期" Binding="{Binding InboundDate, StringFormat=yyyy-MM-dd HH:mm}" Width="150"/>
+            <DataGrid Grid.Row="1" 
+                      ItemsSource="{Binding InboundList}" 
+                      PreviewMouseWheel="DataGrid_PreviewMouseWheel"
+                      VerticalScrollBarVisibility="Disabled"
+                      HorizontalScrollBarVisibility="Auto"
+                      MinHeight="400"
+                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="All" SelectionMode="Single" Style="{StaticResource MaterialDesignDataGrid}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="入库单号" Binding="{Binding OrderNo}" Width="Auto" MinWidth="150" FontWeight="Bold"/>
 
-                <DataGridTemplateColumn Header="操作" Width="120">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" Width="30" Height="30"
-                                        Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
-                                    <materialDesign:PackIcon Kind="Pencil" />
-                                </Button>
-                                <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="删除" Foreground="Red" Width="30" Height="30"
-                                        Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
-                                    <materialDesign:PackIcon Kind="Delete" />
-                                </Button>
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
-    </Grid>
+                    <DataGridTemplateColumn Header="产品名称" Width="2*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding ProductName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding ProductName}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="供应商" Binding="{Binding Supplier}" Width="1.5*"/>
+                    <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="0.8*"/>
+                    <DataGridTextColumn Header="单价" Binding="{Binding Price, StringFormat=C2}" Width="1*" Foreground="#4CAF50"/>
+                    <DataGridTextColumn Header="入库日期" Binding="{Binding InboundDate, StringFormat=yyyy-MM-dd HH:mm}" Width="Auto" MinWidth="140"/>
+
+                    <DataGridTemplateColumn Header="操作" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" Width="30" Height="30"
+                                            Command="{Binding DataContext.EditCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                        <materialDesign:PackIcon Kind="Pencil" />
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="删除" Foreground="Red" Width="30" Height="30"
+                                            Command="{Binding DataContext.DeleteCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                        <materialDesign:PackIcon Kind="Delete" />
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+    </ScrollViewer>
 </UserControl>

@@ -4,99 +4,102 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="900">
+             mc:Ignorable="d" d:DesignHeight="768" d:DesignWidth="1024"
+             x:Name="Root">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20" Background="White">
 
-    <Grid Background="White" Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+            <TextBlock Text="退货管理" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
 
-        <materialDesign:Card Grid.Row="0" Margin="0,0,0,20" Padding="15" UniformCornerRadius="6">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <materialDesign:PackIcon Kind="KeyboardReturn" Width="25" Height="25" VerticalAlignment="Center" Margin="0,0,15,0" Foreground="Gray"/>
+            <materialDesign:Card Margin="0,0,0,20" Padding="15" UniformCornerRadius="6">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <materialDesign:PackIcon Kind="KeyboardReturn" Width="25" Height="25" VerticalAlignment="Center" Margin="0,0,15,0" Foreground="Gray"/>
 
-                <ComboBox Width="140" Margin="0,0,15,0" materialDesign:HintAssist.Hint="退回产品" IsEditable="True" Style="{StaticResource MaterialDesignFloatingHintComboBox}" ItemsSource="{Binding ProductList}" Text="{Binding NewReturn.ProductName}" />
-                <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="数量" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewReturn.Quantity}" />
-                <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="退款金额" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewReturn.Price}" />
-                <ComboBox Width="120" Margin="0,0,15,0" materialDesign:HintAssist.Hint="客户" IsEditable="True" Style="{StaticResource MaterialDesignFloatingHintComboBox}" ItemsSource="{Binding Customers}" Text="{Binding NewReturn.Customer}" />
-                <TextBox Width="100" Margin="0,0,15,0" materialDesign:HintAssist.Hint="退货原因" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewReturn.Reason}" />
+                    <TextBox Width="120" Margin="0,0,15,0" materialDesign:HintAssist.Hint="产品名称" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewReturn.ProductName}" />
+                    <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="数量" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewReturn.Quantity}" />
+                    <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="退款金额" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewReturn.Price}" />
+                    <TextBox Width="120" Margin="0,0,15,0" materialDesign:HintAssist.Hint="客户" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewReturn.Customer}" />
+                    <TextBox Width="120" Margin="0,0,15,0" materialDesign:HintAssist.Hint="原因" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewReturn.Reason}" />
 
-                <Button Command="{Binding SaveCommand}" Width="100" Margin="10,0,0,0" Background="#FF7043" BorderBrush="#FF7043">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding NewReturn.Id}" Value="0">
-                                    <Setter Property="Content" Value="确认退货"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding NewReturn.Id}" Value="{x:Null}">
-                                    <Setter Property="Content" Value="确认退货"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                            <Setter Property="Content" Value="保存修改"/>
-                        </Style>
-                    </Button.Style>
-                </Button>
+                    <ComboBox Width="110" Margin="0,0,15,0" materialDesign:HintAssist.Hint="排序方式" Style="{StaticResource MaterialDesignFloatingHintComboBox}" ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
 
-                <Button Command="{Binding CancelCommand}" Content="取消" 
-                        Foreground="Gray" BorderBrush="Gray" Width="80" Margin="10,0,0,0">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding NewReturn.Id}" Value="0">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
+                    <Button Command="{Binding SaveCommand}" Width="100" Margin="10,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding NewReturn.Id}" Value="0">
+                                        <Setter Property="Content" Value="确认退货"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding NewReturn.Id}" Value="{x:Null}">
+                                        <Setter Property="Content" Value="确认退货"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                                <Setter Property="Content" Value="保存修改"/>
+                            </Style>
+                        </Button.Style>
+                    </Button>
 
-                <Button Command="{Binding ExportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="导出Excel" Width="40" Margin="10,0,0,0" Padding="0">
-                    <materialDesign:PackIcon Kind="FileExcel" Width="20" Height="20"/>
-                </Button>
-            </StackPanel>
-        </materialDesign:Card>
+                    <Button Command="{Binding CancelCommand}" Content="取消" 
+                            Foreground="Gray" BorderBrush="Gray" Width="80" Margin="10,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding NewReturn.Id}" Value="0">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
 
-        <DataGrid Grid.Row="1" ItemsSource="{Binding ReturnList}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="All" SelectionMode="Single" Style="{StaticResource MaterialDesignDataGrid}">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="退货单号" Binding="{Binding ReturnNo}" Width="160" FontWeight="Bold"/>
-                <DataGridTemplateColumn Header="产品名称" Width="*">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding ProductName}" VerticalAlignment="Center" FontWeight="Medium"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="80"/>
-                <DataGridTextColumn Header="退款金额" Binding="{Binding Price, StringFormat=C2}" Width="100">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Foreground" Value="#FF5252"/>
-                            <Setter Property="VerticalAlignment" Value="Center"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="客户" Binding="{Binding Customer}" Width="120"/>
-                <DataGridTextColumn Header="原因" Binding="{Binding Reason}" Width="150"/>
-                <DataGridTextColumn Header="日期" Binding="{Binding ReturnDate, StringFormat=yyyy-MM-dd}" Width="120"/>
+                    <Button Command="{Binding ExportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="导出Excel" Width="40" Margin="10,0,0,0" Padding="0">
+                        <materialDesign:PackIcon Kind="FileExcel" Width="20" Height="20"/>
+                    </Button>
+                </StackPanel>
+            </materialDesign:Card>
 
-                <DataGridTemplateColumn Header="操作" Width="120">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" Width="30" Height="30"
-                                        Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
-                                    <materialDesign:PackIcon Kind="Pencil" />
-                                </Button>
-                                <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="删除" Foreground="Red" Width="30" Height="30"
-                                        Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
-                                    <materialDesign:PackIcon Kind="Delete" />
-                                </Button>
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
-    </Grid>
+            <DataGrid ItemsSource="{Binding ReturnList}" 
+                      PreviewMouseWheel="DataGrid_PreviewMouseWheel"
+                      VerticalScrollBarVisibility="Disabled"
+                      HorizontalScrollBarVisibility="Auto"
+                      MinHeight="400"
+                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="All" SelectionMode="Single" Style="{StaticResource MaterialDesignDataGrid}">
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="退货单号" Binding="{Binding ReturnNo}" Width="Auto" MinWidth="150" FontWeight="Bold"/>
+
+                    <DataGridTemplateColumn Header="产品名称" Width="2*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding ProductName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding ProductName}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="客户" Binding="{Binding Customer}" Width="1.5*"/>
+                    <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="0.8*"/>
+                    <DataGridTextColumn Header="退款金额" Binding="{Binding Price, StringFormat=C2}" Width="1*" Foreground="Red"/>
+                    <DataGridTextColumn Header="原因" Binding="{Binding Reason}" Width="1.5*"/>
+                    <DataGridTextColumn Header="退货日期" Binding="{Binding ReturnDate, StringFormat=yyyy-MM-dd HH:mm}" Width="Auto" MinWidth="140"/>
+
+                    <DataGridTemplateColumn Header="操作" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" Width="30" Height="30"
+                                            Command="{Binding DataContext.EditCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                        <materialDesign:PackIcon Kind="Pencil" />
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="删除" Foreground="Red" Width="30" Height="30"
+                                            Command="{Binding DataContext.DeleteCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                        <materialDesign:PackIcon Kind="Delete" />
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>
