@@ -97,7 +97,7 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="入库单号" Binding="{Binding OrderNo}" Width="Auto" MinWidth="130" FontWeight="Bold"/>
 
-                            <DataGridTemplateColumn Header="产品名称" Width="1.5*">
+                            <DataGridTemplateColumn Header="产品名称" Width="1.5*" MinWidth="120">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding ProductName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding ProductName}"/>
@@ -105,17 +105,19 @@
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
 
-                            <DataGridTextColumn Header="供应商" Binding="{Binding Supplier}" Width="1.2*"/>
+                            <DataGridTextColumn Header="供应商" Binding="{Binding Supplier}" Width="1.2*" MinWidth="100"/>
 
-                            <DataGridTextColumn Header="总数" Binding="{Binding Quantity}" Width="0.5*"/>
+                            <DataGridTextColumn Header="单价" Binding="{Binding Price, StringFormat=C2}" Width="0.7*" MinWidth="80"/>
 
-                            <DataGridTextColumn Header="合格" Binding="{Binding AcceptedQuantity}" Width="0.5*" FontWeight="Bold" Foreground="#4CAF50"/>
-                            <DataGridTextColumn Header="拒收" Binding="{Binding RejectedQuantity}" Width="0.5*" FontWeight="Bold" Foreground="#F44336"/>
+                            <DataGridTextColumn Header="进货数" Binding="{Binding Quantity}" Width="0.5*" MinWidth="70"/>
+                            <DataGridTextColumn Header="入库总额" Binding="{Binding TotalAmount, StringFormat=C2}" Width="0.8*" MinWidth="100" Foreground="Gray"/>
 
-                            <DataGridTextColumn Header="单价" Binding="{Binding Price, StringFormat=C2}" Width="0.7*"/>
-                            <DataGridTextColumn Header="总金额" Binding="{Binding TotalAmount, StringFormat=C2}" Width="0.8*" FontWeight="Bold"/>
+                            <DataGridTextColumn Header="合格数" Binding="{Binding AcceptedQuantity}" Width="0.5*" MinWidth="70" FontWeight="Bold" Foreground="#4CAF50"/>
+                            <DataGridTextColumn Header="验收总额" Binding="{Binding AcceptedTotalAmount, StringFormat=C2}" Width="0.8*" MinWidth="100" FontWeight="Bold" Foreground="#4CAF50"/>
 
-                            <DataGridTemplateColumn Header="状态" Width="90">
+                            <DataGridTextColumn Header="拒收" Binding="{Binding RejectedQuantity}" Width="0.5*" MinWidth="60" FontWeight="Bold" Foreground="#F44336"/>
+
+                            <DataGridTemplateColumn Header="状态" Width="90" MinWidth="90">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Border CornerRadius="4" Padding="6,2">
@@ -158,14 +160,13 @@
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
 
-                            <DataGridTextColumn Header="入库时间" Binding="{Binding InboundDate, StringFormat=yyyy-MM-dd HH:mm}" Width="Auto" MinWidth="110"/>
-                            <DataGridTextColumn Header="验收时间" Binding="{Binding CheckDate, StringFormat=yyyy-MM-dd HH:mm}" Width="Auto" MinWidth="110"/>
+                            <DataGridTextColumn Header="入库时间" Binding="{Binding InboundDate, StringFormat=yyyy-MM-dd HH:mm}" Width="Auto" MinWidth="130"/>
+                            <DataGridTextColumn Header="验收时间" Binding="{Binding CheckDate, StringFormat=yyyy-MM-dd HH:mm}" Width="Auto" MinWidth="130"/>
 
-                            <DataGridTemplateColumn Header="操作" Width="150">
+                            <DataGridTemplateColumn Header="操作" Width="150" MinWidth="150">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
-
                                             <Button ToolTip="验收处理" Foreground="#4CAF50" Width="28" Height="28"
                                                     Command="{Binding DataContext.ConfirmAcceptCommand, ElementName=Root}" CommandParameter="{Binding}">
                                                 <Button.Style>

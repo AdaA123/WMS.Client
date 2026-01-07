@@ -19,10 +19,7 @@
 
                     <ComboBox Width="140" Margin="0,0,15,0" 
                               materialDesign:HintAssist.Hint="产品名称 (可搜索)" 
-                              IsEditable="True" 
-                              StaysOpenOnEdit="True"
-                              IsTextSearchEnabled="False"
-                              KeyUp="ComboBox_KeyUp"
+                              IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="False" KeyUp="ComboBox_KeyUp"
                               Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
                               ItemsSource="{Binding ProductList}" 
                               Text="{Binding EntryProductName, UpdateSourceTrigger=PropertyChanged}" />
@@ -32,10 +29,7 @@
 
                     <ComboBox Width="120" Margin="0,0,15,0" 
                               materialDesign:HintAssist.Hint="客户" 
-                              IsEditable="True" 
-                              StaysOpenOnEdit="True"
-                              IsTextSearchEnabled="False"
-                              KeyUp="ComboBox_KeyUp"
+                              IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="False" KeyUp="ComboBox_KeyUp"
                               Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
                               ItemsSource="{Binding Customers}" 
                               Text="{Binding NewOutbound.Customer, UpdateSourceTrigger=PropertyChanged}" />
@@ -98,27 +92,25 @@
 
                 <DataGrid Grid.Row="1" ItemsSource="{Binding OutboundList}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="All" SelectionMode="Single" Style="{StaticResource MaterialDesignDataGrid}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="出库单号" Binding="{Binding OrderNo}" Width="160" FontWeight="Bold"/>
-                        <DataGridTemplateColumn Header="产品名称" Width="*">
+                        <DataGridTextColumn Header="出库单号" Binding="{Binding OrderNo}" Width="Auto" MinWidth="130" FontWeight="Bold"/>
+
+                        <DataGridTemplateColumn Header="产品名称" Width="*" MinWidth="150">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding ProductName}" VerticalAlignment="Center" FontWeight="Medium"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="客户" Binding="{Binding Customer}" Width="150"/>
-                        <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="80"/>
-                        <DataGridTextColumn Header="售价" Binding="{Binding Price, StringFormat=C2}" Width="100" Foreground="#FF5252"/>
 
-                        <DataGridTextColumn Header="总金额" 
-                                            Binding="{Binding TotalAmount, StringFormat=C2}" 
-                                            Width="100" 
-                                            FontWeight="Bold" 
-                                            Foreground="#E91E63"/>
+                        <DataGridTextColumn Header="客户" Binding="{Binding Customer}" Width="Auto" MinWidth="100"/>
+                        <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="Auto" MinWidth="60"/>
+                        <DataGridTextColumn Header="售价" Binding="{Binding Price, StringFormat=C2}" Width="Auto" MinWidth="80" Foreground="#FF5252"/>
 
-                        <DataGridTextColumn Header="出库日期" Binding="{Binding OutboundDate, StringFormat=yyyy-MM-dd HH:mm}" Width="160"/>
+                        <DataGridTextColumn Header="总金额" Binding="{Binding TotalAmount, StringFormat=C2}" Width="Auto" MinWidth="90" FontWeight="Bold" Foreground="#E91E63"/>
 
-                        <DataGridTemplateColumn Header="操作" Width="120">
+                        <DataGridTextColumn Header="出库日期" Binding="{Binding OutboundDate, StringFormat=yyyy-MM-dd HH:mm}" Width="Auto" MinWidth="130"/>
+
+                        <DataGridTemplateColumn Header="操作" Width="120" MinWidth="120">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
