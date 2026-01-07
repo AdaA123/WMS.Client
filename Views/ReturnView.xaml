@@ -86,36 +86,83 @@
 
                 <DataGrid Grid.Row="1" ItemsSource="{Binding ReturnList}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="All" SelectionMode="Single" Style="{StaticResource MaterialDesignDataGrid}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="退货单号" Binding="{Binding ReturnNo}" Width="Auto" MinWidth="130" FontWeight="Bold"/>
+                        <DataGridTextColumn Header="退货单号" Binding="{Binding ReturnNo}" Width="Auto" FontWeight="Bold"/>
 
-                        <DataGridTemplateColumn Header="产品名称" Width="*" MinWidth="150">
+                        <DataGridTemplateColumn Header="产品名称" Width="Auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding ProductName}" VerticalAlignment="Center" FontWeight="Medium"/>
+                                    <TextBlock Text="{Binding ProductName}" 
+                                               TextWrapping="Wrap" 
+                                               MaxWidth="160" 
+                                               VerticalAlignment="Center" 
+                                               ToolTip="{Binding ProductName}"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="Auto" MinWidth="60"/>
-                        <DataGridTextColumn Header="退款金额" Binding="{Binding Price, StringFormat=C2}" Width="Auto" MinWidth="80">
+                        <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="Auto">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="#FF5252"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="退款金额" Binding="{Binding Price, StringFormat=C2}" Width="Auto" Foreground="#FF5252">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="总金额" Binding="{Binding TotalAmount, StringFormat=C2}" Width="Auto" FontWeight="Bold" Foreground="#E91E63">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="客户" Binding="{Binding Customer}" Width="Auto">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="TextWrapping" Value="Wrap"/>
+                                    <Setter Property="MaxWidth" Value="150"/>
                                     <Setter Property="VerticalAlignment" Value="Center"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
 
-                        <DataGridTextColumn Header="总金额" Binding="{Binding TotalAmount, StringFormat=C2}" Width="Auto" MinWidth="90" FontWeight="Bold" Foreground="#E91E63"/>
+                        <DataGridTextColumn Header="原因" Binding="{Binding Reason}" Width="Auto">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="TextWrapping" Value="Wrap"/>
+                                    <Setter Property="MaxWidth" Value="150"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
 
-                        <DataGridTextColumn Header="客户" Binding="{Binding Customer}" Width="Auto" MinWidth="100"/>
-                        <DataGridTextColumn Header="原因" Binding="{Binding Reason}" Width="Auto" MinWidth="100"/>
-                        <DataGridTextColumn Header="日期" Binding="{Binding ReturnDate, StringFormat=yyyy-MM-dd HH:mm}" Width="Auto" MinWidth="130"/>
+                        <DataGridTextColumn Header="退货时间" Binding="{Binding ReturnDate, StringFormat=yyyy-MM-dd HH:mm}" Width="Auto">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="TextWrapping" Value="Wrap"/>
+                                    <Setter Property="MaxWidth" Value="90"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    <Setter Property="TextAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
 
-                        <DataGridTemplateColumn Header="操作" Width="120" MinWidth="120">
+                        <DataGridTemplateColumn Header="操作" Width="Auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" Width="30" Height="30"
                                                 Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                                             <materialDesign:PackIcon Kind="Pencil" />
