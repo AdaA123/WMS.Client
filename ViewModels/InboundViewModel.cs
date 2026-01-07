@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MaterialDesignThemes.Wpf; // 引用 DialogHost
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using WMS.Client.Models;
 using WMS.Client.Services;
+using WMS.Client.Views;
 
 namespace WMS.Client.ViewModels
 {
@@ -36,13 +38,7 @@ namespace WMS.Client.ViewModels
 
         async partial void OnEntryProductNameChanged(string value)
         {
-            // 只有当产品名真正变化时才同步，避免循环
-            if (NewInbound.ProductName != value)
-            {
-                NewInbound.ProductName = value;
-            }
-
-            // 仅在新建模式(Id=0)且输入不为空时，触发自动填充
+            if (NewInbound.ProductName != value) NewInbound.ProductName = value;
             if (NewInbound.Id == 0 && !string.IsNullOrWhiteSpace(value))
             {
                 var lastRecord = await _dbService.GetLastInboundByProductAsync(value);
@@ -67,12 +63,10 @@ namespace WMS.Client.ViewModels
             _cachedList = await _dbService.GetInboundOrdersAsync();
 
             var suppliers = await _dbService.GetSupplierListAsync();
-            Suppliers.Clear();
-            foreach (var s in suppliers) Suppliers.Add(s);
+            Suppliers.Clear(); foreach (var s in suppliers) Suppliers.Add(s);
 
             var products = await _dbService.GetProductListAsync();
-            ProductList.Clear();
-            foreach (var p in products) ProductList.Add(p);
+            ProductList.Clear(); foreach (var p in products) ProductList.Add(p);
 
             ProcessData();
         }
@@ -123,11 +117,11 @@ namespace WMS.Client.ViewModels
                 Price = item.Price,
                 Supplier = item.Supplier,
                 InboundDate = item.InboundDate,
-                Status = item.Status
+                Status = item.Status,
+                AcceptedQuantity = item.AcceptedQuantity,
+                RejectedQuantity = item.RejectedQuantity,
+                CheckDate = item.CheckDate
             };
-
-            // 🟢 修复 MVVMTK0034：直接给属性赋值
-            // 因为 NewInbound.Id != 0，所以不会触发 OnEntryProductNameChanged 中的自动填充逻辑，是安全的
             EntryProductName = item.ProductName ?? "";
         }
 
@@ -150,6 +144,8 @@ namespace WMS.Client.ViewModels
                     NewInbound.OrderNo = $"RK{DateTime.Now:yyyyMMddHHmmss}";
                     NewInbound.InboundDate = DateTime.Now;
                     NewInbound.Status = "待验收";
+                    NewInbound.AcceptedQuantity = 0;
+                    NewInbound.RejectedQuantity = 0;
                 }
 
                 await _dbService.SaveInboundOrderAsync(NewInbound);
@@ -159,29 +155,56 @@ namespace WMS.Client.ViewModels
             catch (Exception ex) { MessageBox.Show($"保存失败：{ex.Message}"); }
         }
 
+        // 🟢 验收处理 (弹窗)
         [RelayCommand]
         private async Task ConfirmAccept(InboundModel item)
         {
             if (item == null) return;
             if (item.Status != "待验收") { MessageBox.Show("只有[待验收]的单据才能进行此操作"); return; }
 
-            if (MessageBox.Show($"确认验收产品 [{item.ProductName}] 吗？\n验收通过后将计入库存。", "验收确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            // 创建并显示验收弹窗
+            var dialog = new AcceptanceDialog(item);
+
+            // 使用 DialogHost.Show 必须指定 Identifier (Root中的 Identifier)
+            // 假设 InboundView 在 MainWindow 或 HomeView 中，这里使用 "InboundDialogHost"
+            // 注意：需要在 InboundView.xaml 外层包裹 DialogHost
+            var result = await DialogHost.Show(dialog, "InboundDialogHost");
+
+            // result 是弹窗返回的字符串 (合格数量)
+            if (result != null && int.TryParse(result.ToString(), out int acceptedQty))
             {
-                item.Status = "已验收";
+                item.AcceptedQuantity = acceptedQty;
+                item.RejectedQuantity = item.Quantity - acceptedQty;
+                item.CheckDate = DateTime.Now;
+
+                // 状态逻辑
+                if (item.AcceptedQuantity == 0)
+                    item.Status = "已退货"; // 全部拒收
+                else if (item.RejectedQuantity > 0)
+                    item.Status = "已验收"; // 部分合格也算验收完成，只是会有拒收数记录
+                else
+                    item.Status = "已验收"; // 全部合格
+
                 await _dbService.SaveInboundOrderAsync(item);
                 await RefreshDataAsync();
+                MessageBox.Show($"验收完成！\n合格: {item.AcceptedQuantity}\n退回: {item.RejectedQuantity}");
             }
         }
 
+        // 🟢 直接全部退货
         [RelayCommand]
         private async Task RejectReturn(InboundModel item)
         {
             if (item == null) return;
             if (item.Status != "待验收") { MessageBox.Show("只有[待验收]的单据才能进行此操作"); return; }
 
-            if (MessageBox.Show($"确认将产品 [{item.ProductName}] 退回供应商吗？\n此操作将标记为[已退货]，不计入库存。", "退货确认", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            if (MessageBox.Show($"确认将产品 [{item.ProductName}] 全部退回供应商吗？", "退货确认", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
                 item.Status = "已退货";
+                item.AcceptedQuantity = 0;
+                item.RejectedQuantity = item.Quantity;
+                item.CheckDate = DateTime.Now; // 记录退货处理时间
+
                 await _dbService.SaveInboundOrderAsync(item);
                 await RefreshDataAsync();
             }
