@@ -29,6 +29,16 @@ namespace WMS.Client.Services
                 {
                     db.Insert(new UserModel { Username = "admin", Password = "888888" });
                 }
+
+                // 🟢 关键修复：迁移旧数据
+                // 如果是以前录入的数据没有Status字段，或者为NULL，默认设为 "已验收"，否则库存会变0
+                // 注意：SQLite添加新列后默认是null，这里做一个容错更新
+                try
+                {
+                    // 检查是否存在 Status 列，如果表结构已自动更新，这里确保数据正确
+                    var count = db.Execute("UPDATE InboundModel SET Status = '已验收' WHERE Status IS NULL OR Status = ''");
+                }
+                catch { /* 忽略异常 */ }
             }
 
             _database = new SQLiteAsyncConnection(_dbPath);
@@ -64,6 +74,12 @@ namespace WMS.Client.Services
         private async Task<decimal> GetTableTotalAmountAsync<T>(string tableName) where T : new()
         {
             string sql = $"SELECT SUM(Price * Quantity) FROM {tableName}";
+            // 🟢 如果是 InboundModel，只计算已验收的金额
+            if (tableName == nameof(InboundModel))
+            {
+                sql += " WHERE Status = '已验收'";
+            }
+
             try
             {
                 var result = await _database.ExecuteScalarAsync<decimal?>(sql);
@@ -101,9 +117,12 @@ namespace WMS.Client.Services
             var list = new List<FinancialSummaryModel>();
             foreach (var name in allProducts)
             {
-                var cost = inbounds.Where(x => x.ProductName == name).Sum(x => x.Quantity * x.Price);
+                // 🟢 成本计算：只计算已验收的入库单
+                var cost = inbounds.Where(x => x.ProductName == name && x.Status == "已验收")
+                                   .Sum(x => x.Quantity * x.Price);
+
                 var rev = outbounds.Where(x => x.ProductName == name).Sum(x => x.Quantity * x.Price);
-                var refd = returns.Where(x => x.ProductName == name).Sum(x => x.Price * x.Quantity); // 修正：退货也按总价算
+                var refd = returns.Where(x => x.ProductName == name).Sum(x => x.Price * x.Quantity);
 
                 list.Add(new FinancialSummaryModel
                 {
@@ -161,7 +180,8 @@ namespace WMS.Client.Services
                     details.Add(new FinancialDetailModel
                     {
                         ProductName = prod,
-                        Cost = currentIn.Where(x => x.ProductName == prod).Sum(x => x.Quantity * x.Price),
+                        // 🟢 成本只算已验收
+                        Cost = currentIn.Where(x => x.ProductName == prod && x.Status == "已验收").Sum(x => x.Quantity * x.Price),
                         Revenue = currentOut.Where(x => x.ProductName == prod).Sum(x => x.Quantity * x.Price),
                         Refund = currentRet.Where(x => x.ProductName == prod).Sum(x => x.Price * x.Quantity)
                     });
@@ -200,17 +220,25 @@ namespace WMS.Client.Services
             foreach (var name in allProducts)
             {
                 var inList = inbounds.Where(x => x.ProductName == name).ToList();
-                var inQty = inList.Sum(x => x.Quantity);
+
+                // 🟢 核心修改：入库量 = 仅状态为 "已验收" 的数量
+                // "待验收" 的不计入库存，"已退货" 的也不计入
+                var inQty = inList.Where(x => x.Status == "已验收").Sum(x => x.Quantity);
+
                 var outQty = outbounds.Where(x => x.ProductName == name).Sum(x => x.Quantity);
+
+                // 退货单(ReturnModel)是客户退给我们的，所以要加回库存
                 var retQty = returns.Where(x => x.ProductName == name).Sum(x => x.Quantity);
 
                 var currentStock = inQty - outQty + retQty;
 
+                // 计算平均成本（只基于已验收的）
                 decimal avgPrice = 0;
-                if (inList.Any())
+                var acceptedInList = inList.Where(x => x.Status == "已验收").ToList();
+                if (acceptedInList.Any())
                 {
-                    var totalInCost = inList.Sum(x => x.Quantity * x.Price);
-                    var totalInQty = inList.Sum(x => x.Quantity);
+                    var totalInCost = acceptedInList.Sum(x => x.Quantity * x.Price);
+                    var totalInQty = acceptedInList.Sum(x => x.Quantity);
                     if (totalInQty > 0)
                         avgPrice = totalInCost / totalInQty;
                 }
@@ -227,11 +255,9 @@ namespace WMS.Client.Services
             return summaryList.OrderByDescending(x => x.CurrentStock).ToList();
         }
 
-        // --- 🟢 新增：获取最近一次交易记录 (用于自动填充) ---
-
+        // --- 获取最近一次交易记录 (自动填充) ---
         public async Task<InboundModel?> GetLastInboundByProductAsync(string productName)
         {
-            // 获取该产品最后一次入库的记录
             return await _database.Table<InboundModel>()
                                   .Where(x => x.ProductName == productName)
                                   .OrderByDescending(x => x.InboundDate)

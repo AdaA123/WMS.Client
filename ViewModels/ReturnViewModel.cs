@@ -31,14 +31,13 @@ namespace WMS.Client.ViewModels
 
         [ObservableProperty] private ReturnModel _newReturn = new();
 
-        // 🟢 自动填充触发
         [ObservableProperty] private string _entryProductName = "";
         async partial void OnEntryProductNameChanged(string value)
         {
-            NewReturn.ProductName = value;
+            if (NewReturn.ProductName != value) NewReturn.ProductName = value;
+
             if (NewReturn.Id == 0 && !string.IsNullOrWhiteSpace(value))
             {
-                // 优先查找最后一次退货记录，如果没有，也可以考虑查找最后一次出库记录
                 var lastRecord = await _dbService.GetLastReturnByProductAsync(value);
                 if (lastRecord != null)
                 {
@@ -47,7 +46,6 @@ namespace WMS.Client.ViewModels
                 }
                 else
                 {
-                    // 如果没退过，尝试找找卖给谁了（出库记录）
                     var lastSale = await _dbService.GetLastOutboundByProductAsync(value);
                     if (lastSale != null)
                     {
@@ -106,8 +104,8 @@ namespace WMS.Client.ViewModels
         {
             if (item == null) return;
             NewReturn = new ReturnModel { Id = item.Id, ReturnNo = item.ReturnNo, ProductName = item.ProductName, Quantity = item.Quantity, Price = item.Price, Customer = item.Customer, Reason = item.Reason, ReturnDate = item.ReturnDate };
-            _entryProductName = item.ProductName ?? "";
-            OnPropertyChanged(nameof(EntryProductName));
+            // 🟢 修复 MVVMTK0034
+            EntryProductName = item.ProductName ?? "";
         }
 
         [RelayCommand]

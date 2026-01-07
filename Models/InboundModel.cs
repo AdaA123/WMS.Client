@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using SQLite;
 using System;
-using System.Diagnostics;
 
 namespace WMS.Client.Models
 {
@@ -16,6 +15,10 @@ namespace WMS.Client.Models
         [ObservableProperty] private int _quantity;
         [ObservableProperty] private decimal _price; // 单价
         [ObservableProperty] private DateTime _inboundDate;
+
+        // 🟢 新增：状态 (待验收, 已验收, 已退货)
+        // 默认为 "待验收"
+        [ObservableProperty] private string _status = "待验收";
 
         // 总金额 (不存入数据库，实时计算)
         [Ignore]

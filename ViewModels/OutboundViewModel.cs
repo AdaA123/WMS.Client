@@ -32,11 +32,11 @@ namespace WMS.Client.ViewModels
 
         [ObservableProperty] private OutboundModel _newOutbound = new();
 
-        // 🟢 自动填充触发属性
         [ObservableProperty] private string _entryProductName = "";
         async partial void OnEntryProductNameChanged(string value)
         {
-            NewOutbound.ProductName = value;
+            if (NewOutbound.ProductName != value) NewOutbound.ProductName = value;
+
             if (NewOutbound.Id == 0 && !string.IsNullOrWhiteSpace(value))
             {
                 var lastRecord = await _dbService.GetLastOutboundByProductAsync(value);
@@ -100,8 +100,8 @@ namespace WMS.Client.ViewModels
         {
             if (item == null) return;
             NewOutbound = new OutboundModel { Id = item.Id, OrderNo = item.OrderNo, ProductName = item.ProductName, Quantity = item.Quantity, Price = item.Price, Customer = item.Customer, OutboundDate = item.OutboundDate };
-            _entryProductName = item.ProductName ?? "";
-            OnPropertyChanged(nameof(EntryProductName));
+            // 🟢 修复 MVVMTK0034
+            EntryProductName = item.ProductName ?? "";
         }
 
         [RelayCommand]

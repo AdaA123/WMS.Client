@@ -19,7 +19,6 @@ namespace WMS.Client.ViewModels
 
         public ObservableCollection<InboundModel> InboundList { get; } = new();
         public ObservableCollection<string> Suppliers { get; } = new();
-        // 产品下拉列表
         public ObservableCollection<string> ProductList { get; } = new();
 
         private List<InboundModel> _cachedList = new();
@@ -27,28 +26,28 @@ namespace WMS.Client.ViewModels
         [ObservableProperty] private string _searchText = "";
         partial void OnSearchTextChanged(string value) => ProcessData();
 
-        public ObservableCollection<string> SortOptions { get; } = new() { "时间 (最新)", "时间 (最早)", "产品名称", "供应商" };
+        public ObservableCollection<string> SortOptions { get; } = new() { "时间 (最新)", "时间 (最早)", "产品名称", "供应商", "状态" };
         [ObservableProperty] private string _selectedSortOption = "时间 (最新)";
         partial void OnSelectedSortOptionChanged(string value) => ProcessData();
 
         [ObservableProperty] private InboundModel _newInbound = new();
 
-        // 🟢 录入专用产品名称属性，用于触发自动填充逻辑
         [ObservableProperty] private string _entryProductName = "";
 
-        // 当输入或选择产品时触发
         async partial void OnEntryProductNameChanged(string value)
         {
-            // 同步到实体
-            NewInbound.ProductName = value;
+            // 只有当产品名真正变化时才同步，避免循环
+            if (NewInbound.ProductName != value)
+            {
+                NewInbound.ProductName = value;
+            }
 
-            // 只有是新建模式(ID=0)且输入不为空时，才自动填充
+            // 仅在新建模式(Id=0)且输入不为空时，触发自动填充
             if (NewInbound.Id == 0 && !string.IsNullOrWhiteSpace(value))
             {
                 var lastRecord = await _dbService.GetLastInboundByProductAsync(value);
                 if (lastRecord != null)
                 {
-                    // 自动填充上次的价格和供应商
                     NewInbound.Price = lastRecord.Price;
                     NewInbound.Supplier = lastRecord.Supplier;
                 }
@@ -97,6 +96,7 @@ namespace WMS.Client.ViewModels
                 "时间 (最早)" => query.OrderBy(x => x.InboundDate),
                 "产品名称" => query.OrderBy(x => x.ProductName),
                 "供应商" => query.OrderBy(x => x.Supplier),
+                "状态" => query.OrderBy(x => x.Status),
                 _ => query.OrderByDescending(x => x.InboundDate)
             };
 
@@ -108,7 +108,12 @@ namespace WMS.Client.ViewModels
         private void Edit(InboundModel item)
         {
             if (item == null) return;
-            // 复制对象
+            if (item.Status != "待验收")
+            {
+                if (MessageBox.Show($"该单据状态为[{item.Status}]，修改可能会影响库存准确性，确认修改吗？", "警告", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+                    return;
+            }
+
             NewInbound = new InboundModel
             {
                 Id = item.Id,
@@ -117,12 +122,13 @@ namespace WMS.Client.ViewModels
                 Quantity = item.Quantity,
                 Price = item.Price,
                 Supplier = item.Supplier,
-                InboundDate = item.InboundDate
+                InboundDate = item.InboundDate,
+                Status = item.Status
             };
-            // 此时不需要触发自动填充，所以直接设置字段或不做操作，
-            // 但为了界面显示，我们需要更新EntryProductName
-            _entryProductName = item.ProductName ?? "";
-            OnPropertyChanged(nameof(EntryProductName));
+
+            // 🟢 修复 MVVMTK0034：直接给属性赋值
+            // 因为 NewInbound.Id != 0，所以不会触发 OnEntryProductNameChanged 中的自动填充逻辑，是安全的
+            EntryProductName = item.ProductName ?? "";
         }
 
         [RelayCommand]
@@ -143,12 +149,42 @@ namespace WMS.Client.ViewModels
                 {
                     NewInbound.OrderNo = $"RK{DateTime.Now:yyyyMMddHHmmss}";
                     NewInbound.InboundDate = DateTime.Now;
+                    NewInbound.Status = "待验收";
                 }
+
                 await _dbService.SaveInboundOrderAsync(NewInbound);
                 await RefreshDataAsync();
-                Cancel(); // 重置
+                Cancel();
             }
             catch (Exception ex) { MessageBox.Show($"保存失败：{ex.Message}"); }
+        }
+
+        [RelayCommand]
+        private async Task ConfirmAccept(InboundModel item)
+        {
+            if (item == null) return;
+            if (item.Status != "待验收") { MessageBox.Show("只有[待验收]的单据才能进行此操作"); return; }
+
+            if (MessageBox.Show($"确认验收产品 [{item.ProductName}] 吗？\n验收通过后将计入库存。", "验收确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                item.Status = "已验收";
+                await _dbService.SaveInboundOrderAsync(item);
+                await RefreshDataAsync();
+            }
+        }
+
+        [RelayCommand]
+        private async Task RejectReturn(InboundModel item)
+        {
+            if (item == null) return;
+            if (item.Status != "待验收") { MessageBox.Show("只有[待验收]的单据才能进行此操作"); return; }
+
+            if (MessageBox.Show($"确认将产品 [{item.ProductName}] 退回供应商吗？\n此操作将标记为[已退货]，不计入库存。", "退货确认", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            {
+                item.Status = "已退货";
+                await _dbService.SaveInboundOrderAsync(item);
+                await RefreshDataAsync();
+            }
         }
 
         [RelayCommand] private void Print() { if (InboundList.Count == 0) MessageBox.Show("无数据"); else _printService.PrintInboundReport(InboundList); }
