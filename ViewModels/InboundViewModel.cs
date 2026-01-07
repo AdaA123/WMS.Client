@@ -19,7 +19,7 @@ namespace WMS.Client.ViewModels
 
         public ObservableCollection<InboundModel> InboundList { get; } = new();
         public ObservableCollection<string> Suppliers { get; } = new();
-        // 🟢 新增：产品名称列表，用于下拉提示
+        // 产品下拉列表
         public ObservableCollection<string> ProductList { get; } = new();
 
         private List<InboundModel> _cachedList = new();
@@ -32,6 +32,28 @@ namespace WMS.Client.ViewModels
         partial void OnSelectedSortOptionChanged(string value) => ProcessData();
 
         [ObservableProperty] private InboundModel _newInbound = new();
+
+        // 🟢 录入专用产品名称属性，用于触发自动填充逻辑
+        [ObservableProperty] private string _entryProductName = "";
+
+        // 当输入或选择产品时触发
+        async partial void OnEntryProductNameChanged(string value)
+        {
+            // 同步到实体
+            NewInbound.ProductName = value;
+
+            // 只有是新建模式(ID=0)且输入不为空时，才自动填充
+            if (NewInbound.Id == 0 && !string.IsNullOrWhiteSpace(value))
+            {
+                var lastRecord = await _dbService.GetLastInboundByProductAsync(value);
+                if (lastRecord != null)
+                {
+                    // 自动填充上次的价格和供应商
+                    NewInbound.Price = lastRecord.Price;
+                    NewInbound.Supplier = lastRecord.Supplier;
+                }
+            }
+        }
 
         public InboundViewModel()
         {
@@ -49,7 +71,6 @@ namespace WMS.Client.ViewModels
             Suppliers.Clear();
             foreach (var s in suppliers) Suppliers.Add(s);
 
-            // 🟢 加载所有历史产品名称
             var products = await _dbService.GetProductListAsync();
             ProductList.Clear();
             foreach (var p in products) ProductList.Add(p);
@@ -83,10 +104,33 @@ namespace WMS.Client.ViewModels
             foreach (var item in query) InboundList.Add(item);
         }
 
-        [RelayCommand] private void Edit(InboundModel item) { if (item == null) return; NewInbound = new InboundModel { Id = item.Id, OrderNo = item.OrderNo, ProductName = item.ProductName, Quantity = item.Quantity, Price = item.Price, Supplier = item.Supplier, InboundDate = item.InboundDate }; }
-        [RelayCommand] private void Cancel() => NewInbound = new InboundModel();
-        [RelayCommand] private void Print() { if (InboundList.Count == 0) MessageBox.Show("无数据"); else _printService.PrintInboundReport(InboundList); }
-        [RelayCommand] private void Export() { if (InboundList.Count == 0) MessageBox.Show("无数据"); else _exportService.ExportInbound(InboundList); }
+        [RelayCommand]
+        private void Edit(InboundModel item)
+        {
+            if (item == null) return;
+            // 复制对象
+            NewInbound = new InboundModel
+            {
+                Id = item.Id,
+                OrderNo = item.OrderNo,
+                ProductName = item.ProductName,
+                Quantity = item.Quantity,
+                Price = item.Price,
+                Supplier = item.Supplier,
+                InboundDate = item.InboundDate
+            };
+            // 此时不需要触发自动填充，所以直接设置字段或不做操作，
+            // 但为了界面显示，我们需要更新EntryProductName
+            _entryProductName = item.ProductName ?? "";
+            OnPropertyChanged(nameof(EntryProductName));
+        }
+
+        [RelayCommand]
+        private void Cancel()
+        {
+            NewInbound = new InboundModel();
+            EntryProductName = "";
+        }
 
         [RelayCommand]
         private async Task Save()
@@ -102,21 +146,13 @@ namespace WMS.Client.ViewModels
                 }
                 await _dbService.SaveInboundOrderAsync(NewInbound);
                 await RefreshDataAsync();
-                NewInbound = new InboundModel();
+                Cancel(); // 重置
             }
             catch (Exception ex) { MessageBox.Show($"保存失败：{ex.Message}"); }
         }
 
-        [RelayCommand]
-        private async Task Delete(InboundModel item)
-        {
-            if (item == null) return;
-            if (MessageBox.Show($"确认删除单号 [{item.OrderNo}] 吗？", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-            {
-                await _dbService.DeleteInboundOrderAsync(item);
-                await RefreshDataAsync();
-                if (NewInbound.Id == item.Id) NewInbound = new InboundModel();
-            }
-        }
+        [RelayCommand] private void Print() { if (InboundList.Count == 0) MessageBox.Show("无数据"); else _printService.PrintInboundReport(InboundList); }
+        [RelayCommand] private void Export() { if (InboundList.Count == 0) MessageBox.Show("无数据"); else _exportService.ExportInbound(InboundList); }
+        [RelayCommand] private async Task Delete(InboundModel item) { if (MessageBox.Show("确认删除？", "提示", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { await _dbService.DeleteInboundOrderAsync(item); await RefreshDataAsync(); if (NewInbound.Id == item.Id) Cancel(); } }
     }
 }

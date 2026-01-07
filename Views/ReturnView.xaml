@@ -19,20 +19,20 @@
 
                     <ComboBox Width="140" Margin="0,0,15,0" 
                               materialDesign:HintAssist.Hint="退回产品" 
-                              IsEditable="True"
+                              IsEditable="True" 
                               StaysOpenOnEdit="True"
                               IsTextSearchEnabled="False"
                               KeyUp="ComboBox_KeyUp"
                               Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
                               ItemsSource="{Binding ProductList}" 
-                              Text="{Binding NewReturn.ProductName, UpdateSourceTrigger=PropertyChanged}" />
+                              Text="{Binding EntryProductName, UpdateSourceTrigger=PropertyChanged}" />
 
                     <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="数量" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewReturn.Quantity}" />
                     <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="退款金额" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewReturn.Price}" />
 
                     <ComboBox Width="120" Margin="0,0,15,0" 
                               materialDesign:HintAssist.Hint="客户" 
-                              IsEditable="True"
+                              IsEditable="True" 
                               StaysOpenOnEdit="True"
                               IsTextSearchEnabled="False"
                               KeyUp="ComboBox_KeyUp"

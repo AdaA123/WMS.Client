@@ -27,7 +27,7 @@
                               KeyUp="ComboBox_KeyUp"
                               Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
                               ItemsSource="{Binding ProductList}" 
-                              Text="{Binding NewInbound.ProductName, UpdateSourceTrigger=PropertyChanged}" />
+                              Text="{Binding EntryProductName, UpdateSourceTrigger=PropertyChanged}" />
 
                     <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="数量" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewInbound.Quantity}" />
                     <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="单价" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewInbound.Price}" />

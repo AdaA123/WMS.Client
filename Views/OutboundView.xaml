@@ -25,14 +25,14 @@
                               KeyUp="ComboBox_KeyUp"
                               Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
                               ItemsSource="{Binding ProductList}" 
-                              Text="{Binding NewOutbound.ProductName, UpdateSourceTrigger=PropertyChanged}" />
+                              Text="{Binding EntryProductName, UpdateSourceTrigger=PropertyChanged}" />
 
                     <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="数量" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewOutbound.Quantity}" />
                     <TextBox Width="70" Margin="0,0,15,0" materialDesign:HintAssist.Hint="售价 (元)" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewOutbound.Price}" />
 
                     <ComboBox Width="120" Margin="0,0,15,0" 
                               materialDesign:HintAssist.Hint="客户" 
-                              IsEditable="True"
+                              IsEditable="True" 
                               StaysOpenOnEdit="True"
                               IsTextSearchEnabled="False"
                               KeyUp="ComboBox_KeyUp"

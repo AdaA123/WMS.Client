@@ -1,21 +1,26 @@
-﻿using SQLite;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using SQLite;
 using System;
+using System.Diagnostics;
 
 namespace WMS.Client.Models
 {
-    public class OutboundModel
+    public partial class OutboundModel : ObservableObject
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
-        public string? OrderNo { get; set; }
-        public string? ProductName { get; set; }
-        public string? Customer { get; set; }
-        public int Quantity { get; set; }
-        public decimal Price { get; set; } // 售价
-        public DateTime OutboundDate { get; set; }
 
-        // 新增：总金额
+        [ObservableProperty] private string? _orderNo;
+        [ObservableProperty] private string? _productName;
+        [ObservableProperty] private string? _customer;
+        [ObservableProperty] private int _quantity;
+        [ObservableProperty] private decimal _price; // 售价
+        [ObservableProperty] private DateTime _outboundDate;
+
         [Ignore]
         public decimal TotalAmount => Quantity * Price;
+
+        partial void OnQuantityChanged(int value) => OnPropertyChanged(nameof(TotalAmount));
+        partial void OnPriceChanged(decimal value) => OnPropertyChanged(nameof(TotalAmount));
     }
 }

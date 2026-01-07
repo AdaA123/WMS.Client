@@ -32,6 +32,22 @@ namespace WMS.Client.ViewModels
 
         [ObservableProperty] private OutboundModel _newOutbound = new();
 
+        // 🟢 自动填充触发属性
+        [ObservableProperty] private string _entryProductName = "";
+        async partial void OnEntryProductNameChanged(string value)
+        {
+            NewOutbound.ProductName = value;
+            if (NewOutbound.Id == 0 && !string.IsNullOrWhiteSpace(value))
+            {
+                var lastRecord = await _dbService.GetLastOutboundByProductAsync(value);
+                if (lastRecord != null)
+                {
+                    NewOutbound.Price = lastRecord.Price;
+                    NewOutbound.Customer = lastRecord.Customer;
+                }
+            }
+        }
+
         public OutboundViewModel()
         {
             _dbService = new DatabaseService();
@@ -79,8 +95,22 @@ namespace WMS.Client.ViewModels
             foreach (var item in query) OutboundList.Add(item);
         }
 
-        [RelayCommand] private void Edit(OutboundModel item) { if (item == null) return; NewOutbound = new OutboundModel { Id = item.Id, OrderNo = item.OrderNo, ProductName = item.ProductName, Quantity = item.Quantity, Price = item.Price, Customer = item.Customer, OutboundDate = item.OutboundDate }; }
-        [RelayCommand] private void Cancel() => NewOutbound = new OutboundModel();
+        [RelayCommand]
+        private void Edit(OutboundModel item)
+        {
+            if (item == null) return;
+            NewOutbound = new OutboundModel { Id = item.Id, OrderNo = item.OrderNo, ProductName = item.ProductName, Quantity = item.Quantity, Price = item.Price, Customer = item.Customer, OutboundDate = item.OutboundDate };
+            _entryProductName = item.ProductName ?? "";
+            OnPropertyChanged(nameof(EntryProductName));
+        }
+
+        [RelayCommand]
+        private void Cancel()
+        {
+            NewOutbound = new OutboundModel();
+            EntryProductName = "";
+        }
+
         [RelayCommand] private void Print() { if (OutboundList.Count == 0) { MessageBox.Show("无数据可打印"); return; } _printService.PrintOutboundReport(OutboundList); }
         [RelayCommand] private void Export() { if (OutboundList.Count == 0) { MessageBox.Show("无数据可导出"); return; } _exportService.ExportOutbound(OutboundList); }
 
@@ -99,7 +129,7 @@ namespace WMS.Client.ViewModels
                 if (string.IsNullOrEmpty(NewOutbound.Customer)) NewOutbound.Customer = "散客";
                 await _dbService.SaveOutboundOrderAsync(NewOutbound);
                 await RefreshDataAsync();
-                NewOutbound = new OutboundModel();
+                Cancel();
             }
             catch (Exception ex) { MessageBox.Show($"保存失败：{ex.Message}"); }
         }
@@ -112,7 +142,7 @@ namespace WMS.Client.ViewModels
             {
                 await _dbService.DeleteOutboundOrderAsync(item);
                 await RefreshDataAsync();
-                if (NewOutbound.Id == item.Id) NewOutbound = new OutboundModel();
+                if (NewOutbound.Id == item.Id) Cancel();
             }
         }
     }

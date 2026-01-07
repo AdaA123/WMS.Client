@@ -31,6 +31,33 @@ namespace WMS.Client.ViewModels
 
         [ObservableProperty] private ReturnModel _newReturn = new();
 
+        // 🟢 自动填充触发
+        [ObservableProperty] private string _entryProductName = "";
+        async partial void OnEntryProductNameChanged(string value)
+        {
+            NewReturn.ProductName = value;
+            if (NewReturn.Id == 0 && !string.IsNullOrWhiteSpace(value))
+            {
+                // 优先查找最后一次退货记录，如果没有，也可以考虑查找最后一次出库记录
+                var lastRecord = await _dbService.GetLastReturnByProductAsync(value);
+                if (lastRecord != null)
+                {
+                    NewReturn.Price = lastRecord.Price;
+                    NewReturn.Customer = lastRecord.Customer;
+                }
+                else
+                {
+                    // 如果没退过，尝试找找卖给谁了（出库记录）
+                    var lastSale = await _dbService.GetLastOutboundByProductAsync(value);
+                    if (lastSale != null)
+                    {
+                        NewReturn.Price = lastSale.Price;
+                        NewReturn.Customer = lastSale.Customer;
+                    }
+                }
+            }
+        }
+
         public ReturnViewModel()
         {
             _dbService = new DatabaseService();
@@ -74,8 +101,22 @@ namespace WMS.Client.ViewModels
             foreach (var item in query) ReturnList.Add(item);
         }
 
-        [RelayCommand] private void Edit(ReturnModel item) { if (item == null) return; NewReturn = new ReturnModel { Id = item.Id, ReturnNo = item.ReturnNo, ProductName = item.ProductName, Quantity = item.Quantity, Price = item.Price, Customer = item.Customer, Reason = item.Reason, ReturnDate = item.ReturnDate }; }
-        [RelayCommand] private void Cancel() => NewReturn = new ReturnModel();
+        [RelayCommand]
+        private void Edit(ReturnModel item)
+        {
+            if (item == null) return;
+            NewReturn = new ReturnModel { Id = item.Id, ReturnNo = item.ReturnNo, ProductName = item.ProductName, Quantity = item.Quantity, Price = item.Price, Customer = item.Customer, Reason = item.Reason, ReturnDate = item.ReturnDate };
+            _entryProductName = item.ProductName ?? "";
+            OnPropertyChanged(nameof(EntryProductName));
+        }
+
+        [RelayCommand]
+        private void Cancel()
+        {
+            NewReturn = new ReturnModel();
+            EntryProductName = "";
+        }
+
         [RelayCommand] private void Export() { if (ReturnList.Count == 0) { MessageBox.Show("无数据可导出"); return; } _exportService.ExportReturn(ReturnList); }
 
         [RelayCommand]
@@ -94,7 +135,7 @@ namespace WMS.Client.ViewModels
                 if (string.IsNullOrEmpty(NewReturn.Reason)) NewReturn.Reason = "无理由退货";
                 await _dbService.SaveReturnOrderAsync(NewReturn);
                 await RefreshDataAsync();
-                NewReturn = new ReturnModel();
+                Cancel();
             }
             catch (Exception ex) { MessageBox.Show($"保存失败：{ex.Message}"); }
         }
@@ -106,7 +147,7 @@ namespace WMS.Client.ViewModels
             {
                 await _dbService.DeleteReturnOrderAsync(item);
                 await RefreshDataAsync();
-                if (NewReturn.Id == item.Id) NewReturn = new ReturnModel();
+                if (NewReturn.Id == item.Id) Cancel();
             }
         }
     }

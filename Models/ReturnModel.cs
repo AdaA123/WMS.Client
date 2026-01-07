@@ -1,22 +1,27 @@
-﻿using SQLite;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using SQLite;
 using System;
+using System.Diagnostics;
 
 namespace WMS.Client.Models
 {
-    public class ReturnModel
+    public partial class ReturnModel : ObservableObject
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
-        public string? ReturnNo { get; set; }
-        public string? ProductName { get; set; }
-        public string? Customer { get; set; }
-        public int Quantity { get; set; }
-        public decimal Price { get; set; } // 退款单价
-        public string? Reason { get; set; }
-        public DateTime ReturnDate { get; set; }
 
-        // 新增：总金额
+        [ObservableProperty] private string? _returnNo;
+        [ObservableProperty] private string? _productName;
+        [ObservableProperty] private string? _customer;
+        [ObservableProperty] private int _quantity;
+        [ObservableProperty] private decimal _price; // 退款金额
+        [ObservableProperty] private string? _reason;
+        [ObservableProperty] private DateTime _returnDate;
+
         [Ignore]
         public decimal TotalAmount => Quantity * Price;
+
+        partial void OnQuantityChanged(int value) => OnPropertyChanged(nameof(TotalAmount));
+        partial void OnPriceChanged(decimal value) => OnPropertyChanged(nameof(TotalAmount));
     }
 }

@@ -65,6 +65,7 @@ namespace WMS.Client.ViewModels
             foreach (var item in query) InventoryList.Add(item);
         }
 
+        // 🟢 快速入库 (带自动填充)
         [RelayCommand]
         private async Task QuickInbound()
         {
@@ -75,11 +76,23 @@ namespace WMS.Client.ViewModels
                 Quantity = 1
             };
 
+            // 监听变化实现自动填充
+            newOrder.PropertyChanged += async (s, e) =>
+            {
+                if (e.PropertyName == nameof(InboundModel.ProductName) && !string.IsNullOrWhiteSpace(newOrder.ProductName))
+                {
+                    var last = await _dbService.GetLastInboundByProductAsync(newOrder.ProductName);
+                    if (last != null)
+                    {
+                        newOrder.Price = last.Price;
+                        newOrder.Supplier = last.Supplier;
+                    }
+                }
+            };
+
             var suppliers = await _dbService.GetSupplierListAsync();
-            // 🟢 新增：获取产品列表
             var products = await _dbService.GetProductListAsync();
 
-            // 🟢 将产品列表传给 Dialog
             var view = new InboundDialog(suppliers, products) { DataContext = newOrder };
             var result = await DialogHost.Show(view, "HomeDialogHost");
 
@@ -96,6 +109,7 @@ namespace WMS.Client.ViewModels
             }
         }
 
+        // 🟢 快速出库 (带自动填充)
         [RelayCommand]
         private async Task QuickOutbound()
         {
@@ -104,6 +118,19 @@ namespace WMS.Client.ViewModels
                 OrderNo = $"CK{DateTime.Now:yyyyMMddHHmmss}",
                 OutboundDate = DateTime.Now,
                 Quantity = 1
+            };
+
+            newOrder.PropertyChanged += async (s, e) =>
+            {
+                if (e.PropertyName == nameof(OutboundModel.ProductName) && !string.IsNullOrWhiteSpace(newOrder.ProductName))
+                {
+                    var last = await _dbService.GetLastOutboundByProductAsync(newOrder.ProductName);
+                    if (last != null)
+                    {
+                        newOrder.Price = last.Price;
+                        newOrder.Customer = last.Customer;
+                    }
+                }
             };
 
             var products = await _dbService.GetProductListAsync();
