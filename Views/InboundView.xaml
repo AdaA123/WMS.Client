@@ -87,8 +87,9 @@
 
                     <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10">
                         <materialDesign:PackIcon Kind="Magnify" VerticalAlignment="Center" Foreground="Gray" Width="20" Height="20"/>
+
                         <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
-                                 materialDesign:HintAssist.Hint="搜索单号/产品/供应商..."
+                                 materialDesign:HintAssist.Hint="搜索单号/产品/供应商/状态..."
                                  Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                  Width="220" Margin="10,-10,0,0"/>
                     </StackPanel>
@@ -110,11 +111,7 @@
                             <DataGridTemplateColumn Header="产品名称" Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding ProductName}" 
-                                                   TextWrapping="Wrap" 
-                                                   MaxWidth="160" 
-                                                   VerticalAlignment="Center" 
-                                                   ToolTip="{Binding ProductName}"/>
+                                        <TextBlock Text="{Binding ProductName}" TextWrapping="Wrap" MaxWidth="160" VerticalAlignment="Center" ToolTip="{Binding ProductName}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
