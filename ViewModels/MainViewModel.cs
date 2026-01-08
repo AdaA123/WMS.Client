@@ -51,9 +51,15 @@ namespace WMS.Client.ViewModels
         [RelayCommand]
         private void Logout()
         {
-            MenuVisibility = Visibility.Collapsed;
-            CurrentUser = null;
-            CurrentViewModel = new LoginViewModel(_dbService, this);
+            // 🟢 新增：退出确认提示
+            // MessageBox.Show 会阻断线程等待用户点击，如果点击“是(Yes)”才执行退出逻辑
+            if (MessageBox.Show("确定要退出登录吗？", "提示", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                MenuVisibility = Visibility.Collapsed;
+                CurrentUser = null;
+                // 切换回登录视图
+                CurrentViewModel = new LoginViewModel(_dbService, this);
+            }
         }
     }
 }
