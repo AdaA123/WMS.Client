@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Threading.Tasks; // 引入 Task
+using MaterialDesignThemes.Wpf;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using WMS.Client.Models;
@@ -12,61 +13,87 @@ namespace WMS.Client.ViewModels
     public partial class LoginViewModel : ObservableObject
     {
         private readonly DatabaseService _dbService;
+        private readonly MainViewModel _mainViewModel;
 
-        [ObservableProperty]
-        private string _username = "admin";
+        [ObservableProperty] private string _username = "";
 
-        public LoginViewModel()
+        [ObservableProperty] private string _resetUsername = "";
+        [ObservableProperty] private string _resetSecurityQuestion = "请输入账号获取问题";
+        [ObservableProperty] private string _resetAnswer = "";
+
+        async partial void OnResetUsernameChanged(string value)
         {
-            _dbService = new DatabaseService();
+            if (!string.IsNullOrWhiteSpace(value))
+                ResetSecurityQuestion = await _dbService.GetSecurityQuestionAsync(value);
+            else
+                ResetSecurityQuestion = "请输入账号获取问题";
         }
 
-        // 🔴 修复 MVVMTK0039：将 async void 改为 async Task
+        public LoginViewModel(DatabaseService dbService, MainViewModel mainViewModel)
+        {
+            _dbService = dbService;
+            _mainViewModel = mainViewModel;
+        }
+
         [RelayCommand]
         private async Task Login(object parameter)
         {
-            var passwordBox = parameter as PasswordBox;
-            var password = passwordBox?.Password;
-
-            if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(password))
+            if (parameter is PasswordBox passwordBox)
             {
-                MessageBox.Show("用户名或密码不能为空！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            bool isValid = await _dbService.LoginAsync(Username, password);
-            if (isValid)
-            {
-                // 登录成功，创建当前用户对象
-                var user = new UserModel { Username = Username, Password = password };
-
-                // 传递用户给 MainViewModel (通过构造函数或属性)
-                var mainWindow = new MainWindow();
-                var mainViewModel = new MainViewModel(user); // 假设 MainViewModel 接收用户
-                mainWindow.DataContext = mainViewModel;
-
-                Application.Current.MainWindow = mainWindow;
-                mainWindow.Show();
-
-                foreach (Window window in Application.Current.Windows)
+                var password = passwordBox.Password;
+                if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(password))
                 {
-                    if (window is LoginView)
-                    {
-                        window.Close();
-                        break;
-                    }
+                    MessageBox.Show("请输入用户名和密码");
+                    return;
                 }
-            }
-            else
-            {
-                MessageBox.Show("用户名或密码错误！", "登录失败", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                // 🟢 接收 UserModel 对象
+                var user = await _dbService.LoginAsync(Username, password);
+                if (user != null)
+                {
+                    // 登录成功，传递用户对象
+                    _mainViewModel.GoToHome(user);
+                }
+                else
+                {
+                    MessageBox.Show("用户名或密码错误");
+                }
             }
         }
 
         [RelayCommand]
-        private void Exit()
+        private async Task OpenForgotPassword()
         {
-            Application.Current.Shutdown();
+            ResetUsername = "";
+            ResetAnswer = "";
+            ResetSecurityQuestion = "请输入账号获取问题";
+            var view = new ForgotPasswordDialog { DataContext = this };
+            await DialogHost.Show(view, "LoginDialogHost");
+        }
+
+        [RelayCommand]
+        private async Task ExecuteResetPassword(object parameter)
+        {
+            if (parameter is PasswordBox pb)
+            {
+                var newPass = pb.Password;
+                if (string.IsNullOrWhiteSpace(ResetUsername) || string.IsNullOrWhiteSpace(ResetAnswer) || string.IsNullOrWhiteSpace(newPass))
+                {
+                    MessageBox.Show("请填写完整信息");
+                    return;
+                }
+
+                var success = await _dbService.VerifyAndResetPasswordAsync(ResetUsername, ResetAnswer, newPass);
+                if (success)
+                {
+                    MessageBox.Show("密码重置成功！请使用新密码登录。");
+                    DialogHost.Close("LoginDialogHost");
+                }
+                else
+                {
+                    MessageBox.Show("重置失败：账号不存在或密保答案错误。");
+                }
+            }
         }
     }
 }

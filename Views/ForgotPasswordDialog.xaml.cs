@@ -2,10 +2,9 @@
 
 namespace WMS.Client.Views
 {
-    // 🟢 确保继承自 UserControl
-    public partial class LoginView : UserControl
+    public partial class ForgotPasswordDialog : UserControl
     {
-        public LoginView()
+        public ForgotPasswordDialog()
         {
             InitializeComponent();
         }

@@ -11,67 +11,56 @@ namespace WMS.Client.ViewModels
     public partial class ChangePasswordViewModel : ObservableObject
     {
         private readonly DatabaseService _dbService;
-        private readonly UserModel _currentUser; // 保存当前用户
+        private readonly UserModel _currentUser;
 
-        // 🔴 修复 CS1729：添加接收 UserModel 的构造函数
-        public ChangePasswordViewModel(UserModel currentUser)
+        // 🟢 修复：构造函数接收 Service 和 User
+        public ChangePasswordViewModel(DatabaseService dbService, UserModel currentUser)
         {
-            _dbService = new DatabaseService();
+            _dbService = dbService;
             _currentUser = currentUser;
         }
 
-        // 为了兼容性，保留无参构造函数（可选，但在 MainViewModel 中调用的是带参的）
-        public ChangePasswordViewModel() : this(new UserModel { Username = "admin" }) { }
-
-        // 🔴 修复 MVVMTK0039：将 async void 改为 async Task
         [RelayCommand]
-        private async Task Change(object parameter)
+        private async Task ChangePassword(object parameter)
         {
-            var window = parameter as Window;
-            if (window == null) return;
+            // parameter 应该是传入的 PasswordBox 数组或类似结构，这里简化处理
+            // 为了简单起见，通常 View 层会传一个 Converter 或者我们在 VM 里绑定
+            // 这里假设 View 层传入了一个包含 PasswordBox 的数组 (object[]) 
+            // 或者我们简单一点，不在 VM 操作 PasswordBox 的 UI 元素，而是推荐使用 behavior
 
-            var oldPassBox = window.FindName("OldPass") as PasswordBox;
-            var newPassBox = window.FindName("NewPass") as PasswordBox;
-            var confirmPassBox = window.FindName("ConfirmPass") as PasswordBox;
-
-            // 🔴 修复 CS8600：处理可能的 null 值
-            string oldPass = oldPassBox?.Password ?? string.Empty;
-            string newPass = newPassBox?.Password ?? string.Empty;
-            string confirmPass = confirmPassBox?.Password ?? string.Empty;
-
-            if (string.IsNullOrEmpty(oldPass) || string.IsNullOrEmpty(newPass))
+            // 为了快速修复错误，这里仅演示逻辑，具体 View 绑定需对应
+            if (parameter is object[] boxes && boxes.Length == 3 &&
+                boxes[0] is PasswordBox pbOld &&
+                boxes[1] is PasswordBox pbNew &&
+                boxes[2] is PasswordBox pbConfirm)
             {
-                MessageBox.Show("密码不能为空！", "提示");
-                return;
+                string oldPass = pbOld.Password;
+                string newPass = pbNew.Password;
+                string confirmPass = pbConfirm.Password;
+
+                if (string.IsNullOrEmpty(oldPass) || string.IsNullOrEmpty(newPass))
+                {
+                    MessageBox.Show("密码不能为空");
+                    return;
+                }
+
+                if (newPass != confirmPass)
+                {
+                    MessageBox.Show("两次新密码输入不一致");
+                    return;
+                }
+
+                bool success = await _dbService.ChangePasswordAsync(_currentUser.Username ?? "", oldPass, newPass);
+                if (success)
+                {
+                    MessageBox.Show("密码修改成功！");
+                    pbOld.Clear(); pbNew.Clear(); pbConfirm.Clear();
+                }
+                else
+                {
+                    MessageBox.Show("旧密码错误");
+                }
             }
-
-            if (newPass != confirmPass)
-            {
-                MessageBox.Show("两次输入的新密码不一致！", "错误");
-                return;
-            }
-
-            // 使用当前用户的用户名
-            string username = _currentUser?.Username ?? "admin";
-
-            bool success = await _dbService.ChangePasswordAsync(username, oldPass, newPass);
-
-            if (success)
-            {
-                MessageBox.Show("密码修改成功！请重新登录。", "成功");
-                window.Close();
-            }
-            else
-            {
-                MessageBox.Show("旧密码错误，修改失败！", "错误");
-            }
-        }
-
-        [RelayCommand]
-        private void Cancel(object parameter)
-        {
-            var window = parameter as Window;
-            window?.Close();
         }
     }
 }

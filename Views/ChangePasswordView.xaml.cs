@@ -1,15 +1,13 @@
-﻿using System.Windows;
-using WMS.Client.ViewModels;
+﻿using System.Windows.Controls;
 
 namespace WMS.Client.Views
 {
-    public partial class ChangePasswordView : Window
+    // 🟢 确保这里是 UserControl，与 XAML 中的根节点一致
+    public partial class ChangePasswordView : UserControl
     {
         public ChangePasswordView()
         {
             InitializeComponent();
-            // 🔴 关键修复：绑定 ViewModel
-            this.DataContext = new ChangePasswordViewModel();
         }
     }
 }

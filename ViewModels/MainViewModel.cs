@@ -3,87 +3,57 @@ using CommunityToolkit.Mvvm.Input;
 using System.Threading.Tasks;
 using System.Windows;
 using WMS.Client.Models;
-using WMS.Client.Views;
+using WMS.Client.Services;
 
 namespace WMS.Client.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
-        [ObservableProperty]
-        private UserModel _currentUser;
+        private readonly DatabaseService _dbService;
 
         [ObservableProperty]
-        private object _currentView;
+        private object? _currentViewModel;
 
-        private readonly HomeViewModel _homeVM;
-        private readonly InboundViewModel _inboundVM;
-        private readonly OutboundViewModel _outboundVM;
-        private readonly ReturnViewModel _returnVM;
-        private readonly FinancialViewModel _financialVM; // 🟢 新增
+        // 預設隱藏選單
+        [ObservableProperty]
+        private Visibility _menuVisibility = Visibility.Collapsed;
 
-        public MainViewModel(UserModel user)
+        public UserModel? CurrentUser { get; set; }
+
+        public MainViewModel()
+        {
+            _dbService = new DatabaseService();
+            // 🟢 啟動時：設置當前視圖為登入頁
+            CurrentViewModel = new LoginViewModel(_dbService, this);
+        }
+
+        // 登入成功後調用
+        public void GoToHome(UserModel user)
         {
             CurrentUser = user;
-
-            _homeVM = new HomeViewModel();
-            _inboundVM = new InboundViewModel();
-            _outboundVM = new OutboundViewModel();
-            _returnVM = new ReturnViewModel();
-            _financialVM = new FinancialViewModel(); // 🟢 初始化
-
-            CurrentView = _homeVM;
+            CurrentViewModel = new HomeViewModel();
+            MenuVisibility = Visibility.Visible; // 顯示選單
         }
 
-        public MainViewModel() : this(new UserModel { Username = "Admin" }) { }
+        [RelayCommand] private void NavigateToHome() => CurrentViewModel = new HomeViewModel();
+        [RelayCommand] private void NavigateToInbound() => CurrentViewModel = new InboundViewModel();
+        [RelayCommand] private void NavigateToOutbound() => CurrentViewModel = new OutboundViewModel();
+        [RelayCommand] private void NavigateToReturn() => CurrentViewModel = new ReturnViewModel();
+        [RelayCommand] private void NavigateToFinancial() => CurrentViewModel = new FinancialViewModel();
 
         [RelayCommand]
-        private void Navigate(string viewName)
+        private void NavigateToChangePassword()
         {
-            switch (viewName)
-            {
-                case "Home":
-                    CurrentView = _homeVM;
-                    _ = _homeVM.LoadDashboardDataCommand.ExecuteAsync(null);
-                    break;
-                case "Inbound":
-                    CurrentView = _inboundVM;
-                    _ = _inboundVM.RefreshDataAsync();
-                    break;
-                case "Outbound":
-                    CurrentView = _outboundVM;
-                    _ = _outboundVM.RefreshDataAsync();
-                    break;
-                case "Return":
-                    CurrentView = _returnVM;
-                    _ = _returnVM.RefreshDataAsync();
-                    break;
-                case "Financial": // 🟢 新增导航 case
-                    CurrentView = _financialVM;
-                    _ = _financialVM.RefreshDataAsync();
-                    break;
-            }
-        }
-
-        [RelayCommand]
-        private void OpenChangePassword()
-        {
-            var vm = new ChangePasswordViewModel(CurrentUser);
-            var view = new ChangePasswordView
-            {
-                DataContext = vm,
-                Owner = Application.Current.MainWindow
-            };
-            view.ShowDialog();
+            if (CurrentUser != null)
+                CurrentViewModel = new ChangePasswordViewModel(_dbService, CurrentUser);
         }
 
         [RelayCommand]
         private void Logout()
         {
-            var loginView = new LoginView();
-            loginView.Show();
-
-            Application.Current.MainWindow?.Close();
-            Application.Current.MainWindow = loginView;
+            MenuVisibility = Visibility.Collapsed;
+            CurrentUser = null;
+            CurrentViewModel = new LoginViewModel(_dbService, this);
         }
     }
 }
