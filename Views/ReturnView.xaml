@@ -101,13 +101,13 @@
             </StackPanel>
 
             <DataGrid Grid.Row="1" ItemsSource="{Binding ReturnList}" 
-                          AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" 
-                          HeadersVisibility="All" SelectionMode="Single"
-                          VerticalScrollBarVisibility="Auto" 
-                          HorizontalScrollBarVisibility="Auto"
-                          Style="{StaticResource MaterialDesignDataGrid}">
+                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" 
+                      HeadersVisibility="All" SelectionMode="Single"
+                      VerticalScrollBarVisibility="Auto" 
+                      HorizontalScrollBarVisibility="Auto"
+                      Style="{StaticResource MaterialDesignDataGrid}">
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="退货单号" Width="Auto">
+                    <DataGridTemplateColumn Header="退货单号" Width="Auto" SortMemberPath="ReturnNo">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBox Text="{Binding ReturnNo}" Style="{StaticResource ReadOnlyTextBoxStyle}" FontWeight="Bold"/>
@@ -115,7 +115,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="产品名称" Width="Auto">
+                    <DataGridTemplateColumn Header="产品名称" Width="Auto" SortMemberPath="ProductName">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBox Text="{Binding ProductName}" Style="{StaticResource ReadOnlyTextBoxStyle}" MaxWidth="160" ToolTip="{Binding ProductName}"/>
@@ -123,7 +123,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="数量" Width="Auto">
+                    <DataGridTemplateColumn Header="数量" Width="Auto" SortMemberPath="Quantity">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBox Text="{Binding Quantity}" Style="{StaticResource CenteredReadOnlyTextBoxStyle}"/>
@@ -131,7 +131,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="退款金额" Width="Auto">
+                    <DataGridTemplateColumn Header="退款金额" Width="Auto" SortMemberPath="Price">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBox Text="{Binding Price, StringFormat=C2}" Style="{StaticResource CenteredReadOnlyTextBoxStyle}" Foreground="#FF5252"/>
@@ -139,7 +139,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="总金额" Width="Auto">
+                    <DataGridTemplateColumn Header="总金额" Width="Auto" SortMemberPath="TotalAmount">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBox Text="{Binding TotalAmount, StringFormat=C2, Mode=OneWay}" Style="{StaticResource CenteredReadOnlyTextBoxStyle}" FontWeight="Bold" Foreground="#E91E63"/>
@@ -147,7 +147,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="客户" Width="Auto">
+                    <DataGridTemplateColumn Header="客户" Width="Auto" SortMemberPath="Customer">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBox Text="{Binding Customer}" Style="{StaticResource ReadOnlyTextBoxStyle}" MaxWidth="150" ToolTip="{Binding Customer}"/>
@@ -155,7 +155,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="原因" Width="Auto">
+                    <DataGridTemplateColumn Header="原因" Width="Auto" SortMemberPath="Reason">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBox Text="{Binding Reason}" Style="{StaticResource ReadOnlyTextBoxStyle}" MaxWidth="150" ToolTip="{Binding Reason}"/>
@@ -163,7 +163,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="退货时间" Width="Auto">
+                    <DataGridTemplateColumn Header="退货时间" Width="Auto" SortMemberPath="ReturnDate">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBox Text="{Binding ReturnDate, StringFormat=yyyy-MM-dd HH:mm}" Style="{StaticResource CenteredReadOnlyTextBoxStyle}" MaxWidth="90"/>
