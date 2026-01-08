@@ -101,11 +101,10 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Header="操作" Width="Auto">
+                        <DataGridTemplateColumn Header="操作" Width="140">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
                                         <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="查看历史记录" Foreground="#2196F3" 
                                                 Command="{Binding DataContext.ViewDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                                                 CommandParameter="{Binding}">

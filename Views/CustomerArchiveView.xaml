@@ -92,10 +92,10 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Header="操作" Width="Auto">
+                        <DataGridTemplateColumn Header="操作" Width="140">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
                                         <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="查看历史记录" Foreground="#2196F3" 
                                                 Command="{Binding DataContext.ViewDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                                                 CommandParameter="{Binding}">
@@ -103,11 +103,13 @@
                                         </Button>
 
                                         <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" 
-                                                Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                                Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                CommandParameter="{Binding}">
                                             <materialDesign:PackIcon Kind="Pencil" />
                                         </Button>
                                         <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="删除" Foreground="Red" 
-                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                CommandParameter="{Binding}">
                                             <materialDesign:PackIcon Kind="Delete" />
                                         </Button>
                                     </StackPanel>
