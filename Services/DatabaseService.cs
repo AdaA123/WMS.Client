@@ -255,5 +255,27 @@ namespace WMS.Client.Services
         public Task<List<ReturnModel>> GetReturnOrdersAsync() => _database.Table<ReturnModel>().ToListAsync();
         public Task SaveReturnOrderAsync(ReturnModel i) => i.Id != 0 ? _database.UpdateAsync(i) : _database.InsertAsync(i);
         public Task DeleteReturnOrderAsync(ReturnModel i) => _database.DeleteAsync(i);
+        // --- 🟢 新增：历史记录查询 (用于档案详情) ---
+
+        // 1. 商品相关
+        public Task<List<InboundModel>> GetInboundsByProductAsync(string name) =>
+            _database.Table<InboundModel>().Where(x => x.ProductName == name).OrderByDescending(x => x.InboundDate).ToListAsync();
+
+        public Task<List<OutboundModel>> GetOutboundsByProductAsync(string name) =>
+            _database.Table<OutboundModel>().Where(x => x.ProductName == name).OrderByDescending(x => x.OutboundDate).ToListAsync();
+
+        public Task<List<ReturnModel>> GetReturnsByProductAsync(string name) =>
+            _database.Table<ReturnModel>().Where(x => x.ProductName == name).OrderByDescending(x => x.ReturnDate).ToListAsync();
+
+        // 2. 客户相关
+        public Task<List<OutboundModel>> GetOutboundsByCustomerAsync(string name) =>
+            _database.Table<OutboundModel>().Where(x => x.Customer == name).OrderByDescending(x => x.OutboundDate).ToListAsync();
+
+        public Task<List<ReturnModel>> GetReturnsByCustomerAsync(string name) =>
+            _database.Table<ReturnModel>().Where(x => x.Customer == name).OrderByDescending(x => x.ReturnDate).ToListAsync();
+
+        // 3. 供应商相关
+        public Task<List<InboundModel>> GetInboundsBySupplierAsync(string name) =>
+            _database.Table<InboundModel>().Where(x => x.Supplier == name).OrderByDescending(x => x.InboundDate).ToListAsync();
     }
 }

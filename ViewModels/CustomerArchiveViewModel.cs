@@ -1,11 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MaterialDesignThemes.Wpf;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using WMS.Client.Models;
 using WMS.Client.Services;
+using WMS.Client.Views;
 
 namespace WMS.Client.ViewModels
 {
@@ -16,10 +18,16 @@ namespace WMS.Client.ViewModels
         [ObservableProperty] private CustomerModel _newItem = new();
         [ObservableProperty] private string _searchText = "";
 
+        // 🟢 详情页数据源
+        public ObservableCollection<OutboundModel> DetailOutbounds { get; } = new();
+        public ObservableCollection<ReturnModel> DetailReturns { get; } = new();
+        [ObservableProperty] private string _detailTitle = "";
+
         public CustomerArchiveViewModel()
         {
             _dbService = new DatabaseService();
-            _ = Refresh();
+            // 🟢 修复：添加 "_ =" 消除警告
+            _ = Task.Run(() => Refresh());
         }
 
         [RelayCommand]
@@ -57,6 +65,24 @@ namespace WMS.Client.ViewModels
                 await _dbService.DeleteCustomerAsync(item);
                 await Refresh();
             }
+        }
+
+        // 🟢 查看详情命令
+        [RelayCommand]
+        private async Task ViewDetail(CustomerModel item)
+        {
+            if (item == null || string.IsNullOrEmpty(item.Name)) return;
+            DetailTitle = $"客户详情：{item.Name}";
+
+            var t1 = _dbService.GetOutboundsByCustomerAsync(item.Name);
+            var t2 = _dbService.GetReturnsByCustomerAsync(item.Name);
+            await Task.WhenAll(t1, t2);
+
+            DetailOutbounds.Clear(); foreach (var i in t1.Result) DetailOutbounds.Add(i);
+            DetailReturns.Clear(); foreach (var i in t2.Result) DetailReturns.Add(i);
+
+            var view = new CustomerDetailDialog { DataContext = this };
+            await DialogHost.Show(view, "CustomerArchiveDialog");
         }
     }
 }

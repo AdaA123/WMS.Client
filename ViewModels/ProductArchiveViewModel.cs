@@ -1,11 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MaterialDesignThemes.Wpf;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using WMS.Client.Models;
 using WMS.Client.Services;
+using WMS.Client.Views; // 引用视图命名空间
 
 namespace WMS.Client.ViewModels
 {
@@ -17,10 +19,17 @@ namespace WMS.Client.ViewModels
         [ObservableProperty] private ProductModel _newItem = new();
         [ObservableProperty] private string _searchText = "";
 
+        // 🟢 详情页数据源
+        public ObservableCollection<InboundModel> DetailInbounds { get; } = new();
+        public ObservableCollection<OutboundModel> DetailOutbounds { get; } = new();
+        public ObservableCollection<ReturnModel> DetailReturns { get; } = new();
+        [ObservableProperty] private string _detailTitle = "";
+
         public ProductArchiveViewModel()
         {
             _dbService = new DatabaseService();
-            _ = Refresh();
+            // 🟢 修复：添加 "_ =" 消除警告
+            _ = Task.Run(() => Refresh());
         }
 
         [RelayCommand]
@@ -49,7 +58,6 @@ namespace WMS.Client.ViewModels
         [RelayCommand]
         private void Edit(ProductModel item)
         {
-            // 复制一份以便编辑，避免直接修改列表显示
             NewItem = new ProductModel { Id = item.Id, Name = item.Name, Spec = item.Spec, Unit = item.Unit, Price = item.Price, Remark = item.Remark };
         }
 
@@ -64,6 +72,30 @@ namespace WMS.Client.ViewModels
                 await _dbService.DeleteProductAsync(item);
                 await Refresh();
             }
+        }
+
+        // 🟢 查看详情命令
+        [RelayCommand]
+        private async Task ViewDetail(ProductModel item)
+        {
+            if (item == null || string.IsNullOrEmpty(item.Name)) return;
+
+            DetailTitle = $"商品详情：{item.Name}";
+
+            // 并行加载数据
+            var t1 = _dbService.GetInboundsByProductAsync(item.Name);
+            var t2 = _dbService.GetOutboundsByProductAsync(item.Name);
+            var t3 = _dbService.GetReturnsByProductAsync(item.Name);
+
+            await Task.WhenAll(t1, t2, t3);
+
+            DetailInbounds.Clear(); foreach (var i in t1.Result) DetailInbounds.Add(i);
+            DetailOutbounds.Clear(); foreach (var i in t2.Result) DetailOutbounds.Add(i);
+            DetailReturns.Clear(); foreach (var i in t3.Result) DetailReturns.Add(i);
+
+            // 打开弹窗
+            var view = new ProductDetailDialog { DataContext = this };
+            await DialogHost.Show(view, "ProductArchiveDialog");
         }
     }
 }

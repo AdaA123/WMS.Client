@@ -23,92 +23,100 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid Background="White" Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-
-        <materialDesign:Card Grid.Row="0" Margin="0,0,0,20" Padding="15" UniformCornerRadius="6">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <materialDesign:PackIcon Kind="AccountTie" Width="25" Height="25" VerticalAlignment="Center" Margin="0,0,15,0" Foreground="Gray"/>
-                <TextBox Width="150" Margin="0,0,15,0" materialDesign:HintAssist.Hint="客户名称" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Name}" />
-                <TextBox Width="100" Margin="0,0,15,0" materialDesign:HintAssist.Hint="联系人" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.ContactPerson}" />
-                <TextBox Width="100" Margin="0,0,15,0" materialDesign:HintAssist.Hint="电话" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Phone}" />
-                <TextBox Width="150" Margin="0,0,15,0" materialDesign:HintAssist.Hint="地址" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Address}" />
-                <Button Command="{Binding SaveCommand}" Content="保存" Width="80" Margin="10,0,0,0" Style="{StaticResource MaterialDesignRaisedButton}"/>
-                <Button Command="{Binding CancelCommand}" Content="重置" Width="80" Margin="10,0,0,0" Style="{StaticResource MaterialDesignOutlinedButton}"/>
-            </StackPanel>
-        </materialDesign:Card>
-
-        <Grid Grid.Row="1">
+    <materialDesign:DialogHost Identifier="CustomerArchiveDialog" DialogTheme="Inherit">
+        <Grid Background="White" Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10">
-                <materialDesign:PackIcon Kind="Magnify" VerticalAlignment="Center" Foreground="Gray" Width="20" Height="20"/>
-                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="搜索客户..." Style="{StaticResource MaterialDesignFloatingHintTextBox}" Width="200" Margin="10,-10,0,0"/>
-            </StackPanel>
+            <materialDesign:Card Grid.Row="0" Margin="0,0,0,20" Padding="15" UniformCornerRadius="6">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <materialDesign:PackIcon Kind="AccountTie" Width="25" Height="25" VerticalAlignment="Center" Margin="0,0,15,0" Foreground="Gray"/>
+                    <TextBox Width="150" Margin="0,0,15,0" materialDesign:HintAssist.Hint="客户名称" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Name}" />
+                    <TextBox Width="100" Margin="0,0,15,0" materialDesign:HintAssist.Hint="联系人" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.ContactPerson}" />
+                    <TextBox Width="100" Margin="0,0,15,0" materialDesign:HintAssist.Hint="电话" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Phone}" />
+                    <TextBox Width="150" Margin="0,0,15,0" materialDesign:HintAssist.Hint="地址" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Address}" />
+                    <Button Command="{Binding SaveCommand}" Content="保存" Width="80" Margin="10,0,0,0" Style="{StaticResource MaterialDesignRaisedButton}"/>
+                    <Button Command="{Binding CancelCommand}" Content="重置" Width="80" Margin="10,0,0,0" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                </StackPanel>
+            </materialDesign:Card>
 
-            <DataGrid Grid.Row="1" ItemsSource="{Binding List}" 
-                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" 
-                      HeadersVisibility="All" SelectionMode="Single" 
-                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" 
-                      Style="{StaticResource MaterialDesignDataGrid}">
-                <DataGrid.Columns>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                    <DataGridTemplateColumn Header="客户名称" Width="Auto" SortMemberPath="Name">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBox Text="{Binding Name}" Style="{StaticResource ReadOnlyTextBoxStyle}" MaxWidth="160" FontWeight="Bold"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10">
+                    <materialDesign:PackIcon Kind="Magnify" VerticalAlignment="Center" Foreground="Gray" Width="20" Height="20"/>
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="搜索客户..." Style="{StaticResource MaterialDesignFloatingHintTextBox}" Width="200" Margin="10,-10,0,0"/>
+                </StackPanel>
 
-                    <DataGridTemplateColumn Header="联系人" Width="Auto" SortMemberPath="ContactPerson">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBox Text="{Binding ContactPerson}" Style="{StaticResource ReadOnlyTextBoxStyle}" MaxWidth="100"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                <DataGrid Grid.Row="1" ItemsSource="{Binding List}" 
+                          AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" 
+                          HeadersVisibility="All" SelectionMode="Single" 
+                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" 
+                          Style="{StaticResource MaterialDesignDataGrid}">
+                    <DataGrid.Columns>
 
-                    <DataGridTemplateColumn Header="电话" Width="Auto" SortMemberPath="Phone">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBox Text="{Binding Phone}" Style="{StaticResource CenteredReadOnlyTextBoxStyle}"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="客户名称" Width="Auto" SortMemberPath="Name">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Name}" Style="{StaticResource ReadOnlyTextBoxStyle}" MaxWidth="160" FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="地址" Width="*" SortMemberPath="Address">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBox Text="{Binding Address}" Style="{StaticResource ReadOnlyTextBoxStyle}"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="联系人" Width="Auto" SortMemberPath="ContactPerson">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding ContactPerson}" Style="{StaticResource ReadOnlyTextBoxStyle}" MaxWidth="100"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="操作" Width="Auto">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" 
-                                            Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
-                                        <materialDesign:PackIcon Kind="Pencil" />
-                                    </Button>
-                                    <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="删除" Foreground="Red" 
-                                            Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
-                                        <materialDesign:PackIcon Kind="Delete" />
-                                    </Button>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
+                        <DataGridTemplateColumn Header="电话" Width="Auto" SortMemberPath="Phone">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Phone}" Style="{StaticResource CenteredReadOnlyTextBoxStyle}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="地址" Width="*" SortMemberPath="Address">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Address}" Style="{StaticResource ReadOnlyTextBoxStyle}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="操作" Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="查看历史记录" Foreground="#2196F3" 
+                                                Command="{Binding DataContext.ViewDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                CommandParameter="{Binding}">
+                                            <materialDesign:PackIcon Kind="Eye" />
+                                        </Button>
+
+                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" 
+                                                Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                            <materialDesign:PackIcon Kind="Pencil" />
+                                        </Button>
+                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="删除" Foreground="Red" 
+                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                            <materialDesign:PackIcon Kind="Delete" />
+                                        </Button>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
         </Grid>
-    </Grid>
+    </materialDesign:DialogHost>
 </UserControl>

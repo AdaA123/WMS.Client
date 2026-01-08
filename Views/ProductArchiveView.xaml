@@ -23,101 +23,111 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid Background="White" Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-
-        <materialDesign:Card Grid.Row="0" Margin="0,0,0,20" Padding="15" UniformCornerRadius="6">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <materialDesign:PackIcon Kind="CubeOutline" Width="25" Height="25" VerticalAlignment="Center" Margin="0,0,15,0" Foreground="Gray"/>
-                <TextBox Width="150" Margin="0,0,15,0" materialDesign:HintAssist.Hint="商品名称" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Name}" />
-                <TextBox Width="100" Margin="0,0,15,0" materialDesign:HintAssist.Hint="规格型号" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Spec}" />
-                <TextBox Width="60" Margin="0,0,15,0" materialDesign:HintAssist.Hint="单位" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Unit}" />
-                <TextBox Width="80" Margin="0,0,15,0" materialDesign:HintAssist.Hint="参考价" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Price}" />
-                <TextBox Width="150" Margin="0,0,15,0" materialDesign:HintAssist.Hint="备注" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Remark}" />
-                <Button Command="{Binding SaveCommand}" Content="保存" Width="80" Margin="10,0,0,0" Style="{StaticResource MaterialDesignRaisedButton}"/>
-                <Button Command="{Binding CancelCommand}" Content="重置" Width="80" Margin="10,0,0,0" Style="{StaticResource MaterialDesignOutlinedButton}"/>
-            </StackPanel>
-        </materialDesign:Card>
-
-        <Grid Grid.Row="1">
+    <materialDesign:DialogHost Identifier="ProductArchiveDialog" DialogTheme="Inherit">
+        <Grid Background="White" Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10">
-                <materialDesign:PackIcon Kind="Magnify" VerticalAlignment="Center" Foreground="Gray" Width="20" Height="20"/>
-                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="搜索商品..." Style="{StaticResource MaterialDesignFloatingHintTextBox}" Width="200" Margin="10,-10,0,0"/>
-            </StackPanel>
+            <materialDesign:Card Grid.Row="0" Margin="0,0,0,20" Padding="15" UniformCornerRadius="6">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <materialDesign:PackIcon Kind="CubeOutline" Width="25" Height="25" VerticalAlignment="Center" Margin="0,0,15,0" Foreground="Gray"/>
+                    <TextBox Width="150" Margin="0,0,15,0" materialDesign:HintAssist.Hint="商品名称" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Name}" />
+                    <TextBox Width="100" Margin="0,0,15,0" materialDesign:HintAssist.Hint="规格型号" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Spec}" />
+                    <TextBox Width="60" Margin="0,0,15,0" materialDesign:HintAssist.Hint="单位" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Unit}" />
+                    <TextBox Width="80" Margin="0,0,15,0" materialDesign:HintAssist.Hint="参考价" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Price}" />
+                    <TextBox Width="150" Margin="0,0,15,0" materialDesign:HintAssist.Hint="备注" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding NewItem.Remark}" />
+                    <Button Command="{Binding SaveCommand}" Content="保存" Width="80" Margin="10,0,0,0" Style="{StaticResource MaterialDesignRaisedButton}"/>
+                    <Button Command="{Binding CancelCommand}" Content="重置" Width="80" Margin="10,0,0,0" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                </StackPanel>
+            </materialDesign:Card>
 
-            <DataGrid Grid.Row="1" ItemsSource="{Binding List}" 
-                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" 
-                      HeadersVisibility="All" SelectionMode="Single" 
-                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" 
-                      Style="{StaticResource MaterialDesignDataGrid}">
-                <DataGrid.Columns>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                    <DataGridTemplateColumn Header="商品名称" Width="Auto" SortMemberPath="Name">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBox Text="{Binding Name}" Style="{StaticResource ReadOnlyTextBoxStyle}" MaxWidth="160" FontWeight="Bold"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10">
+                    <materialDesign:PackIcon Kind="Magnify" VerticalAlignment="Center" Foreground="Gray" Width="20" Height="20"/>
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="搜索商品..." Style="{StaticResource MaterialDesignFloatingHintTextBox}" Width="200" Margin="10,-10,0,0"/>
+                </StackPanel>
 
-                    <DataGridTemplateColumn Header="规格型号" Width="Auto" SortMemberPath="Spec">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBox Text="{Binding Spec}" Style="{StaticResource ReadOnlyTextBoxStyle}" MaxWidth="150"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                <DataGrid Grid.Row="1" ItemsSource="{Binding List}" 
+                          AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" 
+                          HeadersVisibility="All" SelectionMode="Single" 
+                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" 
+                          Style="{StaticResource MaterialDesignDataGrid}">
+                    <DataGrid.Columns>
 
-                    <DataGridTemplateColumn Header="单位" Width="Auto" SortMemberPath="Unit">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBox Text="{Binding Unit}" Style="{StaticResource CenteredReadOnlyTextBoxStyle}" MinWidth="40"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="商品名称" Width="Auto" SortMemberPath="Name">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Name}" Style="{StaticResource ReadOnlyTextBoxStyle}" MaxWidth="160" FontWeight="Bold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="参考价" Width="Auto" SortMemberPath="Price">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBox Text="{Binding Price, StringFormat=C2}" Style="{StaticResource CenteredReadOnlyTextBoxStyle}" Foreground="#4CAF50"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="规格型号" Width="Auto" SortMemberPath="Spec">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Spec}" Style="{StaticResource ReadOnlyTextBoxStyle}" MaxWidth="150"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="备注" Width="*" SortMemberPath="Remark">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBox Text="{Binding Remark}" Style="{StaticResource ReadOnlyTextBoxStyle}" Foreground="Gray"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="单位" Width="Auto" SortMemberPath="Unit">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Unit}" Style="{StaticResource CenteredReadOnlyTextBoxStyle}" MinWidth="40"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="操作" Width="Auto">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" 
-                                            Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
-                                        <materialDesign:PackIcon Kind="Pencil" />
-                                    </Button>
-                                    <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="删除" Foreground="Red" 
-                                            Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
-                                        <materialDesign:PackIcon Kind="Delete" />
-                                    </Button>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
+                        <DataGridTemplateColumn Header="参考价" Width="Auto" SortMemberPath="Price">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Price, StringFormat=C2}" Style="{StaticResource CenteredReadOnlyTextBoxStyle}" Foreground="#4CAF50"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="备注" Width="*" SortMemberPath="Remark">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Remark}" Style="{StaticResource ReadOnlyTextBoxStyle}" Foreground="Gray"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="操作" Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+
+                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="查看历史记录" Foreground="#2196F3" 
+                                                Command="{Binding DataContext.ViewDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                CommandParameter="{Binding}">
+                                            <materialDesign:PackIcon Kind="Eye" />
+                                        </Button>
+
+                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="修改" Foreground="{DynamicResource PrimaryHueMidBrush}" 
+                                                Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                            <materialDesign:PackIcon Kind="Pencil" />
+                                        </Button>
+
+                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="删除" Foreground="Red" 
+                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                            <materialDesign:PackIcon Kind="Delete" />
+                                        </Button>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
         </Grid>
-    </Grid>
+    </materialDesign:DialogHost>
 </UserControl>
