@@ -34,6 +34,16 @@
         <DataTemplate DataType="{x:Type vm:ChangePasswordViewModel}">
             <v:ChangePasswordView/>
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ProductArchiveViewModel}">
+            <v:ProductArchiveView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CustomerArchiveViewModel}">
+            <v:CustomerArchiveView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SupplierArchiveViewModel}">
+            <v:SupplierArchiveView/>
+        </DataTemplate>
     </Window.Resources>
 
     <Grid>
@@ -85,7 +95,31 @@
                     </StackPanel>
                 </Button>
 
-                <Separator Background="#50FFFFFF" Margin="10"/>
+                <Separator Background="#50FFFFFF" Margin="10,10,10,5"/>
+                <TextBlock Text="基础资料" Foreground="#B0FFFFFF" Margin="20,0,0,5" FontSize="11"/>
+
+                <Button Command="{Binding NavigateToProductArchiveCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="45" Padding="20,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="CubeOutline" Margin="0,0,15,0"/>
+                        <TextBlock Text="商品档案"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding NavigateToCustomerArchiveCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="45" Padding="20,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="AccountTie" Margin="0,0,15,0"/>
+                        <TextBlock Text="客户档案"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding NavigateToSupplierArchiveCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="45" Padding="20,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="TruckOutline" Margin="0,0,15,0"/>
+                        <TextBlock Text="供应商档案"/>
+                    </StackPanel>
+                </Button>
+
+                <Separator Background="#50FFFFFF" Margin="10,10,10,5"/>
 
                 <Button Command="{Binding NavigateToChangePasswordCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
                     <StackPanel Orientation="Horizontal">
