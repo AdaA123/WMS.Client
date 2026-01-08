@@ -18,7 +18,6 @@ namespace WMS.Client.ViewModels
         [ObservableProperty] private CustomerModel _newItem = new();
         [ObservableProperty] private string _searchText = "";
 
-        // 🟢 详情页数据源
         public ObservableCollection<OutboundModel> DetailOutbounds { get; } = new();
         public ObservableCollection<ReturnModel> DetailReturns { get; } = new();
         [ObservableProperty] private string _detailTitle = "";
@@ -26,8 +25,8 @@ namespace WMS.Client.ViewModels
         public CustomerArchiveViewModel()
         {
             _dbService = new DatabaseService();
-            // 🟢 修复：添加 "_ =" 消除警告
-            _ = Task.Run(() => Refresh());
+            // 🟢 修复：去掉 Task.Run
+            _ = Refresh();
         }
 
         [RelayCommand]
@@ -40,7 +39,7 @@ namespace WMS.Client.ViewModels
             foreach (var item in data) List.Add(item);
         }
 
-        partial void OnSearchTextChanged(string value) => Refresh();
+        partial void OnSearchTextChanged(string value) => _ = Refresh();
 
         [RelayCommand]
         private async Task Save()
@@ -67,7 +66,6 @@ namespace WMS.Client.ViewModels
             }
         }
 
-        // 🟢 查看详情命令
         [RelayCommand]
         private async Task ViewDetail(CustomerModel item)
         {

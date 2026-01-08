@@ -27,8 +27,8 @@ namespace WMS.Client.ViewModels
         public SupplierArchiveViewModel()
         {
             _dbService = new DatabaseService();
-            // 消除异步警告
-            _ = Task.Run(() => Refresh());
+            // 🟢 修复：去掉 Task.Run，直接调用 Refresh
+            _ = Refresh();
         }
 
         [RelayCommand]
@@ -62,7 +62,7 @@ namespace WMS.Client.ViewModels
             foreach (var item in data) List.Add(item);
         }
 
-        partial void OnSearchTextChanged(string value) => Refresh();
+        partial void OnSearchTextChanged(string value) => _ = Refresh();
 
         [RelayCommand]
         private async Task Save()
