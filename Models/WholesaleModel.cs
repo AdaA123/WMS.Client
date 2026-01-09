@@ -1,23 +1,40 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using SQLite;
 using System;
+using System.Collections.Generic;
 
 namespace WMS.Client.Models
 {
-    public partial class WholesaleModel : ObservableObject
+    // 批发主单：记录整单信息
+    public partial class WholesaleOrder : ObservableObject
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
 
-        [ObservableProperty] private string? _orderNo;      // 批发单号 (如 WS20231027001)
-        [ObservableProperty] private string? _productName;  // 产品名称
-        [ObservableProperty] private string? _customer;     // 客户/批发商
-        [ObservableProperty] private int _quantity;         // 批发数量
-        [ObservableProperty] private decimal _price;        // 批发单价
-        [ObservableProperty] private DateTime _wholesaleDate = DateTime.Now; // 销售日期
+        [ObservableProperty] private string? _orderNo;      // 单号
+        [ObservableProperty] private string? _customer;     // 客户
+        [ObservableProperty] private DateTime _orderDate = DateTime.Now;
+        [ObservableProperty] private decimal _totalAmount;  // 整单总金额
         [ObservableProperty] private string? _remark;       // 备注
 
         [Ignore]
-        public decimal TotalAmount => Price * Quantity;     // 总金额 (不存数据库，实时计算)
+        public List<WholesaleItem> Items { get; set; } = new(); // 关联的明细
+    }
+
+    // 批发细项：记录具体商品
+    public partial class WholesaleItem : ObservableObject
+    {
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
+
+        [Indexed]
+        public int OrderId { get; set; } // 外键：关联主单
+
+        [ObservableProperty] private string? _productName;
+        [ObservableProperty] private int _quantity;
+        [ObservableProperty] private decimal _price;
+
+        [Ignore]
+        public decimal SubTotal => Price * Quantity; // 小计
     }
 }

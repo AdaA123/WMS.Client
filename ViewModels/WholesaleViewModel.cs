@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MaterialDesignThemes.Wpf;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using WMS.Client.Models;
 using WMS.Client.Services;
+using WMS.Client.Views;
 
 namespace WMS.Client.ViewModels
 {
@@ -14,138 +16,170 @@ namespace WMS.Client.ViewModels
     {
         private readonly DatabaseService _dbService;
 
-        public ObservableCollection<WholesaleModel> WholesaleList { get; } = new();
-        public ObservableCollection<string> ProductList { get; } = new();
-        public ObservableCollection<string> Customers { get; } = new();
-        public ObservableCollection<string> SortOptions { get; } = new() { "时间 (新->旧)", "时间 (旧->新)", "数量 (多->少)", "金额 (高->低)" };
+        public ObservableCollection<WholesaleOrder> WholesaleList { get; } = new();
 
-        [ObservableProperty] private WholesaleModel _newWholesale = new();
+        // 弹窗需要的数据源
+        public ObservableCollection<string> ProductList { get; } = new();
+        public ObservableCollection<string> CustomerList { get; } = new();
+        public ObservableCollection<WholesaleItem> OrderItems { get; } = new(); // 当前单据的明细
+
+        [ObservableProperty] private WholesaleOrder _currentOrder = new();
         [ObservableProperty] private string _searchText = "";
-        [ObservableProperty] private string _selectedSortOption = "时间 (新->旧)";
-        [ObservableProperty] private string _entryProductName = "";
+        [ObservableProperty] private string _dialogTitle = "新建批发单";
+        [ObservableProperty] private decimal _totalOrderAmount;
+
+        // 临时添加栏变量
+        [ObservableProperty] private string _tempProductName = "";
+        [ObservableProperty] private int _tempQuantity = 1;
+        [ObservableProperty] private decimal _tempPrice = 0;
 
         public WholesaleViewModel()
         {
             _dbService = new DatabaseService();
-            NewWholesale = new WholesaleModel { OrderNo = GenerateOrderNo(), WholesaleDate = DateTime.Now };
             _ = LoadData();
         }
-
-        private string GenerateOrderNo() => $"WS{DateTime.Now:yyyyMMdd}{DateTime.Now.Ticks % 10000:0000}";
 
         [RelayCommand]
         private async Task LoadData()
         {
             var data = await _dbService.GetWholesaleOrdersAsync();
-            var products = await _dbService.GetProductListAsync();
-            var customers = await _dbService.GetCustomerListAsync();
 
-            ProductList.Clear(); foreach (var p in products) ProductList.Add(p);
-            Customers.Clear(); foreach (var c in customers) Customers.Add(c);
-
-            // 搜索过滤
+            // 🟢 修复 CS8602：增加空值检查 (?.) 和合并操作符 (?? false)
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 data = data.Where(x => (x.OrderNo?.Contains(SearchText) ?? false) ||
-                                       (x.ProductName?.Contains(SearchText) ?? false) ||
                                        (x.Customer?.Contains(SearchText) ?? false)).ToList();
             }
 
-            // 排序
-            data = SelectedSortOption switch
-            {
-                "时间 (旧->新)" => data.OrderBy(x => x.WholesaleDate).ToList(),
-                "数量 (多->少)" => data.OrderByDescending(x => x.Quantity).ToList(),
-                "金额 (高->低)" => data.OrderByDescending(x => x.TotalAmount).ToList(),
-                _ => data.OrderByDescending(x => x.WholesaleDate).ToList(),
-            };
-
             WholesaleList.Clear();
             foreach (var item in data) WholesaleList.Add(item);
+
+            // 预加载下拉框数据
+            var products = await _dbService.GetProductListAsync();
+            ProductList.Clear(); foreach (var p in products) ProductList.Add(p);
+            var customers = await _dbService.GetCustomerListAsync();
+            CustomerList.Clear(); foreach (var c in customers) CustomerList.Add(c);
         }
 
         partial void OnSearchTextChanged(string value) => _ = LoadData();
-        partial void OnSelectedSortOptionChanged(string value) => _ = LoadData();
 
-        partial void OnEntryProductNameChanged(string value)
+        partial void OnTempProductNameChanged(string value) => _ = FillPrice(value);
+        private async Task FillPrice(string name)
         {
-            NewWholesale.ProductName = value;
-            if (!string.IsNullOrEmpty(value)) _ = FillProductInfo(value);
+            var lastOut = await _dbService.GetLastOutboundByProductAsync(name);
+            if (lastOut != null) TempPrice = lastOut.Price;
         }
 
-        private async Task FillProductInfo(string productName)
+        [RelayCommand]
+        private async Task OpenCreateDialog()
         {
-            // 批发参考上次出库价，您也可以改为参考其他价格
-            var lastOut = await _dbService.GetLastOutboundByProductAsync(productName);
-            if (lastOut != null && NewWholesale.Price == 0)
+            DialogTitle = "新建批发单";
+            CurrentOrder = new WholesaleOrder
             {
-                NewWholesale.Price = lastOut.Price; // 自动填入参考价
+                OrderNo = $"WS{DateTime.Now:yyyyMMdd}{DateTime.Now.Ticks % 10000:0000}",
+                OrderDate = DateTime.Now
+            };
+            OrderItems.Clear();
+            UpdateTotal();
+
+            TempProductName = ""; TempQuantity = 1; TempPrice = 0;
+
+            var view = new WholesaleDialog { DataContext = this };
+            var result = await DialogHost.Show(view, "RootDialog");
+
+            if (result is bool save && save)
+            {
+                await SaveOrder();
             }
         }
 
         [RelayCommand]
-        private async Task Save()
+        private async Task Edit(WholesaleOrder item)
         {
-            if (string.IsNullOrEmpty(NewWholesale.ProductName)) { MessageBox.Show("请填写产品名称"); return; }
-            if (NewWholesale.Quantity <= 0) { MessageBox.Show("数量必须大于0"); return; }
-
-            // 检查库存 (可选)
-            var inventory = await _dbService.GetInventorySummaryAsync();
-            var item = inventory.FirstOrDefault(x => x.ProductName == NewWholesale.ProductName);
-            if (item != null && item.CurrentStock < NewWholesale.Quantity)
+            DialogTitle = "编辑批发单";
+            CurrentOrder = new WholesaleOrder
             {
-                if (MessageBox.Show($"当前库存仅剩 {item.CurrentStock}，确定要批发 {NewWholesale.Quantity} 吗？\n库存将变为负数。", "库存预警", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
-                    return;
-            }
+                Id = item.Id,
+                OrderNo = item.OrderNo,
+                Customer = item.Customer,
+                OrderDate = item.OrderDate,
+                Remark = item.Remark
+            };
 
-            if (string.IsNullOrEmpty(NewWholesale.OrderNo)) NewWholesale.OrderNo = GenerateOrderNo();
+            OrderItems.Clear();
+            foreach (var i in item.Items)
+                OrderItems.Add(new WholesaleItem { Id = i.Id, OrderId = i.OrderId, ProductName = i.ProductName, Quantity = i.Quantity, Price = i.Price });
 
-            await _dbService.SaveWholesaleOrderAsync(NewWholesale);
+            UpdateTotal();
 
-            // 如果是新客户，自动添加到客户档案
-            if (!string.IsNullOrEmpty(NewWholesale.Customer))
+            var view = new WholesaleDialog { DataContext = this };
+            var result = await DialogHost.Show(view, "RootDialog");
+
+            if (result is bool save && save)
             {
-                var exists = (await _dbService.GetCustomersAsync()).Any(c => c.Name == NewWholesale.Customer);
-                if (!exists) await _dbService.SaveCustomerAsync(new CustomerModel { Name = NewWholesale.Customer });
+                await SaveOrder();
             }
+        }
 
-            NewWholesale = new WholesaleModel { OrderNo = GenerateOrderNo(), WholesaleDate = DateTime.Now };
-            EntryProductName = "";
+        [RelayCommand]
+        private void AddItem()
+        {
+            if (string.IsNullOrEmpty(TempProductName)) return;
+            if (TempQuantity <= 0) return;
+
+            OrderItems.Add(new WholesaleItem
+            {
+                ProductName = TempProductName,
+                Quantity = TempQuantity,
+                Price = TempPrice
+            });
+
+            UpdateTotal();
+            TempProductName = ""; TempQuantity = 1;
+        }
+
+        [RelayCommand]
+        private void RemoveItem(WholesaleItem item)
+        {
+            OrderItems.Remove(item);
+            UpdateTotal();
+        }
+
+        private void UpdateTotal()
+        {
+            TotalOrderAmount = OrderItems.Sum(x => x.SubTotal);
+        }
+
+        private async Task SaveOrder()
+        {
+            if (OrderItems.Count == 0) { MessageBox.Show("请至少添加一种商品"); return; }
+            if (string.IsNullOrEmpty(CurrentOrder.Customer)) { MessageBox.Show("请选择客户"); return; }
+
+            CurrentOrder.Items = OrderItems.ToList();
+            CurrentOrder.TotalAmount = TotalOrderAmount;
+
+            await _dbService.SaveWholesaleOrderAsync(CurrentOrder);
+
+            if (!CustomerList.Contains(CurrentOrder.Customer))
+                await _dbService.SaveCustomerAsync(new CustomerModel { Name = CurrentOrder.Customer });
+
             await LoadData();
         }
 
         [RelayCommand]
-        private void Edit(WholesaleModel item)
+        private async Task Delete(WholesaleOrder item)
         {
-            NewWholesale = new WholesaleModel
-            {
-                Id = item.Id,
-                OrderNo = item.OrderNo,
-                ProductName = item.ProductName,
-                Customer = item.Customer,
-                Price = item.Price,
-                Quantity = item.Quantity,
-                WholesaleDate = item.WholesaleDate,
-                Remark = item.Remark
-            };
-            EntryProductName = item.ProductName ?? "";
-        }
-
-        [RelayCommand]
-        private void Cancel()
-        {
-            NewWholesale = new WholesaleModel { OrderNo = GenerateOrderNo(), WholesaleDate = DateTime.Now };
-            EntryProductName = "";
-        }
-
-        [RelayCommand]
-        private async Task Delete(WholesaleModel item)
-        {
-            if (MessageBox.Show("确定删除该批发单吗？\n库存将会回退。", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            if (MessageBox.Show("确定删除该单据吗？库存将回滚。", "提示", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 await _dbService.DeleteWholesaleOrderAsync(item);
                 await LoadData();
             }
+        }
+
+        [RelayCommand]
+        private void PrintOrder()
+        {
+            MessageBox.Show($"正在打印单据：{CurrentOrder.OrderNo}\n总金额：{TotalOrderAmount:C2}\n(请完善 PrintService 以连接真实打印机)");
         }
     }
 }

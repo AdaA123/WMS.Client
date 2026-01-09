@@ -50,105 +50,107 @@
         </DataTemplate>
     </Window.Resources>
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+    <materialDesign:DialogHost Identifier="RootDialog" DialogTheme="Inherit">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="{DynamicResource PrimaryHueMidBrush}" 
-                Visibility="{Binding MenuVisibility}">
-            <StackPanel Width="200">
-                <StackPanel Orientation="Horizontal" Margin="20">
-                    <materialDesign:PackIcon Kind="Warehouse" Foreground="White" Width="30" Height="30" VerticalAlignment="Center"/>
-                    <TextBlock Text="WMS 系统" Foreground="White" FontSize="20" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+            <Border Grid.Column="0" Background="{DynamicResource PrimaryHueMidBrush}" 
+                    Visibility="{Binding MenuVisibility}">
+                <StackPanel Width="200">
+                    <StackPanel Orientation="Horizontal" Margin="20">
+                        <materialDesign:PackIcon Kind="Warehouse" Foreground="White" Width="30" Height="30" VerticalAlignment="Center"/>
+                        <TextBlock Text="WMS 系统" Foreground="White" FontSize="20" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Button Command="{Binding NavigateToHomeCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ViewDashboard" Margin="0,0,15,0"/>
+                            <TextBlock Text="仪表盘"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavigateToInboundCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Dolly" Margin="0,0,15,0"/>
+                            <TextBlock Text="入库管理"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavigateToOutboundCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="TruckDelivery" Margin="0,0,15,0"/>
+                            <TextBlock Text="出库管理"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavigateToWholesaleCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="StorefrontOutline" Margin="0,0,15,0"/>
+                            <TextBlock Text="批发销售"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavigateToReturnCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="KeyboardReturn" Margin="0,0,15,0"/>
+                            <TextBlock Text="退货管理"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavigateToFinancialCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Finance" Margin="0,0,15,0"/>
+                            <TextBlock Text="财务报表"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Separator Background="#50FFFFFF" Margin="10,10,10,5"/>
+                    <TextBlock Text="基础资料" Foreground="#B0FFFFFF" Margin="20,0,0,5" FontSize="11"/>
+
+                    <Button Command="{Binding NavigateToProductArchiveCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="45" Padding="20,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="CubeOutline" Margin="0,0,15,0"/>
+                            <TextBlock Text="商品档案"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavigateToCustomerArchiveCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="45" Padding="20,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="AccountTie" Margin="0,0,15,0"/>
+                            <TextBlock Text="客户档案"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavigateToSupplierArchiveCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="45" Padding="20,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="TruckOutline" Margin="0,0,15,0"/>
+                            <TextBlock Text="供应商档案"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Separator Background="#50FFFFFF" Margin="10,10,10,5"/>
+
+                    <Button Command="{Binding NavigateToChangePasswordCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="KeyChange" Margin="0,0,15,0"/>
+                            <TextBlock Text="修改密码"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding LogoutCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#FFCDD2" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Logout" Margin="0,0,15,0"/>
+                            <TextBlock Text="退出登录"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
+            </Border>
 
-                <Button Command="{Binding NavigateToHomeCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="ViewDashboard" Margin="0,0,15,0"/>
-                        <TextBlock Text="仪表盘"/>
-                    </StackPanel>
-                </Button>
+            <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}" />
 
-                <Button Command="{Binding NavigateToInboundCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="Dolly" Margin="0,0,15,0"/>
-                        <TextBlock Text="入库管理"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Command="{Binding NavigateToOutboundCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="TruckDelivery" Margin="0,0,15,0"/>
-                        <TextBlock Text="出库管理"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Command="{Binding NavigateToWholesaleCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="StorefrontOutline" Margin="0,0,15,0"/>
-                        <TextBlock Text="批发销售"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Command="{Binding NavigateToReturnCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="KeyboardReturn" Margin="0,0,15,0"/>
-                        <TextBlock Text="退货管理"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Command="{Binding NavigateToFinancialCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="Finance" Margin="0,0,15,0"/>
-                        <TextBlock Text="财务报表"/>
-                    </StackPanel>
-                </Button>
-
-                <Separator Background="#50FFFFFF" Margin="10,10,10,5"/>
-                <TextBlock Text="基础资料" Foreground="#B0FFFFFF" Margin="20,0,0,5" FontSize="11"/>
-
-                <Button Command="{Binding NavigateToProductArchiveCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="45" Padding="20,0">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="CubeOutline" Margin="0,0,15,0"/>
-                        <TextBlock Text="商品档案"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Command="{Binding NavigateToCustomerArchiveCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="45" Padding="20,0">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="AccountTie" Margin="0,0,15,0"/>
-                        <TextBlock Text="客户档案"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Command="{Binding NavigateToSupplierArchiveCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="45" Padding="20,0">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="TruckOutline" Margin="0,0,15,0"/>
-                        <TextBlock Text="供应商档案"/>
-                    </StackPanel>
-                </Button>
-
-                <Separator Background="#50FFFFFF" Margin="10,10,10,5"/>
-
-                <Button Command="{Binding NavigateToChangePasswordCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="KeyChange" Margin="0,0,15,0"/>
-                        <TextBlock Text="修改密码"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Command="{Binding LogoutCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#FFCDD2" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="Logout" Margin="0,0,15,0"/>
-                        <TextBlock Text="退出登录"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-        </Border>
-
-        <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}" />
-
-    </Grid>
+        </Grid>
+    </materialDesign:DialogHost>
 </Window>
