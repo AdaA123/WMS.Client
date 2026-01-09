@@ -7,14 +7,14 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="{Binding DialogTitle}" FontSize="24" FontWeight="Bold" Margin="20" HorizontalAlignment="Center" Foreground="#673AB7"/>
+        <TextBlock Text="{Binding DialogTitle}" FontSize="24" FontWeight="Bold" Margin="20" HorizontalAlignment="Center" Foreground="#424242"/>
 
-        <materialDesign:Card Grid.Row="1" Margin="20,0,20,10" Padding="15">
+        <materialDesign:Card Grid.Row="1" Margin="20,0,20,15" Padding="15" UniformCornerRadius="6">
             <StackPanel Orientation="Horizontal">
                 <TextBox Text="{Binding CurrentOrder.OrderNo}" materialDesign:HintAssist.Hint="批发单号" Style="{StaticResource MaterialDesignFloatingHintTextBox}" IsReadOnly="True" Width="150" Margin="0,0,20,0"/>
 
@@ -26,26 +26,57 @@
 
                 <DatePicker SelectedDate="{Binding CurrentOrder.OrderDate}" materialDesign:HintAssist.Hint="销售日期" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" Width="120" Margin="0,0,20,0"/>
 
-                <TextBox Text="{Binding CurrentOrder.Remark}" materialDesign:HintAssist.Hint="备注信息" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Width="200"/>
+                <TextBox Text="{Binding CurrentOrder.Remark}" materialDesign:HintAssist.Hint="备注信息" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Width="250"/>
             </StackPanel>
         </materialDesign:Card>
 
-        <DataGrid Grid.Row="2" Margin="20,0,20,10" 
+        <materialDesign:ColorZone Grid.Row="2" Mode="Standard" Background="#F5F5F5" Padding="10" Margin="20,0,20,10" CornerRadius="4" materialDesign:ElevationAssist.Elevation="Dp1">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <materialDesign:PackIcon Kind="PlaylistPlus" Width="24" Height="24" VerticalAlignment="Center" Margin="5,0,10,0" Foreground="Gray"/>
+                <TextBlock Text="录入明细：" VerticalAlignment="Center" FontWeight="Bold" FontSize="15" Margin="0,0,15,0" Foreground="#616161"/>
+
+                <ComboBox Width="200" Margin="0,0,15,0" 
+                          materialDesign:HintAssist.Hint="请选择或输入产品名称" 
+                          IsEditable="True" 
+                          Style="{StaticResource MaterialDesignFilledComboBox}"
+                          ItemsSource="{Binding ProductList}" 
+                          Text="{Binding TempProductName}" />
+
+                <TextBox Width="110" Margin="0,0,15,0" 
+                         Style="{StaticResource MaterialDesignFilledTextBox}"
+                         materialDesign:HintAssist.Hint="数量" 
+                         materialDesign:TextFieldAssist.SuffixText="件"
+                         Text="{Binding TempQuantity}"/>
+
+                <TextBox Width="110" Margin="0,0,15,0" 
+                         Style="{StaticResource MaterialDesignFilledTextBox}"
+                         materialDesign:HintAssist.Hint="批发单价" 
+                         materialDesign:TextFieldAssist.PrefixText="¥ "
+                         Text="{Binding TempPrice}"/>
+
+                <Button Command="{Binding AddItemCommand}" Content="加入列表" 
+                        Style="{StaticResource MaterialDesignRaisedButton}" 
+                        ToolTip="点击将商品加入下方表格"/>
+            </StackPanel>
+        </materialDesign:ColorZone>
+
+        <DataGrid Grid.Row="3" Margin="20,0,20,10" 
                   ItemsSource="{Binding OrderItems}" 
                   AutoGenerateColumns="False" CanUserAddRows="False"
+                  HeadersVisibility="All"
                   Style="{StaticResource MaterialDesignDataGrid}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="*"/>
+                <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="*" FontWeight="Bold"/>
                 <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="100"/>
                 <DataGridTextColumn Header="单价" Binding="{Binding Price, StringFormat=C2}" Width="100"/>
-                <DataGridTextColumn Header="小计" Binding="{Binding SubTotal, StringFormat=C2}" Width="100" FontWeight="Bold" Foreground="#673AB7"/>
+                <DataGridTextColumn Header="小计" Binding="{Binding SubTotal, StringFormat=C2}" Width="120" FontWeight="Bold" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
                 <DataGridTemplateColumn Header="操作" Width="80">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Button Style="{StaticResource MaterialDesignIconButton}" Foreground="Red" 
+                            <Button Style="{StaticResource MaterialDesignIconButton}" Foreground="Red" ToolTip="移除此行"
                                     Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                                     CommandParameter="{Binding}">
-                                <materialDesign:PackIcon Kind="Delete" />
+                                <materialDesign:PackIcon Kind="CloseCircle" />
                             </Button>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -53,32 +84,21 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <materialDesign:Card Grid.Row="3" Margin="20,0,20,10" Padding="10" Background="#F5F5F5">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <materialDesign:PackIcon Kind="PlaylistPlus" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <TextBlock Text="添加商品：" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
-
-                <ComboBox Width="150" Margin="0,0,10,0" materialDesign:HintAssist.Hint="选择产品" 
-                          IsEditable="True" ItemsSource="{Binding ProductList}" 
-                          Text="{Binding TempProductName}" />
-
-                <TextBox Width="80" Margin="0,0,10,0" materialDesign:HintAssist.Hint="数量" Text="{Binding TempQuantity}"/>
-                <TextBox Width="80" Margin="0,0,10,0" materialDesign:HintAssist.Hint="单价" Text="{Binding TempPrice}"/>
-
-                <Button Content="添加" Command="{Binding AddItemCommand}" Style="{StaticResource MaterialDesignFlatButton}" Height="30"/>
-            </StackPanel>
-        </materialDesign:Card>
-
         <Grid Grid.Row="4" Margin="20">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                <TextBlock Text="整单合计：" FontSize="20"/>
-                <TextBlock Text="{Binding TotalOrderAmount, StringFormat=C2}" FontSize="24" FontWeight="Bold" Foreground="#673AB7" Margin="10,0,0,0"/>
+                <TextBlock Text="整单合计：" FontSize="20" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding TotalOrderAmount, StringFormat=C2}" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource PrimaryHueMidBrush}" Margin="10,0,0,0" VerticalAlignment="Center"/>
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Command="{Binding PrintOrderCommand}" Content="打印预览" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0"/>
+                <Button Command="{Binding PrintOrderCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,15,0" BorderBrush="Gray" Foreground="Gray">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Printer" Margin="0,0,8,0"/>
+                        <TextBlock Text="打印预览"/>
+                    </StackPanel>
+                </Button>
 
-                <Button Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}" CommandParameter="True" Content="保存单据" Style="{StaticResource MaterialDesignRaisedButton}"/>
+                <Button Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}" CommandParameter="True" Content="保存单据" Style="{StaticResource MaterialDesignRaisedButton}" Width="100"/>
                 <Button Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}" CommandParameter="False" Content="取消" Style="{StaticResource MaterialDesignFlatButton}" Margin="10,0,0,0"/>
             </StackPanel>
         </Grid>
