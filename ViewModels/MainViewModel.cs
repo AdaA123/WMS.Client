@@ -32,9 +32,12 @@ namespace WMS.Client.ViewModels
         [RelayCommand] private void NavigateToInbound() => CurrentViewModel = new InboundViewModel();
         [RelayCommand] private void NavigateToOutbound() => CurrentViewModel = new OutboundViewModel();
         [RelayCommand] private void NavigateToReturn() => CurrentViewModel = new ReturnViewModel();
+
+        // 🟢 新增：批发导航
+        [RelayCommand] private void NavigateToWholesale() => CurrentViewModel = new WholesaleViewModel();
+
         [RelayCommand] private void NavigateToFinancial() => CurrentViewModel = new FinancialViewModel();
 
-        // 🟢 新增：档案管理导航命令
         [RelayCommand] private void NavigateToProductArchive() => CurrentViewModel = new ProductArchiveViewModel();
         [RelayCommand] private void NavigateToCustomerArchive() => CurrentViewModel = new CustomerArchiveViewModel();
         [RelayCommand] private void NavigateToSupplierArchive() => CurrentViewModel = new SupplierArchiveViewModel();

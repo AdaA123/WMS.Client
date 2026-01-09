@@ -44,6 +44,10 @@
         <DataTemplate DataType="{x:Type vm:SupplierArchiveViewModel}">
             <v:SupplierArchiveView/>
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:WholesaleViewModel}">
+            <v:WholesaleView/>
+        </DataTemplate>
     </Window.Resources>
 
     <Grid>
@@ -78,6 +82,13 @@
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="TruckDelivery" Margin="0,0,15,0"/>
                         <TextBlock Text="出库管理"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding NavigateToWholesaleCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" HorizontalContentAlignment="Left" Height="50" Padding="20,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="StorefrontOutline" Margin="0,0,15,0"/>
+                        <TextBlock Text="批发销售"/>
                     </StackPanel>
                 </Button>
 
