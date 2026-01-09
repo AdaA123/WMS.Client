@@ -6,7 +6,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls; // 用于打印
+using System.Windows.Controls; // 包含 FlowDocumentReader
 using System.Windows.Documents; // 用于生成打印文档
 using System.Windows.Media; // 用于打印样式
 using WMS.Client.Models;
@@ -20,18 +20,15 @@ namespace WMS.Client.ViewModels
         private readonly DatabaseService _dbService;
 
         public ObservableCollection<WholesaleOrder> WholesaleList { get; } = new();
-
-        // 弹窗需要的数据源
         public ObservableCollection<string> ProductList { get; } = new();
         public ObservableCollection<string> CustomerList { get; } = new();
-        public ObservableCollection<WholesaleItem> OrderItems { get; } = new(); // 当前单据的明细
+        public ObservableCollection<WholesaleItem> OrderItems { get; } = new();
 
         [ObservableProperty] private WholesaleOrder _currentOrder = new();
         [ObservableProperty] private string _searchText = "";
         [ObservableProperty] private string _dialogTitle = "新建批发单";
         [ObservableProperty] private decimal _totalOrderAmount;
 
-        // 临时添加栏变量
         [ObservableProperty] private string _tempProductName = "";
         [ObservableProperty] private int _tempQuantity = 1;
         [ObservableProperty] private decimal _tempPrice = 0;
@@ -46,8 +43,6 @@ namespace WMS.Client.ViewModels
         private async Task LoadData()
         {
             var data = await _dbService.GetWholesaleOrdersAsync();
-
-            // 修复空引用警告
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 data = data.Where(x => (x.OrderNo?.Contains(SearchText) ?? false) ||
@@ -57,7 +52,6 @@ namespace WMS.Client.ViewModels
             WholesaleList.Clear();
             foreach (var item in data) WholesaleList.Add(item);
 
-            // 预加载下拉框数据
             var products = await _dbService.GetProductListAsync();
             ProductList.Clear(); foreach (var p in products) ProductList.Add(p);
             var customers = await _dbService.GetCustomerListAsync();
@@ -65,15 +59,32 @@ namespace WMS.Client.ViewModels
         }
 
         partial void OnSearchTextChanged(string value) => _ = LoadData();
-
         partial void OnTempProductNameChanged(string value) => _ = FillPrice(value);
+
+        partial void OnCurrentOrderChanged(WholesaleOrder? value)
+        {
+            if (value != null)
+            {
+                value.PropertyChanged += async (s, e) =>
+                {
+                    if (e.PropertyName == nameof(WholesaleOrder.Customer) && !string.IsNullOrEmpty(CurrentOrder.Customer))
+                    {
+                        var customer = (await _dbService.GetCustomersAsync()).FirstOrDefault(c => c.Name == CurrentOrder.Customer);
+                        if (customer != null && string.IsNullOrEmpty(CurrentOrder.Address))
+                        {
+                            CurrentOrder.Address = customer.Address;
+                        }
+                    }
+                };
+            }
+        }
+
         private async Task FillPrice(string name)
         {
             var lastOut = await _dbService.GetLastOutboundByProductAsync(name);
             if (lastOut != null) TempPrice = lastOut.Price;
         }
 
-        // 打开新建弹窗
         [RelayCommand]
         private async Task OpenCreateDialog()
         {
@@ -83,25 +94,16 @@ namespace WMS.Client.ViewModels
                 OrderNo = $"WS{DateTime.Now:yyyyMMdd}{DateTime.Now.Ticks % 10000:0000}",
                 OrderDate = DateTime.Now
             };
+            OnCurrentOrderChanged(CurrentOrder);
+
             OrderItems.Clear();
             UpdateTotal();
-
             TempProductName = ""; TempQuantity = 1; TempPrice = 0;
 
             var view = new WholesaleDialog { DataContext = this };
-            var result = await DialogHost.Show(view, "RootDialog");
-
-            // 🟢 修复1：兼容字符串 "True" 和布尔值 true
-            // DialogHost CloseDialogCommand 传回来的可能是字符串
-            bool isConfirm = result != null && (result.Equals(true) || result.ToString()!.Equals("True", StringComparison.OrdinalIgnoreCase));
-
-            if (isConfirm)
-            {
-                await SaveOrder();
-            }
+            await DialogHost.Show(view, "RootDialog");
         }
 
-        // 打开编辑弹窗
         [RelayCommand]
         private async Task Edit(WholesaleOrder item)
         {
@@ -111,9 +113,11 @@ namespace WMS.Client.ViewModels
                 Id = item.Id,
                 OrderNo = item.OrderNo,
                 Customer = item.Customer,
+                Address = item.Address,
                 OrderDate = item.OrderDate,
                 Remark = item.Remark
             };
+            OnCurrentOrderChanged(CurrentOrder);
 
             OrderItems.Clear();
             foreach (var i in item.Items)
@@ -122,15 +126,7 @@ namespace WMS.Client.ViewModels
             UpdateTotal();
 
             var view = new WholesaleDialog { DataContext = this };
-            var result = await DialogHost.Show(view, "RootDialog");
-
-            // 🟢 修复1：同上
-            bool isConfirm = result != null && (result.Equals(true) || result.ToString()!.Equals("True", StringComparison.OrdinalIgnoreCase));
-
-            if (isConfirm)
-            {
-                await SaveOrder();
-            }
+            await DialogHost.Show(view, "RootDialog");
         }
 
         [RelayCommand]
@@ -157,12 +153,10 @@ namespace WMS.Client.ViewModels
             UpdateTotal();
         }
 
-        private void UpdateTotal()
-        {
-            TotalOrderAmount = OrderItems.Sum(x => x.SubTotal);
-        }
+        private void UpdateTotal() => TotalOrderAmount = OrderItems.Sum(x => x.SubTotal);
 
-        private async Task SaveOrder()
+        [RelayCommand]
+        private async Task Save()
         {
             if (OrderItems.Count == 0) { MessageBox.Show("请至少添加一种商品"); return; }
             if (string.IsNullOrEmpty(CurrentOrder.Customer)) { MessageBox.Show("请选择客户"); return; }
@@ -173,9 +167,10 @@ namespace WMS.Client.ViewModels
             await _dbService.SaveWholesaleOrderAsync(CurrentOrder);
 
             if (!CustomerList.Contains(CurrentOrder.Customer))
-                await _dbService.SaveCustomerAsync(new CustomerModel { Name = CurrentOrder.Customer });
+                await _dbService.SaveCustomerAsync(new CustomerModel { Name = CurrentOrder.Customer, Address = CurrentOrder.Address });
 
-            await LoadData(); // 🟢 这里会刷新列表
+            await LoadData();
+            DialogHost.Close("RootDialog");
         }
 
         [RelayCommand]
@@ -188,97 +183,114 @@ namespace WMS.Client.ViewModels
             }
         }
 
-        // 🟢 修复2：实现真实的单据打印
+        // 🟢 修复后的打印预览逻辑
         [RelayCommand]
         private void PrintOrder()
         {
-            if (OrderItems.Count == 0)
+            if (OrderItems.Count == 0) { MessageBox.Show("没有商品明细，无法打印。", "提示"); return; }
+
+            // 1. 生成流文档
+            FlowDocument doc = CreateOrderDocument();
+
+            // 2. 创建预览窗口
+            // 🟢 修复点：将 DocumentViewer 替换为 FlowDocumentReader
+            // FlowDocumentReader 支持 FlowDocument，并且自带打印按钮
+            var previewWindow = new Window
             {
-                MessageBox.Show("没有商品明细，无法打印。", "提示");
-                return;
-            }
-
-            PrintDialog printDialog = new PrintDialog();
-            if (printDialog.ShowDialog() == true)
-            {
-                // 创建流文档
-                FlowDocument doc = new FlowDocument();
-                doc.PagePadding = new Thickness(50);
-                doc.FontFamily = new FontFamily("Microsoft YaHei");
-                doc.ColumnWidth = 999999; // 防止分栏
-
-                // 1. 标题
-                Paragraph title = new Paragraph(new Run("批发销售单"));
-                title.FontSize = 24;
-                title.FontWeight = FontWeights.Bold;
-                title.TextAlignment = TextAlignment.Center;
-                doc.Blocks.Add(title);
-
-                // 2. 头部信息
-                Paragraph header = new Paragraph();
-                header.Inlines.Add(new Run($"单号：{CurrentOrder.OrderNo}\n"));
-                header.Inlines.Add(new Run($"客户：{CurrentOrder.Customer}\n"));
-                header.Inlines.Add(new Run($"日期：{CurrentOrder.OrderDate:yyyy-MM-dd HH:mm}"));
-                header.FontSize = 14;
-                doc.Blocks.Add(header);
-
-                // 3. 表格
-                Table table = new Table();
-                table.CellSpacing = 0;
-                table.BorderBrush = Brushes.Black;
-                table.BorderThickness = new Thickness(1);
-
-                // 定义列
-                table.Columns.Add(new TableColumn() { Width = new GridLength(3, GridUnitType.Star) }); // 产品
-                table.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) }); // 数量
-                table.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) }); // 单价
-                table.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) }); // 小计
-
-                // 表头
-                TableRowGroup headerGroup = new TableRowGroup();
-                TableRow headerRow = new TableRow();
-                headerRow.Background = Brushes.LightGray;
-                headerRow.Cells.Add(CreateCell("产品名称", true));
-                headerRow.Cells.Add(CreateCell("数量", true));
-                headerRow.Cells.Add(CreateCell("单价", true));
-                headerRow.Cells.Add(CreateCell("小计", true));
-                headerGroup.Rows.Add(headerRow);
-                table.RowGroups.Add(headerGroup);
-
-                // 数据行
-                TableRowGroup dataGroup = new TableRowGroup();
-                foreach (var item in OrderItems)
+                Title = $"打印预览 - {CurrentOrder.OrderNo}",
+                Width = 800,
+                Height = 900,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                Content = new FlowDocumentReader
                 {
-                    TableRow row = new TableRow();
-                    row.Cells.Add(CreateCell(item.ProductName ?? ""));
-                    row.Cells.Add(CreateCell(item.Quantity.ToString()));
-                    row.Cells.Add(CreateCell(item.Price.ToString("C2")));
-                    row.Cells.Add(CreateCell(item.SubTotal.ToString("C2")));
-                    dataGroup.Rows.Add(row);
+                    Document = doc,
+                    ViewingMode = FlowDocumentReaderViewingMode.Scroll // 默认滚动视图，也可以设为 Page
                 }
-                table.RowGroups.Add(dataGroup);
-                doc.Blocks.Add(table);
-
-                // 4. 合计
-                Paragraph footer = new Paragraph();
-                footer.Inlines.Add(new Run($"\n整单合计：{TotalOrderAmount:C2}"));
-                footer.FontSize = 16;
-                footer.FontWeight = FontWeights.Bold;
-                footer.TextAlignment = TextAlignment.Right;
-                doc.Blocks.Add(footer);
-
-                // 5. 备注
-                if (!string.IsNullOrEmpty(CurrentOrder.Remark))
-                {
-                    doc.Blocks.Add(new Paragraph(new Run($"备注：{CurrentOrder.Remark}")) { Foreground = Brushes.Gray });
-                }
-
-                // 执行打印
-                printDialog.PrintDocument(((IDocumentPaginatorSource)doc).DocumentPaginator, "批发单据打印");
-            }
+            };
+            previewWindow.ShowDialog();
         }
 
-        // 辅助方法：创建表格单元格
+        private FlowDocument CreateOrderDocument()
+        {
+            FlowDocument doc = new FlowDocument();
+            doc.PagePadding = new Thickness(50);
+            doc.FontFamily = new FontFamily("Microsoft YaHei");
+            // 注意：FlowDocumentReader 会自动分页，我们不需要设置 ColumnWidth = 999999，除非想强制单列
+            doc.ColumnWidth = 999999;
+
+            // 标题
+            Paragraph title = new Paragraph(new Run("批发销售单"));
+            title.FontSize = 24; title.FontWeight = FontWeights.Bold; title.TextAlignment = TextAlignment.Center;
+            doc.Blocks.Add(title);
+
+            // 头部信息表格
+            Table infoTable = new Table();
+            infoTable.CellSpacing = 5;
+            infoTable.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) });
+            infoTable.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) });
+
+            TableRowGroup infoGroup = new TableRowGroup();
+            TableRow r1 = new TableRow();
+            r1.Cells.Add(new TableCell(new Paragraph(new Run($"单号：{CurrentOrder.OrderNo}"))));
+            r1.Cells.Add(new TableCell(new Paragraph(new Run($"日期：{CurrentOrder.OrderDate:yyyy-MM-dd}"))));
+            infoGroup.Rows.Add(r1);
+
+            TableRow r2 = new TableRow();
+            r2.Cells.Add(new TableCell(new Paragraph(new Run($"客户：{CurrentOrder.Customer}"))));
+            r2.Cells.Add(new TableCell(new Paragraph(new Run($"地址：{CurrentOrder.Address}"))));
+            infoGroup.Rows.Add(r2);
+            infoTable.RowGroups.Add(infoGroup);
+            doc.Blocks.Add(infoTable);
+
+            doc.Blocks.Add(new BlockUIContainer(new Separator()));
+
+            // 明细表格
+            Table table = new Table();
+            table.CellSpacing = 0;
+            table.BorderBrush = Brushes.Black; table.BorderThickness = new Thickness(1);
+
+            table.Columns.Add(new TableColumn() { Width = new GridLength(3, GridUnitType.Star) });
+            table.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) });
+            table.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) });
+            table.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) });
+
+            TableRowGroup headerGroup = new TableRowGroup();
+            TableRow headerRow = new TableRow();
+            headerRow.Background = Brushes.LightGray;
+            headerRow.Cells.Add(CreateCell("产品名称", true));
+            headerRow.Cells.Add(CreateCell("数量", true));
+            headerRow.Cells.Add(CreateCell("单价", true));
+            headerRow.Cells.Add(CreateCell("小计", true));
+            headerGroup.Rows.Add(headerRow);
+            table.RowGroups.Add(headerGroup);
+
+            TableRowGroup dataGroup = new TableRowGroup();
+            foreach (var item in OrderItems)
+            {
+                TableRow row = new TableRow();
+                row.Cells.Add(CreateCell(item.ProductName ?? ""));
+                row.Cells.Add(CreateCell(item.Quantity.ToString()));
+                row.Cells.Add(CreateCell(item.Price.ToString("C2")));
+                row.Cells.Add(CreateCell(item.SubTotal.ToString("C2")));
+                dataGroup.Rows.Add(row);
+            }
+            table.RowGroups.Add(dataGroup);
+            doc.Blocks.Add(table);
+
+            // 合计
+            Paragraph footer = new Paragraph();
+            footer.Inlines.Add(new Run($"\n整单合计：{TotalOrderAmount:C2}"));
+            footer.FontSize = 16; footer.FontWeight = FontWeights.Bold; footer.TextAlignment = TextAlignment.Right;
+            doc.Blocks.Add(footer);
+
+            if (!string.IsNullOrEmpty(CurrentOrder.Remark))
+            {
+                doc.Blocks.Add(new Paragraph(new Run($"备注：{CurrentOrder.Remark}")) { Foreground = Brushes.Gray });
+            }
+
+            return doc;
+        }
+
         private TableCell CreateCell(string text, bool isHeader = false)
         {
             return new TableCell(new Paragraph(new Run(text))
@@ -288,7 +300,7 @@ namespace WMS.Client.ViewModels
             })
             {
                 BorderBrush = Brushes.Black,
-                BorderThickness = new Thickness(0, 0, 0, 1) // 只有下边框
+                BorderThickness = new Thickness(0, 0, 0, 1)
             };
         }
     }

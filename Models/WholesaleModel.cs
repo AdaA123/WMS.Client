@@ -5,36 +5,37 @@ using System.Collections.Generic;
 
 namespace WMS.Client.Models
 {
-    // 批发主单：记录整单信息
+    // 批发主单
     public partial class WholesaleOrder : ObservableObject
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
 
-        [ObservableProperty] private string? _orderNo;      // 单号
-        [ObservableProperty] private string? _customer;     // 客户
+        [ObservableProperty] private string? _orderNo;
+        [ObservableProperty] private string? _customer;
+        [ObservableProperty] private string? _address; // 🟢 新增：送货地址
         [ObservableProperty] private DateTime _orderDate = DateTime.Now;
-        [ObservableProperty] private decimal _totalAmount;  // 整单总金额
-        [ObservableProperty] private string? _remark;       // 备注
+        [ObservableProperty] private decimal _totalAmount;
+        [ObservableProperty] private string? _remark;
 
         [Ignore]
-        public List<WholesaleItem> Items { get; set; } = new(); // 关联的明细
+        public List<WholesaleItem> Items { get; set; } = new();
     }
 
-    // 批发细项：记录具体商品
+    // 批发细项 (保持不变)
     public partial class WholesaleItem : ObservableObject
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
 
         [Indexed]
-        public int OrderId { get; set; } // 外键：关联主单
+        public int OrderId { get; set; }
 
         [ObservableProperty] private string? _productName;
         [ObservableProperty] private int _quantity;
         [ObservableProperty] private decimal _price;
 
         [Ignore]
-        public decimal SubTotal => Price * Quantity; // 小计
+        public decimal SubTotal => Price * Quantity;
     }
 }
