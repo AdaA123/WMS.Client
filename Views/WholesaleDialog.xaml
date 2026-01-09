@@ -30,7 +30,17 @@
                               ItemsSource="{Binding CustomerList}" 
                               Text="{Binding CurrentOrder.Customer}" />
 
-                    <DatePicker SelectedDate="{Binding CurrentOrder.OrderDate}" materialDesign:HintAssist.Hint="销售日期" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" Width="120"/>
+                    <DatePicker SelectedDate="{Binding CurrentOrder.OrderDate}" 
+                                materialDesign:HintAssist.Hint="日期" 
+                                Style="{StaticResource MaterialDesignFloatingHintDatePicker}" 
+                                Width="100" Margin="0,0,10,0"/>
+
+                    <materialDesign:TimePicker SelectedTime="{Binding CurrentOrder.OrderDate}" 
+                                               Is24Hours="True" 
+                                               WithSeconds="True"
+                                               materialDesign:HintAssist.Hint="时间" 
+                                               Style="{StaticResource MaterialDesignFloatingHintTimePicker}" 
+                                               Width="90" Margin="0,0,20,0"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal">

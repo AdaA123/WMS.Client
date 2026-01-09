@@ -45,8 +45,13 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="批发单号" Binding="{Binding OrderNo}" FontWeight="Bold"/>
                 <DataGridTextColumn Header="客户" Binding="{Binding Customer}"/>
-                <DataGridTextColumn Header="销售日期" Binding="{Binding OrderDate, StringFormat=yyyy-MM-dd}"/>
+
                 <DataGridTextColumn Header="总金额" Binding="{Binding TotalAmount, StringFormat=C2}" FontWeight="Bold" Foreground="#673AB7"/>
+                
+                <DataGridTextColumn Header="送货地址" Binding="{Binding Address}" MaxWidth="200" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"/>
+
+                <DataGridTextColumn Header="建单时间" Binding="{Binding OrderDate, StringFormat=yyyy-MM-dd HH:mm:ss}"/>
+    
                 <DataGridTextColumn Header="备注" Binding="{Binding Remark}" Width="*"/>
 
                 <DataGridTemplateColumn Header="操作" Width="180">
