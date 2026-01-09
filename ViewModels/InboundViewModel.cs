@@ -82,7 +82,6 @@ namespace WMS.Client.ViewModels
                     (x.OrderNo?.ToLower().Contains(key) ?? false) ||
                     (x.ProductName?.ToLower().Contains(key) ?? false) ||
                     (x.Supplier?.ToLower().Contains(key) ?? false) ||
-                    // 🟢 关键修改：增加状态搜索
                     (x.Status?.ToLower().Contains(key) ?? false));
             }
 

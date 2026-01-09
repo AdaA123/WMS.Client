@@ -15,6 +15,7 @@ namespace WMS.Client.ViewModels
     {
         private readonly DatabaseService _dbService;
         private readonly ExportService _exportService;
+        private readonly PrintService _printService; // 🟢 注入
 
         public ObservableCollection<ReturnModel> ReturnList { get; } = new();
         public ObservableCollection<string> ProductList { get; } = new();
@@ -60,6 +61,7 @@ namespace WMS.Client.ViewModels
         {
             _dbService = new DatabaseService();
             _exportService = new ExportService();
+            _printService = new PrintService(); // 🟢 初始化
             _ = RefreshDataAsync();
         }
 
@@ -104,7 +106,6 @@ namespace WMS.Client.ViewModels
         {
             if (item == null) return;
             NewReturn = new ReturnModel { Id = item.Id, ReturnNo = item.ReturnNo, ProductName = item.ProductName, Quantity = item.Quantity, Price = item.Price, Customer = item.Customer, Reason = item.Reason, ReturnDate = item.ReturnDate };
-            // 🟢 修复 MVVMTK0034
             EntryProductName = item.ProductName ?? "";
         }
 
@@ -116,6 +117,14 @@ namespace WMS.Client.ViewModels
         }
 
         [RelayCommand] private void Export() { if (ReturnList.Count == 0) { MessageBox.Show("无数据可导出"); return; } _exportService.ExportReturn(ReturnList); }
+
+        // 🟢 新增：打印命令
+        [RelayCommand]
+        private void Print()
+        {
+            if (ReturnList.Count == 0) { MessageBox.Show("无数据可打印"); return; }
+            _printService.PrintReturnReport(ReturnList);
+        }
 
         [RelayCommand]
         private async Task Save()

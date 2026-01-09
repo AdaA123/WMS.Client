@@ -100,7 +100,6 @@ namespace WMS.Client.ViewModels
         {
             if (item == null) return;
             NewOutbound = new OutboundModel { Id = item.Id, OrderNo = item.OrderNo, ProductName = item.ProductName, Quantity = item.Quantity, Price = item.Price, Customer = item.Customer, OutboundDate = item.OutboundDate };
-            // 🟢 修复 MVVMTK0034
             EntryProductName = item.ProductName ?? "";
         }
 

@@ -6,9 +6,9 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls; // 包含 FlowDocumentReader
-using System.Windows.Documents; // 用于生成打印文档
-using System.Windows.Media; // 用于打印样式
+using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Media;
 using WMS.Client.Models;
 using WMS.Client.Services;
 using WMS.Client.Views;
@@ -18,6 +18,7 @@ namespace WMS.Client.ViewModels
     public partial class WholesaleViewModel : ObservableObject
     {
         private readonly DatabaseService _dbService;
+        private readonly PrintService _printService;
 
         public ObservableCollection<WholesaleOrder> WholesaleList { get; } = new();
         public ObservableCollection<string> ProductList { get; } = new();
@@ -36,6 +37,7 @@ namespace WMS.Client.ViewModels
         public WholesaleViewModel()
         {
             _dbService = new DatabaseService();
+            _printService = new PrintService();
             _ = LoadData();
         }
 
@@ -61,7 +63,8 @@ namespace WMS.Client.ViewModels
         partial void OnSearchTextChanged(string value) => _ = LoadData();
         partial void OnTempProductNameChanged(string value) => _ = FillPrice(value);
 
-        partial void OnCurrentOrderChanged(WholesaleOrder? value)
+        // 🟢 修复 CS8826：去掉了 value 类型的 ?，与属性定义保持一致
+        partial void OnCurrentOrderChanged(WholesaleOrder value)
         {
             if (value != null)
             {
@@ -183,125 +186,11 @@ namespace WMS.Client.ViewModels
             }
         }
 
-        // 🟢 修复后的打印预览逻辑
         [RelayCommand]
         private void PrintOrder()
         {
             if (OrderItems.Count == 0) { MessageBox.Show("没有商品明细，无法打印。", "提示"); return; }
-
-            // 1. 生成流文档
-            FlowDocument doc = CreateOrderDocument();
-
-            // 2. 创建预览窗口
-            // 🟢 修复点：将 DocumentViewer 替换为 FlowDocumentReader
-            // FlowDocumentReader 支持 FlowDocument，并且自带打印按钮
-            var previewWindow = new Window
-            {
-                Title = $"打印预览 - {CurrentOrder.OrderNo}",
-                Width = 800,
-                Height = 900,
-                WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                Content = new FlowDocumentReader
-                {
-                    Document = doc,
-                    ViewingMode = FlowDocumentReaderViewingMode.Scroll // 默认滚动视图，也可以设为 Page
-                }
-            };
-            previewWindow.ShowDialog();
-        }
-
-        private FlowDocument CreateOrderDocument()
-        {
-            FlowDocument doc = new FlowDocument();
-            doc.PagePadding = new Thickness(50);
-            doc.FontFamily = new FontFamily("Microsoft YaHei");
-            // 注意：FlowDocumentReader 会自动分页，我们不需要设置 ColumnWidth = 999999，除非想强制单列
-            doc.ColumnWidth = 999999;
-
-            // 标题
-            Paragraph title = new Paragraph(new Run("批发销售单"));
-            title.FontSize = 24; title.FontWeight = FontWeights.Bold; title.TextAlignment = TextAlignment.Center;
-            doc.Blocks.Add(title);
-
-            // 头部信息表格
-            Table infoTable = new Table();
-            infoTable.CellSpacing = 5;
-            infoTable.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) });
-            infoTable.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) });
-
-            TableRowGroup infoGroup = new TableRowGroup();
-            TableRow r1 = new TableRow();
-            r1.Cells.Add(new TableCell(new Paragraph(new Run($"单号：{CurrentOrder.OrderNo}"))));
-            r1.Cells.Add(new TableCell(new Paragraph(new Run($"日期：{CurrentOrder.OrderDate:yyyy-MM-dd}"))));
-            infoGroup.Rows.Add(r1);
-
-            TableRow r2 = new TableRow();
-            r2.Cells.Add(new TableCell(new Paragraph(new Run($"客户：{CurrentOrder.Customer}"))));
-            r2.Cells.Add(new TableCell(new Paragraph(new Run($"地址：{CurrentOrder.Address}"))));
-            infoGroup.Rows.Add(r2);
-            infoTable.RowGroups.Add(infoGroup);
-            doc.Blocks.Add(infoTable);
-
-            doc.Blocks.Add(new BlockUIContainer(new Separator()));
-
-            // 明细表格
-            Table table = new Table();
-            table.CellSpacing = 0;
-            table.BorderBrush = Brushes.Black; table.BorderThickness = new Thickness(1);
-
-            table.Columns.Add(new TableColumn() { Width = new GridLength(3, GridUnitType.Star) });
-            table.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) });
-            table.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) });
-            table.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) });
-
-            TableRowGroup headerGroup = new TableRowGroup();
-            TableRow headerRow = new TableRow();
-            headerRow.Background = Brushes.LightGray;
-            headerRow.Cells.Add(CreateCell("产品名称", true));
-            headerRow.Cells.Add(CreateCell("数量", true));
-            headerRow.Cells.Add(CreateCell("单价", true));
-            headerRow.Cells.Add(CreateCell("小计", true));
-            headerGroup.Rows.Add(headerRow);
-            table.RowGroups.Add(headerGroup);
-
-            TableRowGroup dataGroup = new TableRowGroup();
-            foreach (var item in OrderItems)
-            {
-                TableRow row = new TableRow();
-                row.Cells.Add(CreateCell(item.ProductName ?? ""));
-                row.Cells.Add(CreateCell(item.Quantity.ToString()));
-                row.Cells.Add(CreateCell(item.Price.ToString("C2")));
-                row.Cells.Add(CreateCell(item.SubTotal.ToString("C2")));
-                dataGroup.Rows.Add(row);
-            }
-            table.RowGroups.Add(dataGroup);
-            doc.Blocks.Add(table);
-
-            // 合计
-            Paragraph footer = new Paragraph();
-            footer.Inlines.Add(new Run($"\n整单合计：{TotalOrderAmount:C2}"));
-            footer.FontSize = 16; footer.FontWeight = FontWeights.Bold; footer.TextAlignment = TextAlignment.Right;
-            doc.Blocks.Add(footer);
-
-            if (!string.IsNullOrEmpty(CurrentOrder.Remark))
-            {
-                doc.Blocks.Add(new Paragraph(new Run($"备注：{CurrentOrder.Remark}")) { Foreground = Brushes.Gray });
-            }
-
-            return doc;
-        }
-
-        private TableCell CreateCell(string text, bool isHeader = false)
-        {
-            return new TableCell(new Paragraph(new Run(text))
-            {
-                Padding = new Thickness(5),
-                TextAlignment = isHeader ? TextAlignment.Center : TextAlignment.Left
-            })
-            {
-                BorderBrush = Brushes.Black,
-                BorderThickness = new Thickness(0, 0, 0, 1)
-            };
+            _printService.PrintWholesaleOrder(CurrentOrder, OrderItems);
         }
     }
 }
