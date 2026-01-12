@@ -35,7 +35,7 @@
 
                 <ComboBox Width="140" Margin="0,0,15,0" 
                           materialDesign:HintAssist.Hint="退回产品" 
-                          IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="False" KeyUp="ComboBox_KeyUp"
+                          IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="False"
                           Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
                           ItemsSource="{Binding ProductList}" 
                           Text="{Binding EntryProductName, UpdateSourceTrigger=PropertyChanged}" />
@@ -45,7 +45,7 @@
 
                 <ComboBox Width="120" Margin="0,0,15,0" 
                           materialDesign:HintAssist.Hint="客户" 
-                          IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="False" KeyUp="ComboBox_KeyUp"
+                          IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="False"
                           Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
                           ItemsSource="{Binding Customers}" 
                           Text="{Binding NewReturn.Customer, UpdateSourceTrigger=PropertyChanged}" />
@@ -57,9 +57,6 @@
                         <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding NewReturn.Id}" Value="0">
-                                    <Setter Property="Content" Value="确认退货"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding NewReturn.Id}" Value="{x:Null}">
                                     <Setter Property="Content" Value="确认退货"/>
                                 </DataTrigger>
                             </Style.Triggers>
@@ -78,6 +75,10 @@
                             </Style.Triggers>
                         </Style>
                     </Button.Style>
+                </Button>
+
+                <Button Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="打印报表" Width="40" Margin="10,0,0,0" Padding="0">
+                    <materialDesign:PackIcon Kind="Printer" Width="20" Height="20"/>
                 </Button>
 
                 <Button Command="{Binding ExportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="导出Excel" Width="40" Margin="10,0,0,0" Padding="0">

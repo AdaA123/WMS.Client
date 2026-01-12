@@ -33,7 +33,6 @@ namespace WMS.Client.ViewModels
         partial void OnSelectedSortOptionChanged(string value) => ProcessData();
 
         [ObservableProperty] private InboundModel _newInbound = new();
-
         [ObservableProperty] private string _entryProductName = "";
 
         async partial void OnEntryProductNameChanged(string value)
@@ -61,77 +60,35 @@ namespace WMS.Client.ViewModels
         public async Task RefreshDataAsync()
         {
             _cachedList = await _dbService.GetInboundOrdersAsync();
-
             var suppliers = await _dbService.GetSupplierListAsync();
             Suppliers.Clear(); foreach (var s in suppliers) Suppliers.Add(s);
-
             var products = await _dbService.GetProductListAsync();
             ProductList.Clear(); foreach (var p in products) ProductList.Add(p);
-
             ProcessData();
         }
 
         private void ProcessData()
         {
             var query = _cachedList.AsEnumerable();
-
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 string key = SearchText.Trim().ToLower();
-                query = query.Where(x =>
-                    (x.OrderNo?.ToLower().Contains(key) ?? false) ||
-                    (x.ProductName?.ToLower().Contains(key) ?? false) ||
-                    (x.Supplier?.ToLower().Contains(key) ?? false) ||
-                    (x.Status?.ToLower().Contains(key) ?? false));
+                query = query.Where(x => (x.OrderNo?.ToLower().Contains(key) ?? false) || (x.ProductName?.ToLower().Contains(key) ?? false) || (x.Supplier?.ToLower().Contains(key) ?? false) || (x.Status?.ToLower().Contains(key) ?? false));
             }
-
-            query = SelectedSortOption switch
-            {
-                "时间 (最新)" => query.OrderByDescending(x => x.InboundDate),
-                "时间 (最早)" => query.OrderBy(x => x.InboundDate),
-                "产品名称" => query.OrderBy(x => x.ProductName),
-                "供应商" => query.OrderBy(x => x.Supplier),
-                "状态" => query.OrderBy(x => x.Status),
-                _ => query.OrderByDescending(x => x.InboundDate)
-            };
-
-            InboundList.Clear();
-            foreach (var item in query) InboundList.Add(item);
+            query = SelectedSortOption switch { "时间 (最新)" => query.OrderByDescending(x => x.InboundDate), "时间 (最早)" => query.OrderBy(x => x.InboundDate), "产品名称" => query.OrderBy(x => x.ProductName), "供应商" => query.OrderBy(x => x.Supplier), "状态" => query.OrderBy(x => x.Status), _ => query.OrderByDescending(x => x.InboundDate) };
+            InboundList.Clear(); foreach (var item in query) InboundList.Add(item);
         }
 
         [RelayCommand]
         private void Edit(InboundModel item)
         {
             if (item == null) return;
-            if (item.Status != "待验收")
-            {
-                if (MessageBox.Show($"该单据状态为[{item.Status}]，修改可能会影响库存准确性，确认修改吗？", "警告", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
-                    return;
-            }
-
-            NewInbound = new InboundModel
-            {
-                Id = item.Id,
-                OrderNo = item.OrderNo,
-                ProductName = item.ProductName,
-                Quantity = item.Quantity,
-                Price = item.Price,
-                Supplier = item.Supplier,
-                InboundDate = item.InboundDate,
-                Status = item.Status,
-                AcceptedQuantity = item.AcceptedQuantity,
-                RejectedQuantity = item.RejectedQuantity,
-                CheckDate = item.CheckDate
-            };
+            if (item.Status != "待验收" && MessageBox.Show($"该单据状态为[{item.Status}]，修改可能影响库存，确认修改？", "警告", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
+            NewInbound = new InboundModel { Id = item.Id, OrderNo = item.OrderNo, ProductName = item.ProductName, Quantity = item.Quantity, Price = item.Price, Supplier = item.Supplier, InboundDate = item.InboundDate, Status = item.Status, AcceptedQuantity = item.AcceptedQuantity, RejectedQuantity = item.RejectedQuantity, CheckDate = item.CheckDate };
             EntryProductName = item.ProductName ?? "";
         }
 
-        [RelayCommand]
-        private void Cancel()
-        {
-            NewInbound = new InboundModel();
-            EntryProductName = "";
-        }
+        [RelayCommand] private void Cancel() { NewInbound = new InboundModel(); EntryProductName = ""; }
 
         [RelayCommand]
         private async Task Save()
@@ -140,18 +97,8 @@ namespace WMS.Client.ViewModels
             if (NewInbound.Quantity <= 0) { MessageBox.Show("数量必须大于 0！"); return; }
             try
             {
-                if (NewInbound.Id == 0)
-                {
-                    NewInbound.OrderNo = $"RK{DateTime.Now:yyyyMMddHHmmss}";
-                    NewInbound.InboundDate = DateTime.Now;
-                    NewInbound.Status = "待验收";
-                    NewInbound.AcceptedQuantity = 0;
-                    NewInbound.RejectedQuantity = 0;
-                }
-
-                await _dbService.SaveInboundOrderAsync(NewInbound);
-                await RefreshDataAsync();
-                Cancel();
+                if (NewInbound.Id == 0) { NewInbound.OrderNo = $"RK{DateTime.Now:yyyyMMddHHmmss}"; NewInbound.InboundDate = DateTime.Now; NewInbound.Status = "待验收"; }
+                await _dbService.SaveInboundOrderAsync(NewInbound); await RefreshDataAsync(); Cancel();
             }
             catch (Exception ex) { MessageBox.Show($"保存失败：{ex.Message}"); }
         }
@@ -159,28 +106,15 @@ namespace WMS.Client.ViewModels
         [RelayCommand]
         private async Task ConfirmAccept(InboundModel item)
         {
-            if (item == null) return;
-            if (item.Status != "待验收") { MessageBox.Show("只有[待验收]的单据才能进行此操作"); return; }
-
+            if (item == null || item.Status != "待验收") { MessageBox.Show("只有[待验收]的单据能操作"); return; }
             var dialog = new AcceptanceDialog(item);
             var result = await DialogHost.Show(dialog, "InboundDialogHost");
-
             if (result != null && int.TryParse(result.ToString(), out int acceptedQty))
             {
-                item.AcceptedQuantity = acceptedQty;
-                item.RejectedQuantity = item.Quantity - acceptedQty;
-                item.CheckDate = DateTime.Now;
-
-                if (item.AcceptedQuantity == 0)
-                    item.Status = "已退货";
-                else if (item.RejectedQuantity > 0)
-                    item.Status = "已验收";
-                else
-                    item.Status = "已验收";
-
-                await _dbService.SaveInboundOrderAsync(item);
-                await RefreshDataAsync();
-                MessageBox.Show($"验收完成！\n合格: {item.AcceptedQuantity}\n退回: {item.RejectedQuantity}");
+                item.AcceptedQuantity = acceptedQty; item.RejectedQuantity = item.Quantity - acceptedQty; item.CheckDate = DateTime.Now;
+                item.Status = item.AcceptedQuantity == 0 ? "已退货" : "已验收";
+                await _dbService.SaveInboundOrderAsync(item); await RefreshDataAsync();
+                MessageBox.Show($"验收完成！合格: {item.AcceptedQuantity}, 退回: {item.RejectedQuantity}");
             }
         }
 

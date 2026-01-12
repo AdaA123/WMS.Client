@@ -6,9 +6,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Documents;
-using System.Windows.Media;
 using WMS.Client.Models;
 using WMS.Client.Services;
 using WMS.Client.Views;
@@ -63,7 +60,6 @@ namespace WMS.Client.ViewModels
         partial void OnSearchTextChanged(string value) => _ = LoadData();
         partial void OnTempProductNameChanged(string value) => _ = FillPrice(value);
 
-        // 🟢 修复 CS8826：去掉了 value 类型的 ?，与属性定义保持一致
         partial void OnCurrentOrderChanged(WholesaleOrder value)
         {
             if (value != null)
@@ -186,10 +182,24 @@ namespace WMS.Client.ViewModels
             }
         }
 
+        // 🟢 修复：支持列表点击（带参数）和弹窗点击（无参数）
         [RelayCommand]
-        private void PrintOrder()
+        private void PrintOrder(WholesaleOrder? item)
         {
+            // 情况 1: 从列表页面点击 (item 不为空)
+            if (item != null)
+            {
+                _printService.PrintWholesaleOrder(item, item.Items);
+                return;
+            }
+
+            // 情况 2: 从弹窗页面点击 (item 为空，打印当前编辑单据)
             if (OrderItems.Count == 0) { MessageBox.Show("没有商品明细，无法打印。", "提示"); return; }
+
+            // 🟢 关键：先同步数据，否则 TotalAmount 会是 0
+            CurrentOrder.Items = OrderItems.ToList();
+            CurrentOrder.TotalAmount = OrderItems.Sum(x => x.SubTotal);
+
             _printService.PrintWholesaleOrder(CurrentOrder, OrderItems);
         }
     }

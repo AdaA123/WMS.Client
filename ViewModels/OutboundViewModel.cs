@@ -31,87 +31,48 @@ namespace WMS.Client.ViewModels
         partial void OnSelectedSortOptionChanged(string value) => ProcessData();
 
         [ObservableProperty] private OutboundModel _newOutbound = new();
-
         [ObservableProperty] private string _entryProductName = "";
+
         async partial void OnEntryProductNameChanged(string value)
         {
             if (NewOutbound.ProductName != value) NewOutbound.ProductName = value;
-
             if (NewOutbound.Id == 0 && !string.IsNullOrWhiteSpace(value))
             {
                 var lastRecord = await _dbService.GetLastOutboundByProductAsync(value);
-                if (lastRecord != null)
-                {
-                    NewOutbound.Price = lastRecord.Price;
-                    NewOutbound.Customer = lastRecord.Customer;
-                }
+                if (lastRecord != null) { NewOutbound.Price = lastRecord.Price; NewOutbound.Customer = lastRecord.Customer; }
             }
         }
 
         public OutboundViewModel()
         {
-            _dbService = new DatabaseService();
-            _printService = new PrintService();
-            _exportService = new ExportService();
+            _dbService = new DatabaseService(); _printService = new PrintService(); _exportService = new ExportService();
             _ = RefreshDataAsync();
         }
 
         public async Task RefreshDataAsync()
         {
             _cachedList = await _dbService.GetOutboundOrdersAsync();
-
-            var customers = await _dbService.GetCustomerListAsync();
-            Customers.Clear(); foreach (var c in customers) Customers.Add(c);
-
-            var products = await _dbService.GetProductListAsync();
-            ProductList.Clear(); foreach (var p in products) ProductList.Add(p);
-
+            var customers = await _dbService.GetCustomerListAsync(); Customers.Clear(); foreach (var c in customers) Customers.Add(c);
+            var products = await _dbService.GetProductListAsync(); ProductList.Clear(); foreach (var p in products) ProductList.Add(p);
             ProcessData();
         }
 
         private void ProcessData()
         {
             var query = _cachedList.AsEnumerable();
-
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 string key = SearchText.Trim().ToLower();
-                query = query.Where(x =>
-                    (x.OrderNo?.ToLower().Contains(key) ?? false) ||
-                    (x.ProductName?.ToLower().Contains(key) ?? false) ||
-                    (x.Customer?.ToLower().Contains(key) ?? false));
+                query = query.Where(x => (x.OrderNo?.ToLower().Contains(key) ?? false) || (x.ProductName?.ToLower().Contains(key) ?? false) || (x.Customer?.ToLower().Contains(key) ?? false));
             }
-
-            query = SelectedSortOption switch
-            {
-                "时间 (最新)" => query.OrderByDescending(x => x.OutboundDate),
-                "时间 (最早)" => query.OrderBy(x => x.OutboundDate),
-                "产品名称" => query.OrderBy(x => x.ProductName),
-                "客户" => query.OrderBy(x => x.Customer),
-                _ => query.OrderByDescending(x => x.OutboundDate)
-            };
-
-            OutboundList.Clear();
-            foreach (var item in query) OutboundList.Add(item);
+            query = SelectedSortOption switch { "时间 (最新)" => query.OrderByDescending(x => x.OutboundDate), "时间 (最早)" => query.OrderBy(x => x.OutboundDate), "产品名称" => query.OrderBy(x => x.ProductName), "客户" => query.OrderBy(x => x.Customer), _ => query.OrderByDescending(x => x.OutboundDate) };
+            OutboundList.Clear(); foreach (var item in query) OutboundList.Add(item);
         }
 
-        [RelayCommand]
-        private void Edit(OutboundModel item)
-        {
-            if (item == null) return;
-            NewOutbound = new OutboundModel { Id = item.Id, OrderNo = item.OrderNo, ProductName = item.ProductName, Quantity = item.Quantity, Price = item.Price, Customer = item.Customer, OutboundDate = item.OutboundDate };
-            EntryProductName = item.ProductName ?? "";
-        }
-
-        [RelayCommand]
-        private void Cancel()
-        {
-            NewOutbound = new OutboundModel();
-            EntryProductName = "";
-        }
-
-        [RelayCommand] private void Print() { if (OutboundList.Count == 0) { MessageBox.Show("无数据可打印"); return; } _printService.PrintOutboundReport(OutboundList); }
-        [RelayCommand] private void Export() { if (OutboundList.Count == 0) { MessageBox.Show("无数据可导出"); return; } _exportService.ExportOutbound(OutboundList); }
+        [RelayCommand] private void Edit(OutboundModel item) { if (item == null) return; NewOutbound = new OutboundModel { Id = item.Id, OrderNo = item.OrderNo, ProductName = item.ProductName, Quantity = item.Quantity, Price = item.Price, Customer = item.Customer, OutboundDate = item.OutboundDate }; EntryProductName = item.ProductName ?? ""; }
+        [RelayCommand] private void Cancel() { NewOutbound = new OutboundModel(); EntryProductName = ""; }
+        [RelayCommand] private void Print() { if (OutboundList.Count == 0) MessageBox.Show("无数据"); else _printService.PrintOutboundReport(OutboundList); }
+        [RelayCommand] private void Export() { if (OutboundList.Count == 0) MessageBox.Show("无数据"); else _exportService.ExportOutbound(OutboundList); }
 
         [RelayCommand]
         private async Task Save()
@@ -120,29 +81,12 @@ namespace WMS.Client.ViewModels
             if (NewOutbound.Quantity <= 0) { MessageBox.Show("数量必须大于 0！"); return; }
             try
             {
-                if (NewOutbound.Id == 0)
-                {
-                    NewOutbound.OrderNo = $"CK{DateTime.Now:yyyyMMddHHmmss}";
-                    NewOutbound.OutboundDate = DateTime.Now;
-                }
-                if (string.IsNullOrEmpty(NewOutbound.Customer)) NewOutbound.Customer = "散客";
-                await _dbService.SaveOutboundOrderAsync(NewOutbound);
-                await RefreshDataAsync();
-                Cancel();
+                if (NewOutbound.Id == 0) { NewOutbound.OrderNo = $"CK{DateTime.Now:yyyyMMddHHmmss}"; NewOutbound.OutboundDate = DateTime.Now; if (string.IsNullOrEmpty(NewOutbound.Customer)) NewOutbound.Customer = "散客"; }
+                await _dbService.SaveOutboundOrderAsync(NewOutbound); await RefreshDataAsync(); Cancel();
             }
             catch (Exception ex) { MessageBox.Show($"保存失败：{ex.Message}"); }
         }
 
-        [RelayCommand]
-        private async Task Delete(OutboundModel item)
-        {
-            if (item == null) return;
-            if (MessageBox.Show($"确认删除单号 [{item.OrderNo}] 吗？", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-            {
-                await _dbService.DeleteOutboundOrderAsync(item);
-                await RefreshDataAsync();
-                if (NewOutbound.Id == item.Id) Cancel();
-            }
-        }
+        [RelayCommand] private async Task Delete(OutboundModel item) { if (MessageBox.Show($"确认删除单号 [{item.OrderNo}] 吗？", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { await _dbService.DeleteOutboundOrderAsync(item); await RefreshDataAsync(); if (NewOutbound.Id == item.Id) Cancel(); } }
     }
 }
