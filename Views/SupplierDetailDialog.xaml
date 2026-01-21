@@ -12,45 +12,21 @@
 
         <TextBlock Text="{Binding DetailTitle}" FontSize="20" FontWeight="Bold" Margin="20" HorizontalAlignment="Center"/>
 
-        <TabControl Grid.Row="1" Margin="10" Style="{StaticResource MaterialDesignFilledTabControl}" materialDesign:ColorZoneAssist.Mode="PrimaryMid">
-            <TabItem Header="供货记录 (入库)">
-                <DataGrid ItemsSource="{Binding DetailInbounds}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Style="{StaticResource MaterialDesignDataGrid}">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="日期" Binding="{Binding InboundDate, StringFormat=yyyy-MM-dd}"/>
-                        <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="*"/>
-                        <DataGridTextColumn Header="单价" Binding="{Binding Price, StringFormat=C2}"/>
-                        <DataGridTextColumn Header="进货数量" Binding="{Binding Quantity}"/>
-                        <DataGridTextColumn Header="验收合格" Binding="{Binding AcceptedQuantity}" FontWeight="Bold" Foreground="#4CAF50"/>
-                        <DataGridTextColumn Header="状态" Binding="{Binding Status}"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </TabItem>
+        <DataGrid Grid.Row="1" Margin="20" ItemsSource="{Binding DetailInbounds}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Style="{StaticResource MaterialDesignDataGrid}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="日期" Binding="{Binding InboundDate, StringFormat=yyyy-MM-dd}"/>
+                <DataGridTextColumn Header="单号" Binding="{Binding OrderNo}"/>
+                <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="*"/>
+                <DataGridTextColumn Header="单价" Binding="{Binding Price, StringFormat=C2}"/>
+                <DataGridTextColumn Header="进货数量" Binding="{Binding Quantity}"/>
+                <DataGridTextColumn Header="验收合格" Binding="{Binding AcceptedQuantity}" FontWeight="Bold" Foreground="#4CAF50"/>
+                <DataGridTextColumn Header="状态" Binding="{Binding Status}"/>
+            </DataGrid.Columns>
+        </DataGrid>
 
-            <TabItem Header="关联销售 (出库)">
-                <DataGrid ItemsSource="{Binding DetailOutbounds}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Style="{StaticResource MaterialDesignDataGrid}">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="日期" Binding="{Binding OutboundDate, StringFormat=yyyy-MM-dd}"/>
-                        <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="*"/>
-                        <DataGridTextColumn Header="客户" Binding="{Binding Customer}"/>
-                        <DataGridTextColumn Header="售价" Binding="{Binding Price, StringFormat=C2}"/>
-                        <DataGridTextColumn Header="销售数量" Binding="{Binding Quantity}"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </TabItem>
-
-            <TabItem Header="关联退货 (客户)">
-                <DataGrid ItemsSource="{Binding DetailReturns}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Style="{StaticResource MaterialDesignDataGrid}">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="日期" Binding="{Binding ReturnDate, StringFormat=yyyy-MM-dd}"/>
-                        <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="*"/>
-                        <DataGridTextColumn Header="客户" Binding="{Binding Customer}"/>
-                        <DataGridTextColumn Header="退货数量" Binding="{Binding Quantity}"/>
-                        <DataGridTextColumn Header="退货原因" Binding="{Binding Reason}"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </TabItem>
-        </TabControl>
-
-        <Button Grid.Row="2" Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}" Content="关闭" Width="100" Margin="20" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="20">
+            <Button Command="{Binding PrintDetailCommand}" Content="打印详情" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0"/>
+            <Button Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}" Content="关闭" Style="{StaticResource MaterialDesignRaisedButton}"/>
+        </StackPanel>
     </Grid>
 </UserControl>

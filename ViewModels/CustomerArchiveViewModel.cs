@@ -14,6 +14,8 @@ namespace WMS.Client.ViewModels
     public partial class CustomerArchiveViewModel : ObservableObject
     {
         private readonly DatabaseService _dbService;
+        private readonly PrintService _printService;
+
         public ObservableCollection<CustomerModel> List { get; } = new();
         [ObservableProperty] private CustomerModel _newItem = new();
         [ObservableProperty] private string _searchText = "";
@@ -22,10 +24,12 @@ namespace WMS.Client.ViewModels
         public ObservableCollection<ReturnModel> DetailReturns { get; } = new();
         [ObservableProperty] private string _detailTitle = "";
 
+        private CustomerModel? _currentCustomer;
+
         public CustomerArchiveViewModel()
         {
             _dbService = new DatabaseService();
-            // 🟢 修复：去掉 Task.Run
+            _printService = new PrintService();
             _ = Refresh();
         }
 
@@ -70,6 +74,7 @@ namespace WMS.Client.ViewModels
         private async Task ViewDetail(CustomerModel item)
         {
             if (item == null || string.IsNullOrEmpty(item.Name)) return;
+            _currentCustomer = item;
             DetailTitle = $"客户详情：{item.Name}";
 
             var t1 = _dbService.GetOutboundsByCustomerAsync(item.Name);
@@ -81,6 +86,13 @@ namespace WMS.Client.ViewModels
 
             var view = new CustomerDetailDialog { DataContext = this };
             await DialogHost.Show(view, "CustomerArchiveDialog");
+        }
+
+        [RelayCommand]
+        private void PrintDetail()
+        {
+            if (_currentCustomer != null)
+                _printService.PrintCustomerDetails(_currentCustomer, DetailOutbounds, DetailReturns);
         }
     }
 }

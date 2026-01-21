@@ -15,7 +15,6 @@ namespace WMS.Client.Services
 {
     public class PrintService
     {
-        // 核心打印方法：生成 XPS 并调用预览窗口
         private void PrintDocument(FlowDocument doc, string documentName)
         {
             doc.PageWidth = 794; // A4 宽度
@@ -54,314 +53,250 @@ namespace WMS.Client.Services
             PackageStore.RemovePackage(packUri);
         }
 
-        // --- 1. 批发销售单打印 (单据样式) ---
+        // --- 1. 批发销售单打印 ---
         public void PrintWholesaleOrder(WholesaleOrder order, IEnumerable<WholesaleItem> items)
         {
-            FlowDocument doc = new FlowDocument();
-            doc.FontFamily = new FontFamily("Microsoft YaHei");
-            doc.FontSize = 12;
+            var doc = CreateDoc("批发销售单");
+            AddHeader(doc, $"单号：{order.OrderNo}", $"日期：{order.OrderDate:yyyy-MM-dd HH:mm:ss}", $"客户：{order.Customer}", $"地址：{order.Address}");
 
-            // 标题
-            Paragraph title = new Paragraph(new Run("批发销售单"));
-            title.FontSize = 24; title.FontWeight = FontWeights.Bold; title.TextAlignment = TextAlignment.Center;
-            doc.Blocks.Add(title);
+            var headers = new string[] { "产品名称", "数量", "单价", "小计" };
+            var table = CreateTable(headers);
+            var group = table.RowGroups[1];
 
-            // 头部
-            Paragraph header = new Paragraph();
-            header.FontSize = 14; header.LineHeight = 24;
-            header.Inlines.Add(new Run($"单号：{order.OrderNo}   "));
-            header.Inlines.Add(new Run($"日期：{order.OrderDate:yyyy-MM-dd HH:mm:ss}\n"));
-            header.Inlines.Add(new Run($"客户：{order.Customer}\n"));
-            header.Inlines.Add(new Run($"地址：{order.Address}"));
-            doc.Blocks.Add(header);
-
-            doc.Blocks.Add(new BlockUIContainer(new System.Windows.Controls.Separator()));
-
-            // 表格
-            Table table = new Table();
-            table.CellSpacing = 0; table.BorderBrush = Brushes.Black; table.BorderThickness = new Thickness(1);
-
-            table.Columns.Add(new TableColumn() { Width = new GridLength(3, GridUnitType.Star) }); // 产品
-            table.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) }); // 数量
-            table.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) }); // 单价
-            table.Columns.Add(new TableColumn() { Width = new GridLength(1, GridUnitType.Star) }); // 小计
-
-            TableRowGroup group = new TableRowGroup();
-
-            // 表头
-            TableRow headerRow = new TableRow();
-            headerRow.Background = Brushes.LightGray;
-            headerRow.Cells.Add(CreateCell("产品名称", true));
-            headerRow.Cells.Add(CreateCell("数量", true, TextAlignment.Center));
-            headerRow.Cells.Add(CreateCell("单价", true, TextAlignment.Right));
-            headerRow.Cells.Add(CreateCell("小计", true, TextAlignment.Right));
-            group.Rows.Add(headerRow);
-
-            // 数据
             foreach (var item in items)
             {
-                TableRow row = new TableRow();
+                var row = new TableRow();
                 row.Cells.Add(CreateCell(item.ProductName ?? ""));
                 row.Cells.Add(CreateCell(item.Quantity.ToString(), false, TextAlignment.Center));
                 row.Cells.Add(CreateCell(item.Price.ToString("C2"), false, TextAlignment.Right));
                 row.Cells.Add(CreateCell(item.SubTotal.ToString("C2"), false, TextAlignment.Right));
                 group.Rows.Add(row);
             }
-            table.RowGroups.Add(group);
             doc.Blocks.Add(table);
 
-            // 底部合计
-            Paragraph footer = new Paragraph();
-            footer.Inlines.Add(new Run($"\n整单合计：{order.TotalAmount:C2}"));
-            footer.FontSize = 16; footer.FontWeight = FontWeights.Bold; footer.TextAlignment = TextAlignment.Right;
-            doc.Blocks.Add(footer);
-
-            if (!string.IsNullOrEmpty(order.Remark))
-                doc.Blocks.Add(new Paragraph(new Run($"备注：{order.Remark}")) { Foreground = Brushes.Gray });
+            // 🟢 修复 CS8604：使用 ?? "" 防止空引用
+            AddFooter(doc, $"整单合计：{order.TotalAmount:C2}", $"备注：{order.Remark ?? ""}");
 
             PrintDocument(doc, $"Wholesale_{order.OrderNo}");
         }
 
-        // --- 2. 入库报表 (增加验收数据和汇总) ---
-        public void PrintInboundReport(IEnumerable<InboundModel> data)
+        // --- 🟢 新增：供应商详情打印 (仅关联入库) ---
+        public void PrintSupplierDetails(SupplierModel supplier, IEnumerable<InboundModel> inbounds)
         {
-            var headers = new string[] { "单号", "产品名称", "供应商", "进价", "进货数", "验收数", "拒收数", "状态", "日期" };
-            var doc = CreateReportDocument("入库单汇总报表", headers);
-            var table = doc.Blocks.OfType<Table>().First();
-            var rowGroup = table.RowGroups[1];
+            var doc = CreateDoc("供应商档案详情");
+            AddHeader(doc, $"名称：{supplier.Name}", $"联系人：{supplier.ContactPerson}", $"电话：{supplier.Phone}", $"地址：{supplier.Address}");
 
-            decimal totalAmount = 0;
+            AddSectionTitle(doc, "供货记录 (入库)");
+            var headers = new string[] { "日期", "单号", "产品名称", "进货数", "验收数", "单价", "状态" };
+            var table = CreateTable(headers);
+            var group = table.RowGroups[1];
 
-            foreach (var item in data)
+            foreach (var item in inbounds)
             {
                 var row = new TableRow();
-                row.Cells.Add(CreateCell(item.OrderNo ?? ""));
-                row.Cells.Add(CreateCell(item.ProductName ?? ""));
-                row.Cells.Add(CreateCell(item.Supplier ?? ""));
-                row.Cells.Add(CreateCell(item.Price.ToString("C2"), false, TextAlignment.Right));
-                row.Cells.Add(CreateCell(item.Quantity.ToString(), false, TextAlignment.Center));
-                // 🟢 验收详情
-                row.Cells.Add(CreateCell(item.AcceptedQuantity.ToString(), false, TextAlignment.Center));
-                row.Cells.Add(CreateCell(item.RejectedQuantity.ToString(), false, TextAlignment.Center));
-                row.Cells.Add(CreateCell(item.Status ?? ""));
                 row.Cells.Add(CreateCell(item.InboundDate.ToString("yyyy-MM-dd")));
-                rowGroup.Rows.Add(row);
-
-                // 计算有效金额 (按验收数量或进货数量算成本)
-                var validQty = (item.Status == "已验收" || item.Status == "已退货") ? item.AcceptedQuantity : item.Quantity;
-                totalAmount += item.Price * validQty;
-            }
-
-            // 🟢 添加底部合计
-            AddFooterRow(table, headers.Length, $"总金额估算: {totalAmount:C2}");
-            PrintDocument(doc, "InboundReport");
-        }
-
-        // --- 3. 出库报表 (增加汇总) ---
-        public void PrintOutboundReport(IEnumerable<OutboundModel> data)
-        {
-            var headers = new string[] { "单号", "产品名称", "客户", "售价", "数量", "小计", "日期" };
-            var doc = CreateReportDocument("出库单汇总报表", headers);
-            var table = doc.Blocks.OfType<Table>().First();
-            var rowGroup = table.RowGroups[1];
-
-            decimal totalAmount = 0;
-
-            foreach (var item in data)
-            {
-                var subTotal = item.Price * item.Quantity;
-                totalAmount += subTotal;
-
-                var row = new TableRow();
                 row.Cells.Add(CreateCell(item.OrderNo ?? ""));
                 row.Cells.Add(CreateCell(item.ProductName ?? ""));
-                row.Cells.Add(CreateCell(item.Customer ?? ""));
-                row.Cells.Add(CreateCell(item.Price.ToString("C2"), false, TextAlignment.Right));
                 row.Cells.Add(CreateCell(item.Quantity.ToString(), false, TextAlignment.Center));
-                row.Cells.Add(CreateCell(subTotal.ToString("C2"), false, TextAlignment.Right));
-                row.Cells.Add(CreateCell(item.OutboundDate.ToString("yyyy-MM-dd")));
-                rowGroup.Rows.Add(row);
-            }
-
-            // 🟢 添加底部合计
-            AddFooterRow(table, headers.Length, $"销售总金额: {totalAmount:C2}");
-            PrintDocument(doc, "OutboundReport");
-        }
-
-        // --- 4. 退货报表 (增加汇总) ---
-        public void PrintReturnReport(IEnumerable<ReturnModel> data)
-        {
-            var headers = new string[] { "单号", "产品名称", "客户", "单价", "数量", "退款额", "原因", "日期" };
-            var doc = CreateReportDocument("退货单汇总报表", headers);
-            var table = doc.Blocks.OfType<Table>().First();
-            var rowGroup = table.RowGroups[1];
-
-            decimal totalAmount = 0;
-
-            foreach (var item in data)
-            {
-                var refund = item.Price * item.Quantity;
-                totalAmount += refund;
-
-                var row = new TableRow();
-                row.Cells.Add(CreateCell(item.ReturnNo ?? ""));
-                row.Cells.Add(CreateCell(item.ProductName ?? ""));
-                row.Cells.Add(CreateCell(item.Customer ?? ""));
+                row.Cells.Add(CreateCell(item.AcceptedQuantity.ToString(), false, TextAlignment.Center));
                 row.Cells.Add(CreateCell(item.Price.ToString("C2"), false, TextAlignment.Right));
-                row.Cells.Add(CreateCell(item.Quantity.ToString(), false, TextAlignment.Center));
-                row.Cells.Add(CreateCell(refund.ToString("C2"), false, TextAlignment.Right));
-                row.Cells.Add(CreateCell(item.Reason ?? ""));
-                row.Cells.Add(CreateCell(item.ReturnDate.ToString("yyyy-MM-dd")));
-                rowGroup.Rows.Add(row);
+                row.Cells.Add(CreateCell(item.Status ?? ""));
+                group.Rows.Add(row);
             }
-
-            // 🟢 添加底部合计
-            AddFooterRow(table, headers.Length, $"退款总金额: {totalAmount:C2}");
-            PrintDocument(doc, "ReturnReport");
-        }
-
-        // --- 5. 财务/库存/周期报表 ---
-        public void PrintFinancialReport(IEnumerable<FinancialSummaryModel> data)
-        {
-            var headers = new string[] { "产品名称", "采购总成本", "销售总收入", "退款总额", "毛利/结余" };
-            var doc = CreateReportDocument("财务收支统计报表", headers);
-            var table = doc.Blocks.OfType<Table>().First();
-            var rowGroup = table.RowGroups[1];
-
-            decimal tCost = 0, tRev = 0, tRef = 0, tProf = 0;
-
-            foreach (var item in data)
-            {
-                tCost += item.TotalCost; tRev += item.TotalRevenue; tRef += item.TotalRefund; tProf += item.GrossProfit;
-                var row = new TableRow();
-                row.Cells.Add(CreateCell(item.ProductName ?? ""));
-                row.Cells.Add(CreateCell(item.TotalCost.ToString("C2"), false, TextAlignment.Right));
-                row.Cells.Add(CreateCell(item.TotalRevenue.ToString("C2"), false, TextAlignment.Right));
-                row.Cells.Add(CreateCell(item.TotalRefund.ToString("C2"), false, TextAlignment.Right));
-                var pCell = CreateCell(item.GrossProfit.ToString("C2"), false, TextAlignment.Right);
-                pCell.Foreground = item.GrossProfit < 0 ? Brushes.Red : Brushes.Green;
-                row.Cells.Add(pCell);
-                rowGroup.Rows.Add(row);
-            }
-
-            // 🟢 底部汇总
-            var footerGroup = new TableRowGroup();
-            var footerRow = new TableRow();
-            footerRow.Background = Brushes.WhiteSmoke;
-            footerRow.Cells.Add(CreateCell("合计:", true, TextAlignment.Right));
-            footerRow.Cells.Add(CreateCell(tCost.ToString("C2"), true, TextAlignment.Right));
-            footerRow.Cells.Add(CreateCell(tRev.ToString("C2"), true, TextAlignment.Right));
-            footerRow.Cells.Add(CreateCell(tRef.ToString("C2"), true, TextAlignment.Right));
-            var tProfCell = CreateCell(tProf.ToString("C2"), true, TextAlignment.Right);
-            tProfCell.Foreground = tProf < 0 ? Brushes.Red : Brushes.Green;
-            footerRow.Cells.Add(tProfCell);
-            footerGroup.Rows.Add(footerRow);
-            table.RowGroups.Add(footerGroup);
-
-            PrintDocument(doc, "FinancialReport");
-        }
-
-        public void PrintPeriodReport(IEnumerable<FinancialReportModel> data, string reportTitle)
-        {
-            var headers = new string[] { "时间段", "总收入", "总成本", "总退款", "净利润" };
-            var doc = CreateReportDocument(reportTitle, headers);
-            FillSimpleData(doc, data, (item) => new List<string> {
-                item.PeriodName ?? "", item.Revenue.ToString("C2"), item.Cost.ToString("C2"),
-                item.Refund.ToString("C2"), item.Profit.ToString("C2")
-            });
-            PrintDocument(doc, "PeriodReport");
-        }
-
-        public void PrintInventoryReport(IEnumerable<InventorySummaryModel> data)
-        {
-            var headers = new string[] { "产品名称", "入库总量", "出库总量", "当前库存", "库存货值" };
-            var doc = CreateReportDocument("当前库存汇总报表", headers);
-            var table = doc.Blocks.OfType<Table>().First();
-            var rowGroup = table.RowGroups[1];
-
-            decimal totalVal = 0;
-            foreach (var item in data)
-            {
-                totalVal += item.TotalAmount;
-                var row = new TableRow();
-                row.Cells.Add(CreateCell(item.ProductName ?? ""));
-                row.Cells.Add(CreateCell(item.TotalInbound.ToString(), false, TextAlignment.Center));
-                row.Cells.Add(CreateCell(item.TotalOutbound.ToString(), false, TextAlignment.Center));
-                var stockCell = CreateCell(item.CurrentStock.ToString(), false, TextAlignment.Center);
-                if (item.CurrentStock < 10) stockCell.Foreground = Brushes.Red;
-                row.Cells.Add(stockCell);
-                row.Cells.Add(CreateCell(item.TotalAmount.ToString("C2"), false, TextAlignment.Right));
-                rowGroup.Rows.Add(row);
-            }
-            AddFooterRow(table, headers.Length, $"库存总货值: {totalVal:C2}");
-            PrintDocument(doc, "InventoryReport");
-        }
-
-        // --- 辅助方法 ---
-
-        private FlowDocument CreateReportDocument(string title, string[] headers)
-        {
-            FlowDocument doc = new FlowDocument();
-            doc.FontFamily = new FontFamily("Microsoft YaHei");
-            doc.FontSize = 12; doc.TextAlignment = TextAlignment.Left;
-
-            Paragraph titlePara = new Paragraph(new Run(title));
-            titlePara.FontSize = 24; titlePara.FontWeight = FontWeights.Bold; titlePara.TextAlignment = TextAlignment.Center; titlePara.Margin = new Thickness(0, 0, 0, 20);
-            doc.Blocks.Add(titlePara);
-
-            Table table = new Table();
-            table.CellSpacing = 0; table.BorderBrush = Brushes.Gray; table.BorderThickness = new Thickness(1);
-
-            for (int i = 0; i < headers.Length; i++) table.Columns.Add(new TableColumn());
-
-            TableRowGroup headerGroup = new TableRowGroup();
-            TableRow headerRow = new TableRow();
-            headerRow.Background = Brushes.LightGray;
-            foreach (var h in headers) headerRow.Cells.Add(CreateCell(h, true, TextAlignment.Center));
-            headerGroup.Rows.Add(headerRow);
-            table.RowGroups.Add(headerGroup);
-            table.RowGroups.Add(new TableRowGroup());
             doc.Blocks.Add(table);
+
+            if (!string.IsNullOrEmpty(supplier.Remark)) AddFooter(doc, "", $"备注：{supplier.Remark}");
+
+            PrintDocument(doc, $"Supplier_{supplier.Name}");
+        }
+
+        // --- 🟢 新增：客户详情打印 ---
+        public void PrintCustomerDetails(CustomerModel customer, IEnumerable<OutboundModel> outbounds, IEnumerable<ReturnModel> returns)
+        {
+            var doc = CreateDoc("客户档案详情");
+            AddHeader(doc, $"名称：{customer.Name}", $"联系人：{customer.ContactPerson}", $"电话：{customer.Phone}", $"地址：{customer.Address}");
+
+            AddSectionTitle(doc, "销售记录 (出库)");
+            var h1 = new string[] { "日期", "单号", "产品名称", "数量", "单价", "小计" };
+            var t1 = CreateTable(h1);
+            foreach (var item in outbounds)
+            {
+                var row = new TableRow();
+                row.Cells.Add(CreateCell(item.OutboundDate.ToString("yyyy-MM-dd")));
+                row.Cells.Add(CreateCell(item.OrderNo ?? ""));
+                row.Cells.Add(CreateCell(item.ProductName ?? ""));
+                row.Cells.Add(CreateCell(item.Quantity.ToString(), false, TextAlignment.Center));
+                row.Cells.Add(CreateCell(item.Price.ToString("C2"), false, TextAlignment.Right));
+                row.Cells.Add(CreateCell((item.Quantity * item.Price).ToString("C2"), false, TextAlignment.Right));
+                t1.RowGroups[1].Rows.Add(row);
+            }
+            doc.Blocks.Add(t1);
+
+            if (returns.Any())
+            {
+                AddSectionTitle(doc, "退货记录");
+                var h2 = new string[] { "日期", "单号", "产品名称", "数量", "退款额", "原因" };
+                var t2 = CreateTable(h2);
+                foreach (var item in returns)
+                {
+                    var row = new TableRow();
+                    row.Cells.Add(CreateCell(item.ReturnDate.ToString("yyyy-MM-dd")));
+                    row.Cells.Add(CreateCell(item.ReturnNo ?? ""));
+                    row.Cells.Add(CreateCell(item.ProductName ?? ""));
+                    row.Cells.Add(CreateCell(item.Quantity.ToString(), false, TextAlignment.Center));
+                    row.Cells.Add(CreateCell((item.Quantity * item.Price).ToString("C2"), false, TextAlignment.Right));
+                    row.Cells.Add(CreateCell(item.Reason ?? ""));
+                    t2.RowGroups[1].Rows.Add(row);
+                }
+                doc.Blocks.Add(t2);
+            }
+
+            if (!string.IsNullOrEmpty(customer.Remark)) AddFooter(doc, "", $"备注：{customer.Remark}");
+            PrintDocument(doc, $"Customer_{customer.Name}");
+        }
+
+        // --- 🟢 新增：商品详情打印 ---
+        public void PrintProductDetails(ProductModel product, IEnumerable<InboundModel> inbounds, IEnumerable<OutboundModel> outbounds, IEnumerable<ReturnModel> returns)
+        {
+            var doc = CreateDoc("商品档案详情");
+            AddHeader(doc, $"品名：{product.Name}", $"规格：{product.Spec}", $"单位：{product.Unit}", $"参考价：{product.Price:C2}");
+
+            int inQty = inbounds.Where(x => x.Status == "已验收").Sum(x => x.AcceptedQuantity);
+            int outQty = outbounds.Sum(x => x.Quantity);
+            int retQty = returns.Sum(x => x.Quantity);
+            int stock = inQty - outQty + retQty;
+
+            Paragraph summary = new Paragraph(new Run($"库存概览：总入库 {inQty} | 总出库 {outQty} | 总退货 {retQty} | 当前库存 {stock}"));
+            summary.FontSize = 14; summary.FontWeight = FontWeights.Bold; summary.Margin = new Thickness(0, 0, 0, 10);
+            doc.Blocks.Add(summary);
+
+            AddSectionTitle(doc, "入库记录");
+            var t1 = CreateTable(new string[] { "日期", "供应商", "进货数", "验收数", "单价" });
+            foreach (var i in inbounds)
+            {
+                var r = new TableRow();
+                r.Cells.Add(CreateCell(i.InboundDate.ToString("yyyy-MM-dd")));
+                r.Cells.Add(CreateCell(i.Supplier ?? ""));
+                r.Cells.Add(CreateCell(i.Quantity.ToString(), false, TextAlignment.Center));
+                r.Cells.Add(CreateCell(i.AcceptedQuantity.ToString(), false, TextAlignment.Center));
+                r.Cells.Add(CreateCell(i.Price.ToString("C2"), false, TextAlignment.Right));
+                t1.RowGroups[1].Rows.Add(r);
+            }
+            doc.Blocks.Add(t1);
+
+            AddSectionTitle(doc, "出库记录");
+            var t2 = CreateTable(new string[] { "日期", "客户", "数量", "售价" });
+            foreach (var o in outbounds)
+            {
+                var r = new TableRow();
+                r.Cells.Add(CreateCell(o.OutboundDate.ToString("yyyy-MM-dd")));
+                r.Cells.Add(CreateCell(o.Customer ?? ""));
+                r.Cells.Add(CreateCell(o.Quantity.ToString(), false, TextAlignment.Center));
+                r.Cells.Add(CreateCell(o.Price.ToString("C2"), false, TextAlignment.Right));
+                t2.RowGroups[1].Rows.Add(r);
+            }
+            doc.Blocks.Add(t2);
+
+            PrintDocument(doc, $"Product_{product.Name}");
+        }
+
+        // --- 业务报表 ---
+        public void PrintInboundReport(IEnumerable<InboundModel> data) => PrintReport("入库单汇总报表", new[] { "单号", "产品", "供应商", "进价", "进货", "验收", "拒收", "状态", "日期" }, data, (r, i) => {
+            r.Cells.Add(CreateCell(i.OrderNo)); r.Cells.Add(CreateCell(i.ProductName)); r.Cells.Add(CreateCell(i.Supplier));
+            r.Cells.Add(CreateCell(i.Price.ToString("C2"), false, TextAlignment.Right));
+            r.Cells.Add(CreateCell(i.Quantity.ToString(), false, TextAlignment.Center));
+            r.Cells.Add(CreateCell(i.AcceptedQuantity.ToString(), false, TextAlignment.Center));
+            r.Cells.Add(CreateCell(i.RejectedQuantity.ToString(), false, TextAlignment.Center));
+            r.Cells.Add(CreateCell(i.Status)); r.Cells.Add(CreateCell(i.InboundDate.ToString("yyyy-MM-dd")));
+        }, $"总金额估算: {data.Sum(x => x.Price * (x.Status == "已验收" ? x.AcceptedQuantity : x.Quantity)):C2}");
+
+        public void PrintOutboundReport(IEnumerable<OutboundModel> data) => PrintReport("出库单汇总报表", new[] { "单号", "产品", "客户", "售价", "数量", "小计", "日期" }, data, (r, i) => {
+            r.Cells.Add(CreateCell(i.OrderNo)); r.Cells.Add(CreateCell(i.ProductName)); r.Cells.Add(CreateCell(i.Customer));
+            r.Cells.Add(CreateCell(i.Price.ToString("C2"), false, TextAlignment.Right));
+            r.Cells.Add(CreateCell(i.Quantity.ToString(), false, TextAlignment.Center));
+            r.Cells.Add(CreateCell((i.Price * i.Quantity).ToString("C2"), false, TextAlignment.Right));
+            r.Cells.Add(CreateCell(i.OutboundDate.ToString("yyyy-MM-dd")));
+        }, $"销售总金额: {data.Sum(x => x.Price * x.Quantity):C2}");
+
+        public void PrintReturnReport(IEnumerable<ReturnModel> data) => PrintReport("退货单汇总报表", new[] { "单号", "产品", "客户", "单价", "数量", "退款", "原因", "日期" }, data, (r, i) => {
+            r.Cells.Add(CreateCell(i.ReturnNo)); r.Cells.Add(CreateCell(i.ProductName)); r.Cells.Add(CreateCell(i.Customer));
+            r.Cells.Add(CreateCell(i.Price.ToString("C2"), false, TextAlignment.Right));
+            r.Cells.Add(CreateCell(i.Quantity.ToString(), false, TextAlignment.Center));
+            r.Cells.Add(CreateCell((i.Price * i.Quantity).ToString("C2"), false, TextAlignment.Right));
+            r.Cells.Add(CreateCell(i.Reason)); r.Cells.Add(CreateCell(i.ReturnDate.ToString("yyyy-MM-dd")));
+        }, $"退款总金额: {data.Sum(x => x.Price * x.Quantity):C2}");
+
+        public void PrintFinancialReport(IEnumerable<FinancialSummaryModel> data) => PrintReport("财务收支统计报表", new[] { "产品名称", "采购总成本", "销售总收入", "退款总额", "毛利" }, data, (r, i) => {
+            r.Cells.Add(CreateCell(i.ProductName)); r.Cells.Add(CreateCell(i.TotalCost.ToString("C2"), false, TextAlignment.Right));
+            r.Cells.Add(CreateCell(i.TotalRevenue.ToString("C2"), false, TextAlignment.Right)); r.Cells.Add(CreateCell(i.TotalRefund.ToString("C2"), false, TextAlignment.Right));
+            var cell = CreateCell(i.GrossProfit.ToString("C2"), false, TextAlignment.Right); cell.Foreground = i.GrossProfit < 0 ? Brushes.Red : Brushes.Green; r.Cells.Add(cell);
+        }, $"总毛利: {data.Sum(x => x.GrossProfit):C2}");
+
+        public void PrintPeriodReport(IEnumerable<FinancialReportModel> data, string title) => PrintReport(title, new[] { "时间段", "收入", "成本", "退款", "利润" }, data, (r, i) => {
+            r.Cells.Add(CreateCell(i.PeriodName)); r.Cells.Add(CreateCell(i.Revenue.ToString("C2"), false, TextAlignment.Right));
+            r.Cells.Add(CreateCell(i.Cost.ToString("C2"), false, TextAlignment.Right)); r.Cells.Add(CreateCell(i.Refund.ToString("C2"), false, TextAlignment.Right));
+            var cell = CreateCell(i.Profit.ToString("C2"), false, TextAlignment.Right); cell.Foreground = i.Profit < 0 ? Brushes.Red : Brushes.Green; r.Cells.Add(cell);
+        }, $"总利润: {data.Sum(x => x.Profit):C2}");
+
+        public void PrintInventoryReport(IEnumerable<InventorySummaryModel> data) => PrintReport("当前库存汇总报表", new[] { "产品", "入库", "出库", "库存", "货值" }, data, (r, i) => {
+            r.Cells.Add(CreateCell(i.ProductName)); r.Cells.Add(CreateCell(i.TotalInbound.ToString(), false, TextAlignment.Center));
+            r.Cells.Add(CreateCell(i.TotalOutbound.ToString(), false, TextAlignment.Center));
+            var cell = CreateCell(i.CurrentStock.ToString(), false, TextAlignment.Center); if (i.CurrentStock < 10) cell.Foreground = Brushes.Red; r.Cells.Add(cell);
+            r.Cells.Add(CreateCell(i.TotalAmount.ToString("C2"), false, TextAlignment.Right));
+        }, $"库存总货值: {data.Sum(x => x.TotalAmount):C2}");
+
+        // --- 私有辅助方法 ---
+        private void PrintReport<T>(string title, string[] headers, IEnumerable<T> data, Action<TableRow, T> fillRow, string footerText)
+        {
+            var doc = CreateDoc(title);
+            var table = CreateTable(headers);
+            foreach (var item in data) { var row = new TableRow(); fillRow(row, item); table.RowGroups[1].Rows.Add(row); }
+            doc.Blocks.Add(table);
+            if (!string.IsNullOrEmpty(footerText)) AddFooter(doc, footerText);
+            PrintDocument(doc, title);
+        }
+
+        private FlowDocument CreateDoc(string title)
+        {
+            var doc = new FlowDocument { FontFamily = new FontFamily("Microsoft YaHei"), FontSize = 12, PagePadding = new Thickness(40), ColumnWidth = double.PositiveInfinity };
+            doc.Blocks.Add(new Paragraph(new Run(title)) { FontSize = 24, FontWeight = FontWeights.Bold, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 0, 0, 20) });
             return doc;
         }
 
-        private void FillSimpleData<T>(FlowDocument doc, IEnumerable<T> data, Func<T, List<string>> formatFunc)
+        private Table CreateTable(string[] headers)
         {
-            var table = doc.Blocks.OfType<Table>().First();
-            var rowGroup = table.RowGroups[1];
-            foreach (var item in data)
-            {
-                var row = new TableRow();
-                var values = formatFunc(item);
-                foreach (var v in values) row.Cells.Add(CreateCell(v, false, TextAlignment.Center));
-                rowGroup.Rows.Add(row);
-            }
+            var table = new Table { CellSpacing = 0, BorderBrush = Brushes.Gray, BorderThickness = new Thickness(1) };
+            for (int i = 0; i < headers.Length; i++) table.Columns.Add(new TableColumn());
+            var group = new TableRowGroup(); var row = new TableRow { Background = Brushes.LightGray };
+            foreach (var h in headers) row.Cells.Add(CreateCell(h, true, TextAlignment.Center));
+            group.Rows.Add(row); table.RowGroups.Add(group); table.RowGroups.Add(new TableRowGroup());
+            return table;
         }
 
-        private void AddFooterRow(Table table, int colSpan, string text)
+        private TableCell CreateCell(string? text, bool isHeader = false, TextAlignment align = TextAlignment.Left)
         {
-            var footerGroup = new TableRowGroup();
-            var row = new TableRow();
-            var cell = CreateCell(text, true, TextAlignment.Right);
-            cell.ColumnSpan = colSpan;
-            cell.Padding = new Thickness(10);
-            cell.Background = Brushes.WhiteSmoke;
-            cell.FontWeight = FontWeights.Bold;
-            row.Cells.Add(cell);
-            footerGroup.Rows.Add(row);
-            table.RowGroups.Add(footerGroup);
+            return new TableCell(new Paragraph(new Run(text ?? "")) { Margin = new Thickness(5), TextAlignment = align }) { BorderBrush = Brushes.Gray, BorderThickness = new Thickness(0.5), FontWeight = isHeader ? FontWeights.Bold : FontWeights.Normal };
         }
 
-        private TableCell CreateCell(string text, bool isHeader = false, TextAlignment alignment = TextAlignment.Left)
+        private void AddHeader(FlowDocument doc, params string[] lines)
         {
-            Paragraph p = new Paragraph(new Run(text));
-            p.Margin = new Thickness(5);
-            p.TextAlignment = alignment;
-            TableCell cell = new TableCell(p);
-            cell.BorderBrush = Brushes.Gray;
-            cell.BorderThickness = new Thickness(0.5);
-            if (isHeader) cell.FontWeight = FontWeights.Bold;
-            return cell;
+            var p = new Paragraph { FontSize = 14, LineHeight = 24 };
+            foreach (var l in lines) p.Inlines.Add(new Run(l + "\n"));
+            doc.Blocks.Add(p); doc.Blocks.Add(new BlockUIContainer(new System.Windows.Controls.Separator()));
+        }
+
+        private void AddFooter(FlowDocument doc, string rightText, string leftText = "")
+        {
+            var t = new Table { CellSpacing = 0 }; t.Columns.Add(new TableColumn()); t.Columns.Add(new TableColumn());
+            var r = new TableRow();
+            if (!string.IsNullOrEmpty(leftText)) r.Cells.Add(new TableCell(new Paragraph(new Run(leftText)) { Foreground = Brushes.Gray }));
+            if (!string.IsNullOrEmpty(rightText)) r.Cells.Add(new TableCell(new Paragraph(new Run(rightText)) { FontWeight = FontWeights.Bold, TextAlignment = TextAlignment.Right, FontSize = 14 }));
+            var g = new TableRowGroup(); g.Rows.Add(r); t.RowGroups.Add(g); doc.Blocks.Add(t);
+        }
+
+        private void AddSectionTitle(FlowDocument doc, string title)
+        {
+            doc.Blocks.Add(new Paragraph(new Run(title)) { FontSize = 16, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 15, 0, 5), Foreground = Brushes.DimGray });
         }
     }
 }

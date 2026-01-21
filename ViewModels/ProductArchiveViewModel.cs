@@ -14,6 +14,7 @@ namespace WMS.Client.ViewModels
     public partial class ProductArchiveViewModel : ObservableObject
     {
         private readonly DatabaseService _dbService;
+        private readonly PrintService _printService;
 
         public ObservableCollection<ProductModel> List { get; } = new();
         [ObservableProperty] private ProductModel _newItem = new();
@@ -24,10 +25,12 @@ namespace WMS.Client.ViewModels
         public ObservableCollection<ReturnModel> DetailReturns { get; } = new();
         [ObservableProperty] private string _detailTitle = "";
 
+        private ProductModel? _currentProduct;
+
         public ProductArchiveViewModel()
         {
             _dbService = new DatabaseService();
-            // 🟢 修复：去掉 Task.Run
+            _printService = new PrintService();
             _ = Refresh();
         }
 
@@ -50,7 +53,7 @@ namespace WMS.Client.ViewModels
         {
             if (string.IsNullOrWhiteSpace(NewItem.Name)) { MessageBox.Show("品名不能为空"); return; }
             await _dbService.SaveProductAsync(NewItem);
-            NewItem = new ProductModel(); // 重置
+            NewItem = new ProductModel();
             await Refresh();
         }
 
@@ -77,7 +80,7 @@ namespace WMS.Client.ViewModels
         private async Task ViewDetail(ProductModel item)
         {
             if (item == null || string.IsNullOrEmpty(item.Name)) return;
-
+            _currentProduct = item;
             DetailTitle = $"商品详情：{item.Name}";
 
             var t1 = _dbService.GetInboundsByProductAsync(item.Name);
@@ -92,6 +95,13 @@ namespace WMS.Client.ViewModels
 
             var view = new ProductDetailDialog { DataContext = this };
             await DialogHost.Show(view, "ProductArchiveDialog");
+        }
+
+        [RelayCommand]
+        private void PrintDetail()
+        {
+            if (_currentProduct != null)
+                _printService.PrintProductDetails(_currentProduct, DetailInbounds, DetailOutbounds, DetailReturns);
         }
     }
 }
