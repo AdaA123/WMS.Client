@@ -2,320 +2,170 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
-             mc:Ignorable="d" d:DesignHeight="1000" d:DesignWidth="900">
+             mc:Ignorable="d" d:DesignHeight="700" d:DesignWidth="1000">
 
-    <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+    <Grid Background="White" Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <Style x:Key="CenterText" TargetType="TextBlock">
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+            <TextBlock Text="财务分析" FontSize="24" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
+            <DatePicker SelectedDate="{Binding StartDate}" materialDesign:HintAssist.Hint="开始日期" Width="100" Margin="0,0,10,0" VerticalAlignment="Center"/>
+            <TextBlock Text="-" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <DatePicker SelectedDate="{Binding EndDate}" materialDesign:HintAssist.Hint="结束日期" Width="100" Margin="0,0,20,0" VerticalAlignment="Center"/>
+            <Button Command="{Binding RefreshDataCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Content="查询" Margin="0,0,20,0"/>
+            <Button Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Content="打印当前报表" Margin="0,0,10,0"/>
+            <Button Command="{Binding ExportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Content="导出Excel"/>
+        </StackPanel>
 
-        <DataTemplate x:Key="ExpandButtonTemplate">
-            <ToggleButton Style="{StaticResource MaterialDesignFlatPrimaryToggleButton}"
-                          IsChecked="{Binding IsExpanded, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                          Width="30" Height="30"
-                          Cursor="Hand"
-                          ToolTip="点击展开/折叠详情">
-                <materialDesign:PackIcon Kind="ChevronRight" Width="20" Height="20">
-                    <materialDesign:PackIcon.Style>
-                        <Style TargetType="materialDesign:PackIcon" BasedOn="{StaticResource {x:Type materialDesign:PackIcon}}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}}" Value="True">
-                                    <Setter Property="Kind" Value="ChevronDown"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </materialDesign:PackIcon.Style>
-                </materialDesign:PackIcon>
-            </ToggleButton>
-        </DataTemplate>
-
-        <DataTemplate x:Key="FinancialDetailsTemplate">
-            <Border Background="#F9F9F9" Padding="20,10,10,10" BorderBrush="#E0E0E0" BorderThickness="0,1,0,1">
+        <Grid Grid.Row="1" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <materialDesign:Card Grid.Column="0" Background="#4CAF50" Foreground="White" Padding="20" Margin="0,0,10,0" UniformCornerRadius="8">
                 <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <materialDesign:PackIcon Kind="SubdirectoryArrowRight" Margin="0,0,5,0" VerticalAlignment="Center" Foreground="Gray"/>
-                        <TextBlock Text="该时段单品销售明细：" FontWeight="Bold" Foreground="Gray" VerticalAlignment="Center"/>
-                    </StackPanel>
+                    <TextBlock Text="总收入 (销售)" FontSize="14" Opacity="0.9"/>
+                    <TextBlock Text="{Binding TotalRevenue, StringFormat=C2}" FontSize="28" FontWeight="Bold" Margin="0,5,0,0"/>
+                </StackPanel>
+            </materialDesign:Card>
+            <materialDesign:Card Grid.Column="1" Background="#F44336" Foreground="White" Padding="20" Margin="5,0,5,0" UniformCornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="总成本 (采购)" FontSize="14" Opacity="0.9"/>
+                    <TextBlock Text="{Binding TotalCost, StringFormat=C2}" FontSize="28" FontWeight="Bold" Margin="0,5,0,0"/>
+                </StackPanel>
+            </materialDesign:Card>
+            <materialDesign:Card Grid.Column="2" Background="#2196F3" Foreground="White" Padding="20" Margin="10,0,0,0" UniformCornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="毛利润 (净收益)" FontSize="14" Opacity="0.9"/>
+                    <TextBlock Text="{Binding TotalGrossProfit, StringFormat=C2}" FontSize="28" FontWeight="Bold" Margin="0,5,0,0"/>
+                </StackPanel>
+            </materialDesign:Card>
+        </Grid>
 
-                    <DataGrid ItemsSource="{Binding Details}" 
-                              PreviewMouseWheel="InnerDataGrid_PreviewMouseWheel"
-                              AutoGenerateColumns="False" 
-                              CanUserAddRows="False" 
-                              IsReadOnly="True"
-                              HeadersVisibility="Column" 
-                              SelectionMode="Single"
-                              Background="White" 
-                              BorderThickness="1" 
-                              BorderBrush="#EEEEEE"
-                              VerticalScrollBarVisibility="Disabled"
-                              Focusable="False"
-                              materialDesign:DataGridAssist.ColumnHeaderPadding="8">
+        <TabControl Grid.Row="2" SelectedIndex="{Binding SelectedTabIndex}" Style="{StaticResource MaterialDesignFilledTabControl}" materialDesign:ColorZoneAssist.Mode="Standard">
+
+            <TabItem Header="单品利润分析">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10">
+                        <materialDesign:PackIcon Kind="Magnify" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="Gray"/>
+                        <TextBox Width="200" materialDesign:HintAssist.Hint="搜索产品名称..." Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding FinancialList}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Style="{StaticResource MaterialDesignDataGrid}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="200" FontWeight="Medium"/>
-                            <DataGridTextColumn Header="收入" Binding="{Binding Revenue, StringFormat=C2}" Width="100" Foreground="#4CAF50"/>
-                            <DataGridTextColumn Header="成本" Binding="{Binding Cost, StringFormat=C2}" Width="100" Foreground="#F44336"/>
-                            <DataGridTextColumn Header="销售利润" Binding="{Binding SalesProfit, StringFormat=C2}" Width="100" Foreground="#FF9800"/>
-                            <DataGridTextColumn Header="退款" Binding="{Binding Refund, StringFormat=C2}" Width="80"/>
-                            <DataGridTextColumn Header="贡献毛利" Binding="{Binding Profit, StringFormat=C2}" Width="100" FontWeight="Bold" Foreground="#3F51B5"/>
+                            <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="*" FontWeight="Bold"/>
+                            <DataGridTextColumn Header="采购总成本" Binding="{Binding TotalCost, StringFormat=C2}"/>
+                            <DataGridTextColumn Header="销售总收入" Binding="{Binding TotalRevenue, StringFormat=C2}"/>
+                            <DataGridTextColumn Header="退款总额" Binding="{Binding TotalRefund, StringFormat=C2}" Foreground="Red"/>
+                            <DataGridTextColumn Header="毛利/结余" Binding="{Binding GrossProfit, StringFormat=C2}" FontWeight="Bold">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsProfitPositive}" Value="False">
+                                                <Setter Property="Foreground" Value="Red"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsProfitPositive}" Value="True">
+                                                <Setter Property="Foreground" Value="Green"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="操作" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="查看进销存详情"
+                                                Command="{Binding DataContext.ViewDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                CommandParameter="{Binding}">
+                                            <materialDesign:PackIcon Kind="ChartBox" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-                </StackPanel>
-            </Border>
-        </DataTemplate>
-    </UserControl.Resources>
-
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-
-        <StackPanel Margin="0,0,10,20">
-
-            <TextBlock Text="财务收支概览" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
-
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <materialDesign:Card Grid.Column="0" Margin="0,0,10,0" Padding="15" UniformCornerRadius="8" Background="#4CAF50">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                            <materialDesign:PackIcon Kind="CashMultiple" Width="24" Height="24" Foreground="White" VerticalAlignment="Center"/>
-                            <TextBlock Text="销售总收入" Foreground="White" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <TextBlock Text="{Binding TotalRevenue, StringFormat=C2}" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Right"/>
-                    </StackPanel>
-                </materialDesign:Card>
-
-                <materialDesign:Card Grid.Column="1" Margin="10,0,10,0" Padding="15" UniformCornerRadius="8" Background="#F44336">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                            <materialDesign:PackIcon Kind="CartOutline" Width="24" Height="24" Foreground="White" VerticalAlignment="Center"/>
-                            <TextBlock Text="采购总成本" Foreground="White" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <TextBlock Text="{Binding TotalCost, StringFormat=C2}" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Right"/>
-                    </StackPanel>
-                </materialDesign:Card>
-
-                <materialDesign:Card Grid.Column="2" Margin="10,0,0,0" Padding="15" UniformCornerRadius="8" Background="#2196F3">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                            <materialDesign:PackIcon Kind="ChartLine" Width="24" Height="24" Foreground="White" VerticalAlignment="Center"/>
-                            <TextBlock Text="总毛利 (结余)" Foreground="White" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <TextBlock Text="{Binding TotalGrossProfit, StringFormat=C2}" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Right"/>
-                    </StackPanel>
-                </materialDesign:Card>
-            </Grid>
-
-            <materialDesign:Card Margin="0,0,0,10" UniformCornerRadius="8">
-                <Expander Header="收支趋势分析图表" 
-                          IsExpanded="{Binding IsChartExpanded, Mode=TwoWay}" 
-                          Background="White" Padding="10">
-                    <Grid Height="200">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <lvc:CartesianChart Grid.Row="1" Series="{Binding ChartSeries}" LegendLocation="Right">
-                            <lvc:CartesianChart.AxisX>
-                                <lvc:Axis Title="月份" Labels="{Binding ChartLabels}" Separator="{x:Static lvc:DefaultAxes.CleanSeparator}"/>
-                            </lvc:CartesianChart.AxisX>
-                            <lvc:CartesianChart.AxisY>
-                                <lvc:Axis Title="金额" LabelFormatter="{Binding YFormatter}"/>
-                            </lvc:CartesianChart.AxisY>
-                            <lvc:CartesianChart.DataTooltip>
-                                <lvc:DefaultTooltip SelectionMode="SharedYValues" ShowTitle="True"/>
-                            </lvc:CartesianChart.DataTooltip>
-                        </lvc:CartesianChart>
-                    </Grid>
-                </Expander>
-            </materialDesign:Card>
-
-            <materialDesign:Card Margin="0,0,0,10" Padding="15" UniformCornerRadius="8">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <materialDesign:PackIcon Kind="CalendarRange" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="Gray"/>
-                        <DatePicker SelectedDate="{Binding StartDate}" Width="100" materialDesign:HintAssist.Hint="开始日期" VerticalAlignment="Center"/>
-                        <TextBlock Text=" - " VerticalAlignment="Center" Margin="5,0"/>
-                        <DatePicker SelectedDate="{Binding EndDate}" Width="100" materialDesign:HintAssist.Hint="结束日期" VerticalAlignment="Center"/>
-
-                        <materialDesign:PackIcon Kind="Magnify" VerticalAlignment="Center" Foreground="Gray" Margin="20,0,5,0"/>
-                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
-                                 materialDesign:HintAssist.Hint="筛选单品名称..."
-                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                                 Width="150" VerticalAlignment="Center" Margin="0,-10,0,0"/>
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="查询/刷新" Command="{Binding RefreshDataCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0,0,15,0"/>
-                        <Button Command="{Binding ExportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="FileExcel" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="导出Excel" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Content="打印报表" Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
-                    </StackPanel>
                 </Grid>
-            </materialDesign:Card>
+            </TabItem>
 
-            <materialDesign:Card Padding="0" UniformCornerRadius="8">
-                <TabControl SelectedIndex="{Binding SelectedTabIndex}" Margin="5">
-                    <TabItem Header="单品利润分析" FontSize="16">
-                        <DataGrid ItemsSource="{Binding FinancialList}" 
-                                  PreviewMouseWheel="MainDataGrid_PreviewMouseWheel"
-                                  AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                                  HeadersVisibility="All" SelectionMode="Single"
-                                  VerticalScrollBarVisibility="Disabled"
-                                  MinHeight="100"
-                                  Style="{StaticResource MaterialDesignDataGrid}">
-                            <DataGrid.ColumnHeaderStyle>
-                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                </Style>
-                            </DataGrid.ColumnHeaderStyle>
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="2*">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Left" />
-                                            <Setter Property="Padding" Value="10,0,0,0"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridTextColumn Header="采购总成本" Binding="{Binding TotalCost, StringFormat=C2}" Width="1*" ElementStyle="{StaticResource CenterText}"/>
-                                <DataGridTextColumn Header="销售总收入" Binding="{Binding TotalRevenue, StringFormat=C2}" Width="1*" ElementStyle="{StaticResource CenterText}"/>
-                                <DataGridTextColumn Header="销售利润" Binding="{Binding SalesProfit, StringFormat=C2}" Width="1*" ElementStyle="{StaticResource CenterText}" Foreground="#FF9800" FontWeight="SemiBold"/>
-                                <DataGridTextColumn Header="退款总额" Binding="{Binding TotalRefund, StringFormat=C2}" Width="1*" ElementStyle="{StaticResource CenterText}"/>
-                                <DataGridTextColumn Header="毛利润" Binding="{Binding GrossProfit, StringFormat=C2}" Width="1*" FontWeight="Bold">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Center" />
-                                            <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="Foreground" Value="#3F51B5"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </TabItem>
+            <TabItem Header="月度经营报表">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <materialDesign:Card Margin="10" Padding="10">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <TextBlock Text="图表视图" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <ToggleButton IsChecked="{Binding IsChartExpanded}"/>
+                            </StackPanel>
+                            <lvc:CartesianChart Series="{Binding ChartSeries}" Height="200" LegendLocation="Right" 
+                                                Visibility="{Binding IsChartExpanded, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <lvc:CartesianChart.AxisX>
+                                    <lvc:Axis Title="月份" Labels="{Binding ChartLabels}"/>
+                                </lvc:CartesianChart.AxisX>
+                                <lvc:CartesianChart.AxisY>
+                                    <lvc:Axis Title="金额" LabelFormatter="{Binding YFormatter}"/>
+                                </lvc:CartesianChart.AxisY>
+                            </lvc:CartesianChart>
+                        </StackPanel>
+                    </materialDesign:Card>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding MonthlyList}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Style="{StaticResource MaterialDesignDataGrid}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="月份" Binding="{Binding PeriodName}" FontWeight="Bold"/>
+                            <DataGridTextColumn Header="总收入" Binding="{Binding Revenue, StringFormat=C2}"/>
+                            <DataGridTextColumn Header="总成本" Binding="{Binding Cost, StringFormat=C2}"/>
+                            <DataGridTextColumn Header="总退款" Binding="{Binding Refund, StringFormat=C2}"/>
+                            <DataGridTextColumn Header="净利润" Binding="{Binding Profit, StringFormat=C2}" FontWeight="Bold" Foreground="#2196F3"/>
+                            <DataGridTemplateColumn Header="操作" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="查看月度流水"
+                                                Command="{Binding DataContext.ViewPeriodDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                CommandParameter="{Binding}">
+                                            <materialDesign:PackIcon Kind="Magnify" Foreground="Gray"/>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
 
-                    <TabItem Header="月度报表" FontSize="16">
-                        <DataGrid ItemsSource="{Binding MonthlyList}" 
-                                  PreviewMouseWheel="MainDataGrid_PreviewMouseWheel"
-                                  AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                                  HeadersVisibility="All" SelectionMode="Extended"
-                                  RowDetailsTemplate="{StaticResource FinancialDetailsTemplate}"
-                                  VerticalScrollBarVisibility="Disabled"
-                                  MinHeight="100"
-                                  Style="{StaticResource MaterialDesignDataGrid}">
-
-                            <DataGrid.RowStyle>
-                                <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
-                                    <Setter Property="DetailsVisibility" Value="{Binding IsExpanded, Converter={StaticResource BoolToVisConverter}}"/>
-                                </Style>
-                            </DataGrid.RowStyle>
-
-                            <DataGrid.ColumnHeaderStyle>
-                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                </Style>
-                            </DataGrid.ColumnHeaderStyle>
-
-                            <DataGrid.Columns>
-                                <DataGridTemplateColumn Width="50">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ExpandButtonTemplate}"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
-                                <DataGridTextColumn Header="月份" Binding="{Binding PeriodName}" Width="1.5*" FontWeight="Bold" ElementStyle="{StaticResource CenterText}"/>
-                                <DataGridTextColumn Header="总收入" Binding="{Binding Revenue, StringFormat=C2}" Width="1*" ElementStyle="{StaticResource CenterText}" Foreground="#4CAF50"/>
-                                <DataGridTextColumn Header="总成本" Binding="{Binding Cost, StringFormat=C2}" Width="1*" ElementStyle="{StaticResource CenterText}" Foreground="#F44336"/>
-                                <DataGridTextColumn Header="总退款" Binding="{Binding Refund, StringFormat=C2}" Width="1*" ElementStyle="{StaticResource CenterText}" Foreground="Gray"/>
-                                <DataGridTextColumn Header="净利润" Binding="{Binding Profit, StringFormat=C2}" Width="1*" FontWeight="Bold">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Center" />
-                                            <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="Foreground" Value="#3F51B5"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridTextColumn Header="利润率" Binding="{Binding ProfitMargin}" Width="0.8*" ElementStyle="{StaticResource CenterText}"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </TabItem>
-
-                    <TabItem Header="年度报表" FontSize="16">
-                        <DataGrid ItemsSource="{Binding YearlyList}" 
-                                  PreviewMouseWheel="MainDataGrid_PreviewMouseWheel"
-                                  AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                                  HeadersVisibility="All" SelectionMode="Extended"
-                                  RowDetailsTemplate="{StaticResource FinancialDetailsTemplate}"
-                                  VerticalScrollBarVisibility="Disabled"
-                                  MinHeight="100"
-                                  Style="{StaticResource MaterialDesignDataGrid}">
-
-                            <DataGrid.RowStyle>
-                                <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
-                                    <Setter Property="DetailsVisibility" Value="{Binding IsExpanded, Converter={StaticResource BoolToVisConverter}}"/>
-                                </Style>
-                            </DataGrid.RowStyle>
-
-                            <DataGrid.ColumnHeaderStyle>
-                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                </Style>
-                            </DataGrid.ColumnHeaderStyle>
-
-                            <DataGrid.Columns>
-                                <DataGridTemplateColumn Width="50">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ExpandButtonTemplate}"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
-                                <DataGridTextColumn Header="年份" Binding="{Binding PeriodName}" Width="1.5*" FontWeight="Bold" ElementStyle="{StaticResource CenterText}"/>
-                                <DataGridTextColumn Header="总收入" Binding="{Binding Revenue, StringFormat=C2}" Width="1*" ElementStyle="{StaticResource CenterText}" Foreground="#4CAF50"/>
-                                <DataGridTextColumn Header="总成本" Binding="{Binding Cost, StringFormat=C2}" Width="1*" ElementStyle="{StaticResource CenterText}" Foreground="#F44336"/>
-                                <DataGridTextColumn Header="总退款" Binding="{Binding Refund, StringFormat=C2}" Width="1*" ElementStyle="{StaticResource CenterText}" Foreground="Gray"/>
-                                <DataGridTextColumn Header="净利润" Binding="{Binding Profit, StringFormat=C2}" Width="1*" FontWeight="Bold">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Center" />
-                                            <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="Foreground" Value="#3F51B5"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridTextColumn Header="利润率" Binding="{Binding ProfitMargin}" Width="0.8*" ElementStyle="{StaticResource CenterText}"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </TabItem>
-                </TabControl>
-            </materialDesign:Card>
-        </StackPanel>
-    </ScrollViewer>
+            <TabItem Header="年度经营报表">
+                <DataGrid ItemsSource="{Binding YearlyList}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Margin="0,10,0,0" Style="{StaticResource MaterialDesignDataGrid}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="年份" Binding="{Binding PeriodName}" FontWeight="Bold"/>
+                        <DataGridTextColumn Header="总收入" Binding="{Binding Revenue, StringFormat=C2}"/>
+                        <DataGridTextColumn Header="总成本" Binding="{Binding Cost, StringFormat=C2}"/>
+                        <DataGridTextColumn Header="总退款" Binding="{Binding Refund, StringFormat=C2}"/>
+                        <DataGridTextColumn Header="净利润" Binding="{Binding Profit, StringFormat=C2}" FontWeight="Bold" Foreground="#2196F3"/>
+                        <DataGridTemplateColumn Header="操作" Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="查看年度流水"
+                                            Command="{Binding DataContext.ViewPeriodDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                            CommandParameter="{Binding}">
+                                        <materialDesign:PackIcon Kind="Magnify" Foreground="Gray"/>
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+        </TabControl>
+    </Grid>
 </UserControl>

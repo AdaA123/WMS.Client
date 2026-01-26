@@ -17,7 +17,7 @@ namespace WMS.Client.Services
     {
         private void PrintDocument(FlowDocument doc, string documentName)
         {
-            doc.PageWidth = 794; // A4 宽度
+            doc.PageWidth = 794;
             doc.PageHeight = 1123;
             doc.PagePadding = new Thickness(40);
             doc.ColumnWidth = double.PositiveInfinity;
@@ -53,16 +53,71 @@ namespace WMS.Client.Services
             PackageStore.RemovePackage(packUri);
         }
 
-        // --- 1. 批发销售单打印 ---
+        // --- 🟢 新增：周期流水明细打印 ---
+        public void PrintPeriodDetails(string title, IEnumerable<InboundModel> inbounds, IEnumerable<OutboundModel> outbounds, IEnumerable<ReturnModel> returns)
+        {
+            var doc = CreateDoc(title);
+            AddHeader(doc, $"打印时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+
+            // 入库记录
+            AddSectionTitle(doc, "入库记录");
+            var t1 = CreateTable(new string[] { "日期", "产品名称", "供应商", "进货数", "验收数", "单价" });
+            foreach (var i in inbounds)
+            {
+                var r = new TableRow();
+                r.Cells.Add(CreateCell(i.InboundDate.ToString("yyyy-MM-dd")));
+                r.Cells.Add(CreateCell(i.ProductName ?? ""));
+                r.Cells.Add(CreateCell(i.Supplier ?? ""));
+                r.Cells.Add(CreateCell(i.Quantity.ToString(), false, TextAlignment.Center));
+                r.Cells.Add(CreateCell(i.AcceptedQuantity.ToString(), false, TextAlignment.Center));
+                r.Cells.Add(CreateCell(i.Price.ToString("C2"), false, TextAlignment.Right));
+                t1.RowGroups[1].Rows.Add(r);
+            }
+            doc.Blocks.Add(t1);
+
+            // 出库记录
+            AddSectionTitle(doc, "出库记录");
+            var t2 = CreateTable(new string[] { "日期", "产品名称", "客户", "数量", "售价" });
+            foreach (var o in outbounds)
+            {
+                var r = new TableRow();
+                r.Cells.Add(CreateCell(o.OutboundDate.ToString("yyyy-MM-dd")));
+                r.Cells.Add(CreateCell(o.ProductName ?? ""));
+                r.Cells.Add(CreateCell(o.Customer ?? ""));
+                r.Cells.Add(CreateCell(o.Quantity.ToString(), false, TextAlignment.Center));
+                r.Cells.Add(CreateCell(o.Price.ToString("C2"), false, TextAlignment.Right));
+                t2.RowGroups[1].Rows.Add(r);
+            }
+            doc.Blocks.Add(t2);
+
+            // 退货记录
+            if (returns.Any())
+            {
+                AddSectionTitle(doc, "退货记录");
+                var t3 = CreateTable(new string[] { "日期", "产品名称", "客户", "数量", "原因" });
+                foreach (var ret in returns)
+                {
+                    var r = new TableRow();
+                    r.Cells.Add(CreateCell(ret.ReturnDate.ToString("yyyy-MM-dd")));
+                    r.Cells.Add(CreateCell(ret.ProductName ?? ""));
+                    r.Cells.Add(CreateCell(ret.Customer ?? ""));
+                    r.Cells.Add(CreateCell(ret.Quantity.ToString(), false, TextAlignment.Center));
+                    r.Cells.Add(CreateCell(ret.Reason ?? ""));
+                    t3.RowGroups[1].Rows.Add(r);
+                }
+                doc.Blocks.Add(t3);
+            }
+
+            PrintDocument(doc, "PeriodDetailReport");
+        }
+
+        // --- 保持原有的其他打印方法 ---
         public void PrintWholesaleOrder(WholesaleOrder order, IEnumerable<WholesaleItem> items)
         {
             var doc = CreateDoc("批发销售单");
             AddHeader(doc, $"单号：{order.OrderNo}", $"日期：{order.OrderDate:yyyy-MM-dd HH:mm:ss}", $"客户：{order.Customer}", $"地址：{order.Address}");
-
             var headers = new string[] { "产品名称", "数量", "单价", "小计" };
             var table = CreateTable(headers);
-            var group = table.RowGroups[1];
-
             foreach (var item in items)
             {
                 var row = new TableRow();
@@ -70,27 +125,20 @@ namespace WMS.Client.Services
                 row.Cells.Add(CreateCell(item.Quantity.ToString(), false, TextAlignment.Center));
                 row.Cells.Add(CreateCell(item.Price.ToString("C2"), false, TextAlignment.Right));
                 row.Cells.Add(CreateCell(item.SubTotal.ToString("C2"), false, TextAlignment.Right));
-                group.Rows.Add(row);
+                table.RowGroups[1].Rows.Add(row);
             }
             doc.Blocks.Add(table);
-
-            // 🟢 修复 CS8604：使用 ?? "" 防止空引用
             AddFooter(doc, $"整单合计：{order.TotalAmount:C2}", $"备注：{order.Remark ?? ""}");
-
             PrintDocument(doc, $"Wholesale_{order.OrderNo}");
         }
 
-        // --- 🟢 新增：供应商详情打印 (仅关联入库) ---
         public void PrintSupplierDetails(SupplierModel supplier, IEnumerable<InboundModel> inbounds)
         {
             var doc = CreateDoc("供应商档案详情");
             AddHeader(doc, $"名称：{supplier.Name}", $"联系人：{supplier.ContactPerson}", $"电话：{supplier.Phone}", $"地址：{supplier.Address}");
-
             AddSectionTitle(doc, "供货记录 (入库)");
             var headers = new string[] { "日期", "单号", "产品名称", "进货数", "验收数", "单价", "状态" };
             var table = CreateTable(headers);
-            var group = table.RowGroups[1];
-
             foreach (var item in inbounds)
             {
                 var row = new TableRow();
@@ -101,21 +149,17 @@ namespace WMS.Client.Services
                 row.Cells.Add(CreateCell(item.AcceptedQuantity.ToString(), false, TextAlignment.Center));
                 row.Cells.Add(CreateCell(item.Price.ToString("C2"), false, TextAlignment.Right));
                 row.Cells.Add(CreateCell(item.Status ?? ""));
-                group.Rows.Add(row);
+                table.RowGroups[1].Rows.Add(row);
             }
             doc.Blocks.Add(table);
-
             if (!string.IsNullOrEmpty(supplier.Remark)) AddFooter(doc, "", $"备注：{supplier.Remark}");
-
             PrintDocument(doc, $"Supplier_{supplier.Name}");
         }
 
-        // --- 🟢 新增：客户详情打印 ---
         public void PrintCustomerDetails(CustomerModel customer, IEnumerable<OutboundModel> outbounds, IEnumerable<ReturnModel> returns)
         {
             var doc = CreateDoc("客户档案详情");
             AddHeader(doc, $"名称：{customer.Name}", $"联系人：{customer.ContactPerson}", $"电话：{customer.Phone}", $"地址：{customer.Address}");
-
             AddSectionTitle(doc, "销售记录 (出库)");
             var h1 = new string[] { "日期", "单号", "产品名称", "数量", "单价", "小计" };
             var t1 = CreateTable(h1);
@@ -131,7 +175,6 @@ namespace WMS.Client.Services
                 t1.RowGroups[1].Rows.Add(row);
             }
             doc.Blocks.Add(t1);
-
             if (returns.Any())
             {
                 AddSectionTitle(doc, "退货记录");
@@ -150,26 +193,21 @@ namespace WMS.Client.Services
                 }
                 doc.Blocks.Add(t2);
             }
-
             if (!string.IsNullOrEmpty(customer.Remark)) AddFooter(doc, "", $"备注：{customer.Remark}");
             PrintDocument(doc, $"Customer_{customer.Name}");
         }
 
-        // --- 🟢 新增：商品详情打印 ---
         public void PrintProductDetails(ProductModel product, IEnumerable<InboundModel> inbounds, IEnumerable<OutboundModel> outbounds, IEnumerable<ReturnModel> returns)
         {
             var doc = CreateDoc("商品档案详情");
             AddHeader(doc, $"品名：{product.Name}", $"规格：{product.Spec}", $"单位：{product.Unit}", $"参考价：{product.Price:C2}");
-
             int inQty = inbounds.Where(x => x.Status == "已验收").Sum(x => x.AcceptedQuantity);
             int outQty = outbounds.Sum(x => x.Quantity);
             int retQty = returns.Sum(x => x.Quantity);
             int stock = inQty - outQty + retQty;
-
             Paragraph summary = new Paragraph(new Run($"库存概览：总入库 {inQty} | 总出库 {outQty} | 总退货 {retQty} | 当前库存 {stock}"));
             summary.FontSize = 14; summary.FontWeight = FontWeights.Bold; summary.Margin = new Thickness(0, 0, 0, 10);
             doc.Blocks.Add(summary);
-
             AddSectionTitle(doc, "入库记录");
             var t1 = CreateTable(new string[] { "日期", "供应商", "进货数", "验收数", "单价" });
             foreach (var i in inbounds)
@@ -183,7 +221,6 @@ namespace WMS.Client.Services
                 t1.RowGroups[1].Rows.Add(r);
             }
             doc.Blocks.Add(t1);
-
             AddSectionTitle(doc, "出库记录");
             var t2 = CreateTable(new string[] { "日期", "客户", "数量", "售价" });
             foreach (var o in outbounds)
@@ -196,11 +233,9 @@ namespace WMS.Client.Services
                 t2.RowGroups[1].Rows.Add(r);
             }
             doc.Blocks.Add(t2);
-
             PrintDocument(doc, $"Product_{product.Name}");
         }
 
-        // --- 业务报表 ---
         public void PrintInboundReport(IEnumerable<InboundModel> data) => PrintReport("入库单汇总报表", new[] { "单号", "产品", "供应商", "进价", "进货", "验收", "拒收", "状态", "日期" }, data, (r, i) => {
             r.Cells.Add(CreateCell(i.OrderNo)); r.Cells.Add(CreateCell(i.ProductName)); r.Cells.Add(CreateCell(i.Supplier));
             r.Cells.Add(CreateCell(i.Price.ToString("C2"), false, TextAlignment.Right));
@@ -245,7 +280,6 @@ namespace WMS.Client.Services
             r.Cells.Add(CreateCell(i.TotalAmount.ToString("C2"), false, TextAlignment.Right));
         }, $"库存总货值: {data.Sum(x => x.TotalAmount):C2}");
 
-        // --- 私有辅助方法 ---
         private void PrintReport<T>(string title, string[] headers, IEnumerable<T> data, Action<TableRow, T> fillRow, string footerText)
         {
             var doc = CreateDoc(title);
