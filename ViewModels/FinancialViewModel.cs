@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.Input;
 using LiveCharts;
 using LiveCharts.Wpf;
-using MaterialDesignThemes.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,6 +11,7 @@ using System.Windows;
 using WMS.Client.Models;
 using WMS.Client.Services;
 using WMS.Client.Views;
+using MaterialDesignThemes.Wpf; // 引入 DialogHost 支持
 
 namespace WMS.Client.ViewModels
 {
@@ -40,8 +40,14 @@ namespace WMS.Client.ViewModels
         [ObservableProperty] private int _selectedTabIndex;
         [ObservableProperty] private bool _isChartExpanded = true;
 
-        [ObservableProperty] private SeriesCollection _chartSeries = new SeriesCollection();
-        [ObservableProperty] private string[] _chartLabels = Array.Empty<string>();
+        // --- 柱状/折线图数据 ---
+        [ObservableProperty]
+        private SeriesCollection _chartSeries = new SeriesCollection();
+        [ObservableProperty]
+        private string[] _chartLabels = Array.Empty<string>();
+
+        // 🟢 新增：产品收入占比饼图
+        public SeriesCollection RevenuePieSeries { get; } = new();
 
         // 详情页数据源
         public ObservableCollection<InboundModel> DetailInbounds { get; } = new();
@@ -49,8 +55,8 @@ namespace WMS.Client.ViewModels
         public ObservableCollection<ReturnModel> DetailReturns { get; } = new();
         [ObservableProperty] private string _detailTitle = "";
 
-        private ProductModel? _currentDetailProduct; // 单品详情用
-        private string? _currentPeriodTitle; // 周期详情用 (用于打印标题)
+        private ProductModel? _currentDetailProduct;
+        private string? _currentPeriodTitle;
 
         public Func<double, string> YFormatter { get; set; }
 
@@ -59,16 +65,24 @@ namespace WMS.Client.ViewModels
             _dbService = new DatabaseService();
             _exportService = new ExportService();
             _printService = new PrintService();
+
             YFormatter = value => value.ToString("C0");
+
             StartDate = new DateTime(DateTime.Now.Year, 1, 1);
             EndDate = DateTime.Now.Date.AddDays(1).AddSeconds(-1);
+
             _ = RefreshDataAsync();
         }
 
         [RelayCommand]
         public async Task RefreshDataAsync()
         {
-            if (StartDate > EndDate) { MessageBox.Show("开始日期不能晚于结束日期！"); return; }
+            if (StartDate > EndDate)
+            {
+                MessageBox.Show("开始日期不能晚于结束日期！");
+                return;
+            }
+
             _cachedFinancialList = await _dbService.GetFinancialSummaryAsync(StartDate, EndDate);
             FilterFinancialList();
             TotalRevenue = _cachedFinancialList.Sum(x => x.TotalRevenue);
@@ -76,10 +90,12 @@ namespace WMS.Client.ViewModels
             TotalGrossProfit = TotalRevenue - TotalCost - _cachedFinancialList.Sum(x => x.TotalRefund);
 
             var monthData = await _dbService.GetPeriodReportAsync(isMonthly: true, StartDate, EndDate);
-            MonthlyList.Clear(); foreach (var item in monthData) MonthlyList.Add(item);
+            MonthlyList.Clear();
+            foreach (var item in monthData) MonthlyList.Add(item);
 
             var yearData = await _dbService.GetPeriodReportAsync(isMonthly: false, StartDate, EndDate);
-            YearlyList.Clear(); foreach (var item in yearData) YearlyList.Add(item);
+            YearlyList.Clear();
+            foreach (var item in yearData) YearlyList.Add(item);
 
             UpdateChart(monthData);
         }
@@ -88,24 +104,126 @@ namespace WMS.Client.ViewModels
         {
             FinancialList.Clear();
             var query = _cachedFinancialList.AsEnumerable();
+
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 string key = SearchText.Trim().ToLower();
                 query = query.Where(x => x.ProductName != null && x.ProductName.ToLower().Contains(key));
             }
+
             foreach (var item in query) FinancialList.Add(item);
+
+            // 🟢 更新饼图 (响应筛选结果)
+            UpdatePieChart(query);
+        }
+
+        private void UpdatePieChart(IEnumerable<FinancialSummaryModel> data)
+        {
+            RevenuePieSeries.Clear();
+            var topRevenue = data.OrderByDescending(x => x.TotalRevenue).Take(5);
+            foreach (var item in topRevenue)
+            {
+                RevenuePieSeries.Add(new PieSeries
+                {
+                    Title = item.ProductName,
+                    Values = new ChartValues<decimal> { item.TotalRevenue },
+                    DataLabels = true,
+                    LabelPoint = chartPoint => $"{chartPoint.Y:C0}"
+                });
+            }
         }
 
         private void UpdateChart(List<FinancialReportModel> data)
         {
             var sortedData = data.OrderBy(x => x.PeriodDate).ToList();
             ChartLabels = sortedData.Select(x => x.PeriodName).ToArray();
+
             ChartSeries = new SeriesCollection
             {
-                new ColumnSeries { Title = "总收入", Values = new ChartValues<decimal>(sortedData.Select(x => x.Revenue)), Fill = System.Windows.Media.Brushes.MediumSeaGreen },
-                new ColumnSeries { Title = "总成本", Values = new ChartValues<decimal>(sortedData.Select(x => x.Cost)), Fill = System.Windows.Media.Brushes.IndianRed },
-                new LineSeries { Title = "净利润趋势", Values = new ChartValues<decimal>(sortedData.Select(x => x.Profit)), Stroke = System.Windows.Media.Brushes.DodgerBlue, Fill = System.Windows.Media.Brushes.Transparent, PointGeometrySize = 10, StrokeThickness = 3 }
+                new ColumnSeries
+                {
+                    Title = "总收入",
+                    Values = new ChartValues<decimal>(sortedData.Select(x => x.Revenue)),
+                    Fill = System.Windows.Media.Brushes.MediumSeaGreen
+                },
+                new ColumnSeries
+                {
+                    Title = "总成本",
+                    Values = new ChartValues<decimal>(sortedData.Select(x => x.Cost)),
+                    Fill = System.Windows.Media.Brushes.IndianRed
+                },
+                new LineSeries
+                {
+                    Title = "净利润趋势",
+                    Values = new ChartValues<decimal>(sortedData.Select(x => x.Profit)),
+                    Stroke = System.Windows.Media.Brushes.DodgerBlue,
+                    Fill = System.Windows.Media.Brushes.Transparent,
+                    PointGeometrySize = 10,
+                    StrokeThickness = 3
+                }
             };
+        }
+
+        [RelayCommand]
+        private async Task ViewDetail(FinancialSummaryModel item)
+        {
+            if (item == null || string.IsNullOrEmpty(item.ProductName)) return;
+            DetailTitle = $"商品详情：{item.ProductName}";
+            _currentDetailProduct = (await _dbService.GetProductsAsync()).FirstOrDefault(p => p.Name == item.ProductName)
+                                    ?? new ProductModel { Name = item.ProductName, Spec = "未知", Unit = "未知", Price = 0 };
+            _currentPeriodTitle = null;
+
+            var t1 = _dbService.GetInboundsByProductAsync(item.ProductName);
+            var t2 = _dbService.GetOutboundsByProductAsync(item.ProductName);
+            var t3 = _dbService.GetReturnsByProductAsync(item.ProductName);
+            await Task.WhenAll(t1, t2, t3);
+
+            FillDetailLists(t1.Result, t2.Result, t3.Result);
+            await DialogHost.Show(new ProductDetailDialog { DataContext = this }, "RootDialog");
+        }
+
+        [RelayCommand]
+        private async Task ViewPeriodDetail(FinancialReportModel item)
+        {
+            if (item == null) return;
+            DateTime start = item.PeriodDate;
+            DateTime end;
+            if (item.PeriodName != null && item.PeriodName.Contains("月"))
+            {
+                end = start.AddMonths(1).AddSeconds(-1);
+                DetailTitle = $"月度流水详情：{item.PeriodName}";
+            }
+            else
+            {
+                end = start.AddYears(1).AddSeconds(-1);
+                DetailTitle = $"年度流水详情：{item.PeriodName}";
+            }
+            _currentPeriodTitle = DetailTitle;
+            _currentDetailProduct = null;
+
+            var t1 = _dbService.GetInboundsByDateRangeAsync(start, end);
+            var t2 = _dbService.GetOutboundsByDateRangeAsync(start, end);
+            var t3 = _dbService.GetReturnsByDateRangeAsync(start, end);
+            await Task.WhenAll(t1, t2, t3);
+
+            FillDetailLists(t1.Result, t2.Result, t3.Result);
+            await DialogHost.Show(new PeriodDetailDialog { DataContext = this }, "RootDialog");
+        }
+
+        private void FillDetailLists(IEnumerable<InboundModel> inbounds, IEnumerable<OutboundModel> outbounds, IEnumerable<ReturnModel> returns)
+        {
+            DetailInbounds.Clear(); foreach (var i in inbounds) DetailInbounds.Add(i);
+            DetailOutbounds.Clear(); foreach (var i in outbounds) DetailOutbounds.Add(i);
+            DetailReturns.Clear(); foreach (var i in returns) DetailReturns.Add(i);
+        }
+
+        [RelayCommand]
+        private void PrintDetail()
+        {
+            if (_currentDetailProduct != null)
+                _printService.PrintProductDetails(_currentDetailProduct, DetailInbounds, DetailOutbounds, DetailReturns);
+            else if (!string.IsNullOrEmpty(_currentPeriodTitle))
+                _printService.PrintPeriodDetails(_currentPeriodTitle, DetailInbounds, DetailOutbounds, DetailReturns);
         }
 
         [RelayCommand]
@@ -122,80 +240,6 @@ namespace WMS.Client.ViewModels
             if (SelectedTabIndex == 0) _printService.PrintFinancialReport(FinancialList);
             else if (SelectedTabIndex == 1) _printService.PrintPeriodReport(MonthlyList, "月度财务报表");
             else if (SelectedTabIndex == 2) _printService.PrintPeriodReport(YearlyList, "年度财务报表");
-        }
-
-        // --- 查看单品详情 (已有) ---
-        [RelayCommand]
-        private async Task ViewDetail(FinancialSummaryModel item)
-        {
-            if (item == null || string.IsNullOrEmpty(item.ProductName)) return;
-            DetailTitle = $"商品详情：{item.ProductName}";
-            _currentDetailProduct = (await _dbService.GetProductsAsync()).FirstOrDefault(p => p.Name == item.ProductName)
-                                    ?? new ProductModel { Name = item.ProductName, Spec = "未知", Unit = "未知", Price = 0 };
-            _currentPeriodTitle = null; // 清空周期标记
-
-            var t1 = _dbService.GetInboundsByProductAsync(item.ProductName);
-            var t2 = _dbService.GetOutboundsByProductAsync(item.ProductName);
-            var t3 = _dbService.GetReturnsByProductAsync(item.ProductName);
-            await Task.WhenAll(t1, t2, t3);
-
-            FillDetailLists(t1.Result, t2.Result, t3.Result);
-            await DialogHost.Show(new ProductDetailDialog { DataContext = this }, "RootDialog");
-        }
-
-        // 🟢 新增：查看周期详情 (月度/年度)
-        [RelayCommand]
-        private async Task ViewPeriodDetail(FinancialReportModel item)
-        {
-            if (item == null) return;
-
-            DateTime start = item.PeriodDate;
-            DateTime end;
-
-            // 判断是月报还是年报 (根据名字包含"月")
-            if (item.PeriodName != null && item.PeriodName.Contains("月"))
-            {
-                end = start.AddMonths(1).AddSeconds(-1);
-                DetailTitle = $"月度流水详情：{item.PeriodName}";
-            }
-            else
-            {
-                end = start.AddYears(1).AddSeconds(-1);
-                DetailTitle = $"年度流水详情：{item.PeriodName}";
-            }
-
-            _currentPeriodTitle = DetailTitle;
-            _currentDetailProduct = null;
-
-            var t1 = _dbService.GetInboundsByDateRangeAsync(start, end);
-            var t2 = _dbService.GetOutboundsByDateRangeAsync(start, end);
-            var t3 = _dbService.GetReturnsByDateRangeAsync(start, end);
-            await Task.WhenAll(t1, t2, t3);
-
-            FillDetailLists(t1.Result, t2.Result, t3.Result);
-            // 🟢 使用新的 PeriodDetailDialog (带产品名称列)
-            await DialogHost.Show(new PeriodDetailDialog { DataContext = this }, "RootDialog");
-        }
-
-        private void FillDetailLists(IEnumerable<InboundModel> inbounds, IEnumerable<OutboundModel> outbounds, IEnumerable<ReturnModel> returns)
-        {
-            DetailInbounds.Clear(); foreach (var i in inbounds) DetailInbounds.Add(i);
-            DetailOutbounds.Clear(); foreach (var i in outbounds) DetailOutbounds.Add(i);
-            DetailReturns.Clear(); foreach (var i in returns) DetailReturns.Add(i);
-        }
-
-        // 🟢 通用详情打印命令
-        [RelayCommand]
-        private void PrintDetail()
-        {
-            if (_currentDetailProduct != null)
-            {
-                _printService.PrintProductDetails(_currentDetailProduct, DetailInbounds, DetailOutbounds, DetailReturns);
-            }
-            else if (!string.IsNullOrEmpty(_currentPeriodTitle))
-            {
-                _printService.PrintPeriodDetails(_currentPeriodTitle, DetailInbounds, DetailOutbounds, DetailReturns);
-            }
         }
     }
 }

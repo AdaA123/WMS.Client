@@ -54,47 +54,65 @@
 
             <TabItem Header="单品利润分析">
                 <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10">
-                        <materialDesign:PackIcon Kind="Magnify" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="Gray"/>
-                        <TextBox Width="200" materialDesign:HintAssist.Hint="搜索产品名称..." Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding FinancialList}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Style="{StaticResource MaterialDesignDataGrid}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="*" FontWeight="Bold"/>
-                            <DataGridTextColumn Header="采购总成本" Binding="{Binding TotalCost, StringFormat=C2}"/>
-                            <DataGridTextColumn Header="销售总收入" Binding="{Binding TotalRevenue, StringFormat=C2}"/>
-                            <DataGridTextColumn Header="退款总额" Binding="{Binding TotalRefund, StringFormat=C2}" Foreground="Red"/>
-                            <DataGridTextColumn Header="毛利/结余" Binding="{Binding GrossProfit, StringFormat=C2}" FontWeight="Bold">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsProfitPositive}" Value="False">
-                                                <Setter Property="Foreground" Value="Red"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding IsProfitPositive}" Value="True">
-                                                <Setter Property="Foreground" Value="Green"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTemplateColumn Header="操作" Width="80">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="查看进销存详情"
-                                                Command="{Binding DataContext.ViewDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                                CommandParameter="{Binding}">
-                                            <materialDesign:PackIcon Kind="ChartBox" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
-                                        </Button>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0" Margin="0,0,10,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10">
+                            <materialDesign:PackIcon Kind="Magnify" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="Gray"/>
+                            <TextBox Width="200" materialDesign:HintAssist.Hint="搜索产品名称..." Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding FinancialList}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Style="{StaticResource MaterialDesignDataGrid}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="产品名称" Binding="{Binding ProductName}" Width="*" FontWeight="Bold"/>
+                                <DataGridTextColumn Header="采购总成本" Binding="{Binding TotalCost, StringFormat=C2}"/>
+                                <DataGridTextColumn Header="销售总收入" Binding="{Binding TotalRevenue, StringFormat=C2}"/>
+                                <DataGridTextColumn Header="退款总额" Binding="{Binding TotalRefund, StringFormat=C2}" Foreground="Red"/>
+                                <DataGridTextColumn Header="毛利/结余" Binding="{Binding GrossProfit, StringFormat=C2}" FontWeight="Bold">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsProfitPositive}" Value="False">
+                                                    <Setter Property="Foreground" Value="Red"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsProfitPositive}" Value="True">
+                                                    <Setter Property="Foreground" Value="Green"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTemplateColumn Header="操作" Width="80">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="查看进销存详情"
+                                                    Command="{Binding DataContext.ViewDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                    CommandParameter="{Binding}">
+                                                <materialDesign:PackIcon Kind="ChartBox" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+
+                    <materialDesign:Card Grid.Column="1" Padding="15" UniformCornerRadius="8" Margin="10,0,0,0" VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Text="产品收入占比 (Top 5)" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" HorizontalAlignment="Center"/>
+                            <lvc:PieChart Series="{Binding RevenuePieSeries}" LegendLocation="Bottom" Hoverable="True" InnerRadius="30" Height="300">
+                                <lvc:PieChart.DataTooltip>
+                                    <lvc:DefaultTooltip SelectionMode="SharedYValues"/>
+                                </lvc:PieChart.DataTooltip>
+                            </lvc:PieChart>
+                        </StackPanel>
+                    </materialDesign:Card>
                 </Grid>
             </TabItem>
 

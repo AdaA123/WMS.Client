@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MaterialDesignThemes.Wpf;
+using LiveCharts; // 🟢 新增
+using LiveCharts.Wpf; // 🟢 新增
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -29,6 +31,9 @@ namespace WMS.Client.ViewModels
         private List<InventorySummaryModel> _allInventory = new();
         public ObservableCollection<InventorySummaryModel> InventoryList { get; } = new();
 
+        // 🟢 新增：库存饼图数据
+        public SeriesCollection StockPieSeries { get; } = new();
+
         public HomeViewModel()
         {
             _dbService = new DatabaseService();
@@ -51,6 +56,7 @@ namespace WMS.Client.ViewModels
 
             _allInventory = await _dbService.GetInventorySummaryAsync();
             FilterInventoryList();
+            UpdateCharts(); // 🟢 更新图表
         }
 
         private void FilterInventoryList()
@@ -65,7 +71,25 @@ namespace WMS.Client.ViewModels
             foreach (var item in query) InventoryList.Add(item);
         }
 
-        // 🟢 快速入库 (带自动填充)
+        // 🟢 新增：更新图表逻辑
+        private void UpdateCharts()
+        {
+            StockPieSeries.Clear();
+            // 取库存货值最高的前5名
+            var topProducts = _allInventory.OrderByDescending(x => x.TotalAmount).Take(5);
+
+            foreach (var item in topProducts)
+            {
+                StockPieSeries.Add(new PieSeries
+                {
+                    Title = item.ProductName,
+                    Values = new ChartValues<decimal> { item.TotalAmount },
+                    DataLabels = true,
+                    LabelPoint = chartPoint => $"{chartPoint.Y:C0}"
+                });
+            }
+        }
+
         [RelayCommand]
         private async Task QuickInbound()
         {
@@ -76,7 +100,6 @@ namespace WMS.Client.ViewModels
                 Quantity = 1
             };
 
-            // 监听变化实现自动填充
             newOrder.PropertyChanged += async (s, e) =>
             {
                 if (e.PropertyName == nameof(InboundModel.ProductName) && !string.IsNullOrWhiteSpace(newOrder.ProductName))
@@ -109,7 +132,6 @@ namespace WMS.Client.ViewModels
             }
         }
 
-        // 🟢 快速出库 (带自动填充)
         [RelayCommand]
         private async Task QuickOutbound()
         {
