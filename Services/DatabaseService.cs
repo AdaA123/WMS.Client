@@ -183,7 +183,7 @@ namespace WMS.Client.Services
         public Task<List<ReturnModel>> GetReturnsByCustomerAsync(string name) => _database.Table<ReturnModel>().Where(x => x.Customer == name).OrderByDescending(x => x.ReturnDate).ToListAsync();
         public Task<List<InboundModel>> GetInboundsBySupplierAsync(string name) => _database.Table<InboundModel>().Where(x => x.Supplier == name).OrderByDescending(x => x.InboundDate).ToListAsync();
 
-        // 🟢 新增：按日期范围查询详情
+        // 🟢 新增：按日期范围查询详情 (月度/年度详情的核心)
         public Task<List<InboundModel>> GetInboundsByDateRangeAsync(DateTime start, DateTime end) => _database.Table<InboundModel>().Where(x => x.InboundDate >= start && x.InboundDate <= end).OrderByDescending(x => x.InboundDate).ToListAsync();
         public Task<List<OutboundModel>> GetOutboundsByDateRangeAsync(DateTime start, DateTime end) => _database.Table<OutboundModel>().Where(x => x.OutboundDate >= start && x.OutboundDate <= end).OrderByDescending(x => x.OutboundDate).ToListAsync();
         public Task<List<ReturnModel>> GetReturnsByDateRangeAsync(DateTime start, DateTime end) => _database.Table<ReturnModel>().Where(x => x.ReturnDate >= start && x.ReturnDate <= end).OrderByDescending(x => x.ReturnDate).ToListAsync();

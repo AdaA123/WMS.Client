@@ -149,23 +149,23 @@ namespace WMS.Client.ViewModels
         {
             if (item == null) return;
 
-            DateTime start = item.PeriodDate; // 比如 2023-10-01
+            DateTime start = item.PeriodDate;
             DateTime end;
 
-            // 判断是月报还是年报
+            // 判断是月报还是年报 (根据名字包含"月")
             if (item.PeriodName != null && item.PeriodName.Contains("月"))
             {
-                end = start.AddMonths(1).AddSeconds(-1); // 月底
+                end = start.AddMonths(1).AddSeconds(-1);
                 DetailTitle = $"月度流水详情：{item.PeriodName}";
             }
             else
             {
-                end = start.AddYears(1).AddSeconds(-1); // 年底
+                end = start.AddYears(1).AddSeconds(-1);
                 DetailTitle = $"年度流水详情：{item.PeriodName}";
             }
 
             _currentPeriodTitle = DetailTitle;
-            _currentDetailProduct = null; // 清空单品标记
+            _currentDetailProduct = null;
 
             var t1 = _dbService.GetInboundsByDateRangeAsync(start, end);
             var t2 = _dbService.GetOutboundsByDateRangeAsync(start, end);
@@ -190,12 +190,10 @@ namespace WMS.Client.ViewModels
         {
             if (_currentDetailProduct != null)
             {
-                // 打印单品详情
                 _printService.PrintProductDetails(_currentDetailProduct, DetailInbounds, DetailOutbounds, DetailReturns);
             }
             else if (!string.IsNullOrEmpty(_currentPeriodTitle))
             {
-                // 打印周期详情
                 _printService.PrintPeriodDetails(_currentPeriodTitle, DetailInbounds, DetailOutbounds, DetailReturns);
             }
         }
