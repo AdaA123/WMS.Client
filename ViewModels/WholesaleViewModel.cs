@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using MaterialDesignThemes.Wpf;
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -84,6 +85,23 @@ namespace WMS.Client.ViewModels
             if (lastOut != null) TempPrice = lastOut.Price;
         }
 
+        // --- 🟢 实时计算逻辑 ---
+
+        // 监听明细行变化
+        private void Item_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(WholesaleItem.Quantity) || e.PropertyName == nameof(WholesaleItem.Price))
+            {
+                UpdateTotal();
+            }
+        }
+
+        private void UpdateTotal()
+        {
+            // 实时计算总金额
+            TotalOrderAmount = OrderItems.Sum(x => x.Price * x.Quantity);
+        }
+
         [RelayCommand]
         private async Task OpenCreateDialog()
         {
@@ -120,7 +138,19 @@ namespace WMS.Client.ViewModels
 
             OrderItems.Clear();
             foreach (var i in item.Items)
-                OrderItems.Add(new WholesaleItem { Id = i.Id, OrderId = i.OrderId, ProductName = i.ProductName, Quantity = i.Quantity, Price = i.Price });
+            {
+                var newItem = new WholesaleItem
+                {
+                    Id = i.Id,
+                    OrderId = i.OrderId,
+                    ProductName = i.ProductName,
+                    Quantity = i.Quantity,
+                    Price = i.Price
+                };
+                // 🟢 绑定监听事件，这样在表格里改数量时，合计会自动变
+                newItem.PropertyChanged += Item_PropertyChanged;
+                OrderItems.Add(newItem);
+            }
 
             UpdateTotal();
 
@@ -134,12 +164,16 @@ namespace WMS.Client.ViewModels
             if (string.IsNullOrEmpty(TempProductName)) return;
             if (TempQuantity <= 0) return;
 
-            OrderItems.Add(new WholesaleItem
+            var newItem = new WholesaleItem
             {
                 ProductName = TempProductName,
                 Quantity = TempQuantity,
                 Price = TempPrice
-            });
+            };
+
+            // 🟢 绑定监听
+            newItem.PropertyChanged += Item_PropertyChanged;
+            OrderItems.Add(newItem);
 
             UpdateTotal();
             TempProductName = ""; TempQuantity = 1;
@@ -148,11 +182,11 @@ namespace WMS.Client.ViewModels
         [RelayCommand]
         private void RemoveItem(WholesaleItem item)
         {
+            // 解除监听
+            item.PropertyChanged -= Item_PropertyChanged;
             OrderItems.Remove(item);
             UpdateTotal();
         }
-
-        private void UpdateTotal() => TotalOrderAmount = OrderItems.Sum(x => x.SubTotal);
 
         [RelayCommand]
         private async Task Save()
@@ -161,7 +195,11 @@ namespace WMS.Client.ViewModels
             if (string.IsNullOrEmpty(CurrentOrder.Customer)) { MessageBox.Show("请选择客户"); return; }
 
             CurrentOrder.Items = OrderItems.ToList();
-            CurrentOrder.TotalAmount = TotalOrderAmount;
+
+            // 🟢 核心修复：保存前强制根据当前明细重新计算总金额
+            // 即使界面上的 TotalOrderAmount 没刷新，这行代码也能保证数据库里的数据是正确的
+            CurrentOrder.TotalAmount = OrderItems.Sum(x => x.Price * x.Quantity);
+            TotalOrderAmount = CurrentOrder.TotalAmount; // 同步更新界面
 
             await _dbService.SaveWholesaleOrderAsync(CurrentOrder);
 
@@ -182,23 +220,19 @@ namespace WMS.Client.ViewModels
             }
         }
 
-        // 🟢 修复：支持列表点击（带参数）和弹窗点击（无参数）
         [RelayCommand]
         private void PrintOrder(WholesaleOrder? item)
         {
-            // 情况 1: 从列表页面点击 (item 不为空)
             if (item != null)
             {
                 _printService.PrintWholesaleOrder(item, item.Items);
                 return;
             }
 
-            // 情况 2: 从弹窗页面点击 (item 为空，打印当前编辑单据)
             if (OrderItems.Count == 0) { MessageBox.Show("没有商品明细，无法打印。", "提示"); return; }
 
-            // 🟢 关键：先同步数据，否则 TotalAmount 会是 0
             CurrentOrder.Items = OrderItems.ToList();
-            CurrentOrder.TotalAmount = OrderItems.Sum(x => x.SubTotal);
+            CurrentOrder.TotalAmount = OrderItems.Sum(x => x.Price * x.Quantity); // 打印前也重新计算
 
             _printService.PrintWholesaleOrder(CurrentOrder, OrderItems);
         }
